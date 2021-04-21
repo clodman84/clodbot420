@@ -14,16 +14,7 @@ Arsenal = client.open('Enriching Weapons Grade Uranium (Responses)').sheet1
 
 client = discord.Client()
 
-intros = ['Oh I was just watching ', 'The best part is when ',
-          'Suck my dick and after that lets ',
-          ' Introducing, the revolutionary, super tasty production from cunt bitch incorporated ', 'last week Narendra '
-                                                                                                   'MoodIOUS said '
-                                                                                                   'that, ',
-          ' I love big butts and also ', ' oh yeah babes ', 'I advocate the use of ', ' Yesterday Obama said :- ',
-          ' I like big ', '  Do you like how ', ' Introducing ', ' K-pop is a piece of shit heres why ',
-          ' Welcome to ', ' J sizzle strikes again ', ' Shut the fuck up. Thanks, also:-', \
- \
-          ' I will do something 😂🐱😂🐱🐱 the best way to get a road for the best of the best 5, Speaking of which:-']
+intros = []
 phrases = ['Yes, uh', 'Why am I doing this?', 'Romantic dude cums on rose',
            'Spongeknob Squarenuts', 'Explosive beaver hammering', "Thor thunder smacks yoda's sopping wet pussy "
                                                                   "with his throbbing lightsaber as he screams "
@@ -447,14 +438,14 @@ async def refuel():
             k = phrases
         for i in x:
             for j in range(0, len(i)):
-                if i[j] is '"':
+                if i[j] == '"':
                     if begin is False:
                         begin = True
                     else:
                         begin = False
                         k.append(phrase)
                         phrase = ''
-                elif i[j] is "'":
+                elif i[j] == "'":
                     continue
                 else:
                     phrase = phrase + i[j]
@@ -529,10 +520,9 @@ def clear(a):
 outputs = [["Thee men talk too much i am did tire of translating thy words especially ", "Shakespeare_CUNT"],
            ["Tired of translating I am, talk too much you do ", 'Yoda_CUNT'],
            ["I am tired of translatin' you dudes. I just wanna smoke crack with ", "Valley_CUNT"],
-           ['I im su tured ouff truonsleting yuou, zeet telketife ', 'European_CUNT'],
-           ["I be so tired o' translatin' ye, that talkative ", 'Pirates_of_the_CUNT'],
-           ["so 😩 ℹ want to go 🏡 and 🛏", 'emoji_CUNT']]
-links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'chef.json', 'valspeak.json', 'emoji.json']
+           ['I im su tured ouff truonsleting yuou, zeet talkateev ', 'European_CUNT'],
+           ["I be so tired o' translatin' ye, that talkative ", 'Pirates_of_the_CUNT']]
+links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'chef.json', 'valspeak.json']
 
 
 async def translate(txt, author):
@@ -546,7 +536,7 @@ async def translate(txt, author):
         A = outputs[random.randint(0, len(outputs) - 1)]
         output = A[0] + author.split('#')[0]
         auth = A[1]
-        cooldown = 7200
+        cooldown = 4000
     return output, auth
 
 
@@ -562,7 +552,7 @@ async def on_ready():
     await asyncio.sleep(2)
     await channel.send(
         mine() + "\n====================\nLaunch"
-                 "Time : " + current_time + "\nCurrent Server Status : " + "I have no fucking clue\n====================\n")
+                 "Time : " + current_time + "\nCurrent Server Status : I have no fucking clue lol\n====================\n")
     await channel.send("Refueling...")
     await channel.send(await refuel())
     serverStatus.start()  # starts the presence update loop
@@ -582,9 +572,9 @@ async def on_message(message):
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         if message.content.lower() == '--start':
-            await message.channel.send("I don't do that anymore :-P")
+            await message.channel.send("I don't do that anymore :-P\n" + mine())
         elif message.content.lower() == '--status':
-            await message.channel.send("I have no clue bro. \nEnjoying porno : " + Frase())
+            await message.channel.send("I have no idea bro. \nEnjoying porno : " + Frase())
         # clear and refuel _____________________________________________________________________________________
         elif message.content.lower() == '--clear porn':
             await message.channel.send(clear(phraseBlack))
@@ -616,7 +606,8 @@ async def on_message(message):
             else:
 
                 await message.channel.send(
-                    "No idea bro, all of you have aternos account now check from phone, take this mienecraft yellow text instead " + mine())
+                    "No idea bro, all of you have aternos account now check from phone, take this mienecraft yellow "
+                    "text instead. " + mine())
 
         elif message.content.lower() == '--stop':
             await message.channel.send(sentence())
@@ -684,18 +675,18 @@ async def on_message(message):
             await message.channel.send(site())
         elif message.content.lower() == '--wait':
             await message.channel.send("Time is an infinite void, aren't we all waiting for something that never "
-                                       "comes closer yet feels like it is. Certified Billi Eyelash moment.")
-
-    author = message.author
-    if author not in counter.keys():
-        counter.setdefault(author, 1)
+                                       "comes closer yet feels like it is. Certified Billi Eyelash moment. " + Frase() + ' moment')
     else:
-        counter[author] += 1
-    if counter[author] % 20 == 0 and cooldown == 0:
-        Text = await translate(message.content, str(author))
-        embed = discord.Embed(title=Text[0], colour=0x1ed9c0)
-        embed.set_footer(text="-" + Text[1])
-        await message.channel.send(embed=embed)
+        author = message.author
+        if author not in counter.keys():
+            counter.setdefault(author, 1)
+        else:
+            counter[author] += 1
+        if counter[author] % 20 == 0 and cooldown == 0 and len(message.content) <= 2048:
+            Text = await translate(message.content, str(author))
+            embed = discord.Embed(description="*" + Text[0] + "*", colour=0x1ed9c0)
+            embed.set_footer(text="-" + Text[1])
+            await message.channel.send(embed=embed)
 
 
 @tasks.loop(seconds=5.0)
