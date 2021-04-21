@@ -439,14 +439,13 @@ async def refuel():
         for i in x:
             for j in range(0, len(i)):
                 if i[j] == '"':
-                    if begin is False:
+                    if not begin:
                         begin = True
-                    else:
+                    elif begin:
                         begin = False
-                        k.append(phrase)
+                        if phrase not in k:
+                            k.append(phrase)
                         phrase = ''
-                elif i[j] == "'":
-                    continue
                 else:
                     phrase = phrase + i[j]
     print('locked and loaded')
@@ -544,9 +543,9 @@ async def translate(txt, author):
 async def on_ready():
     now = datetime.now()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")
-    text = "Filling out the unemployment form | --help"
+    text = "unemployed dating game | --help"
     await client.change_presence(activity=discord.Game(name=text))  # logs into aternos
-    channel = client.get_channel(830075040900186152)
+    channel = client.get_channel(799957897017688065)
     print(channel)
     print('The bot is logged in as {0.user}'.format(client))
     await asyncio.sleep(2)
@@ -593,7 +592,7 @@ async def on_message(message):
             await message.channel.send("pong! " + str(client.latency) + " seconds\n" + mine())
         elif message.content.lower() == '--counter':
             await message.channel.send(
-                message.author.mention + " For as long as I have been online so far you have spoken " + str(
+                message.author.mention + " For as long as I have been online, you have spoken " + str(
                     counter[message.author]) + " times.")
         elif message.content.lower() == '--athar1':
             author = message.author
