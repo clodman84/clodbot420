@@ -535,7 +535,7 @@ async def translate(txt, author):
         A = outputs[random.randint(0, len(outputs) - 1)]
         output = A[0] + author.split('#')[0]
         auth = A[1]
-        cooldown = 4000
+        cooldown = 3600
     return output, auth
 
 
@@ -545,7 +545,7 @@ async def on_ready():
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")
     text = "unemployed dating game | --help"
     await client.change_presence(activity=discord.Game(name=text))  # logs into aternos
-    channel = client.get_channel(830075040900186152)
+    channel = client.get_channel(799957897017688065)
     print(channel)
     print('The bot is logged in as {0.user}'.format(client))
     await asyncio.sleep(2)
