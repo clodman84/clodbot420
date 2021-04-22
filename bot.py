@@ -15,7 +15,7 @@ Arsenal = client.open('Enriching Weapons Grade Uranium (Responses)').sheet1
 client = discord.Client()
 
 intros = []
-phrases = ['Yes, uh', 'Why am I doing this?', 'Romantic dude cums on rose',
+phrases = ['Romantic dude cums on rose',
            'Spongeknob Squarenuts', 'Explosive beaver hammering', "Thor thunder smacks yoda's sopping wet pussy "
                                                                   "with his throbbing lightsaber as he screams "
                                                                   "420 blaze it faggot ",
@@ -39,10 +39,9 @@ phrases = ['Yes, uh', 'Why am I doing this?', 'Romantic dude cums on rose',
            'Kung fu power sex', 'Fisting wars tale of the lost arm', 'Getting hole punched at an office party',
            'The sperm burger extra mayo-free', 'Hot blonde fucked by a gargoyle',
            'Hot redhead performing super hot solo', 'Adventures of the Fart Bitches',
-           'My brother spying on the neighbor, haha', "69420", "oh yeah babe",
-           "shovel", "cheese", "dick",
+           'My brother spying on the neighbor, haha',
            "my schloppity schlong", "my big benis", "Shaatacharya Gupta Mourya", "ballsacks dipped in sauce",
-           "nice cock bro", "mamma mia khalifa", "lolo", "monke", "cheese", "dumbfuck", "cunt",
+           "nice cock bro", "mamma mia khalifa",
            "your project is ruined yeah", ]
 sentences = [
     'Kill yourself\nPlease please kill yourself\nYou should really kill yourself\nPlease please kill '
@@ -459,7 +458,7 @@ minecraftBlack = []
 sitesBlack = []
 
 cooldown = 0
-loud = False
+loud = True
 
 
 # defining the functions here only
@@ -558,9 +557,24 @@ async def joke():
 async def Nasa(type):
     if type == 'APoD':
         url = "https://api.nasa.gov/planetary/apod"
-        querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ'}
+        querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ', 'thumbs':True}
         response = requests.request("GET", url, params=querystring)
         return (response.json()['explanation'], response.json()['hdurl'], response.json()['title'])
+    if type == 'people':
+        url = "http://api.open-notify.org/astros.json"
+        response = requests.request("GET", url)
+        A = response.json()
+        people = A['people']
+        text = ""
+        for i in people:
+            text += str(i) + '\n'
+        number = A['number']
+        return 'There are currently ' + str(number) + ' people in space\n' + text
+    if type == 'iss':
+        url = "http://api.open-notify.org/iss-now.json"
+        response = requests.request("GET", url)
+        pos = response.json()['iss_position']
+        return pos
 
 
 @client.event
@@ -571,11 +585,16 @@ async def on_ready():
     print(channel)
     print('The bot is logged in as {0.user}'.format(client))
     if loud:
-        await channel.send(
-            mine() + "\n====================\nLaunch"
-                     "Time : " + current_time + "\nCurrent Server Status : I have no fucking clue lol\n====================\n")
-        await channel.send("Refueling...")
-        await channel.send(await refuel())
+        de = "The bot is now in its final form. I don't think I will update it any time soon"
+        embed = discord.Embed(title=await joke(), description=de, colour=0x1ed9c0)
+        embed.add_field(name='--joke', value=' Added a Joke command', inline=True)
+        embed.add_field(name= '--iss', value=' Tells the current location of the International Space Station', inline=True)
+        embed.add_field(name='--apod', value=' Astronomy Picture of the Day', inline=True)
+        embed.add_field(name='--refuel', value=' After filling the Uranium Google Form passing this command will load that data into the bot', inline=True)
+        embed.add_field(name='--counter', value=' Will tell you how many times you have spoken in the presence of Aternos_CUNT', inline=True)
+        embed.add_field(name='--people', value=' Tells how many people are in spcae right now', inline=True)
+        embed.set_footer(text="That's it nothing more " + current_time)
+        await channel.send(embed=embed)
     serverStatus.start()  # starts the presence update loop
 
 
@@ -684,15 +703,22 @@ async def on_message(message):
                             value="Tells you a moderately funny joke",
                             inline=False)
             await message.channel.send(embed=embed)
+
         elif message.content.lower() == '--joke':
             await message.channel.send(await joke())
+
         elif message.content.lower() == '--apod':
             APoD = await Nasa('APoD')
             embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
             embed.set_image(url=APoD[1])
             await message.channel.send(embed=embed)
+
         elif message.content.lower() == '--porn':
             await message.channel.send(Frase())
+        elif message.content.lower() == '--people':
+            await message.channel.send(await Nasa('people'))
+        elif message.content.lower() == '--iss':
+            await message.channel.send(await Nasa('iss'))
         elif message.content.lower() == '--monke':
             await message.channel.send(sentence())
         elif message.content.lower() == '--cooldown':
@@ -723,18 +749,21 @@ async def on_message(message):
             embed.set_footer(text="-" + Text[1])
             await message.channel.send(embed=embed)
 
-
+calendar = ['22/04/2021']
 @tasks.loop(seconds=5.0)
 async def serverStatus():
     global cooldown
+    global calendar
     if cooldown > 0:
         cooldown = cooldown - 5
-    if str(datetime.now().strftime('%H:%M:%S')) == '1:30:00':
+    if int(datetime.now().strftime('%H')) >= 1 and datetime.now().strftime('%d/%m/%Y') not in calendar:
         channel = client.get_channel(799957897017688065)
+        calendar.append(datetime.now().strftime('%d/%m/%Y'))
         APoD = await Nasa('APoD')
         embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
-        embed.set_image(APoD[1])
-        embed.set_footer('Good Morning Cunts!')
+        embed.set_image(url=APoD[1])
+        embed.set_footer(text='Good Morning Cunts!')
+        print(calendar)
         await channel.send(embed=embed)
     return
 

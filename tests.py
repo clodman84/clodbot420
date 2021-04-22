@@ -1,7 +1,10 @@
-import pickle
-a = {'a':0}
-a['a'] +=1
-with open('file.txt', 'wb') as handle:
-    pickle.dump(a, handle)
-with open('file.txt', 'rb') as handle:
-    b = pickle.loads(handle.read())
+import requests
+url = "http://api.open-notify.org/astros.json"
+response = requests.request("GET", url)
+A = response.json()
+people = A['people']
+text = ""
+for i in people:
+    text += str(i)+'\n'
+number = A['number']
+print('There are currently '+ str(number) + ' people in space\n'+text)
