@@ -1,11 +1,13 @@
-import asyncio
+import pickle
 import random
 from datetime import datetime
-import requests
+
 import discord
 import gspread
+import requests
 from discord.ext import tasks
 from oauth2client.service_account import ServiceAccountCredentials
+
 
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']  # this part requests the api
 creds = ServiceAccountCredentials.from_json_keyfile_name('Kepler.json', scope)
@@ -459,7 +461,7 @@ minecraftBlack = []
 sitesBlack = []
 
 cooldown = 0
-
+loud = False
 
 # defining the functions here only
 def Frase():
@@ -523,7 +525,7 @@ outputs = [["Thee men talk too much i am did tire of translating thy words espec
            ["I be so tired o' translatin' ye, that talkative ", 'Pirates_of_the_CUNT']]
 links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'chef.json', 'valspeak.json']
 
-
+#  API definitions
 async def translate(txt, author):
     global cooldown
     response = requests.get('https://api.funtranslations.com/translate/' + links[random.randint(0, len(links) - 1)],
@@ -539,30 +541,47 @@ async def translate(txt, author):
     return output, auth
 
 
+async def joke():
+    url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
+    querystring = {"type": "single, twopart"}
+    headers = {
+        'x-rapidapi-key': "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
+        'x-rapidapi-host': "jokeapi-v2.p.rapidapi.com"
+    }
+    response = requests.request("GET", url, headers=headers, params=querystring)
+    if response.json()['type'] == 'single' and response.json()['error'] == False:
+        return response.json()['joke']
+    elif response.json()['type'] == 'twopart' and response.json()['error'] == False:
+        return response.json()['setup'] + '\n' + response.json()['delivery']
+
+async def Nasa(type):
+    if type == 'APoD':
+        url = "https://api.nasa.gov/planetary/apod"
+        querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ'}
+        response = requests.request("GET", url, params=querystring)
+        return (response.json()['explanation'], response.json()['hdurl'], response.json()['title'])
+
 @client.event
 async def on_ready():
     now = datetime.now()
-    current_time = now.strftime("%d/%m/%Y %H:%M:%S")
-    text = "unemployed dating game | --help"
-    await client.change_presence(activity=discord.Game(name=text))  # logs into aternos
+    current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # logs into aternos
     channel = client.get_channel(799957897017688065)
     print(channel)
     print('The bot is logged in as {0.user}'.format(client))
-    await asyncio.sleep(2)
-    await channel.send(
-        mine() + "\n====================\nLaunch"
-                 "Time : " + current_time + "\nCurrent Server Status : I have no fucking clue lol\n====================\n")
-    await channel.send("Refueling...")
-    await channel.send(await refuel())
+    if loud:
+        await channel.send(
+            mine() + "\n====================\nLaunch"
+                     "Time : " + current_time + "\nCurrent Server Status : I have no fucking clue lol\n====================\n")
+        await channel.send("Refueling...")
+        await channel.send(await refuel())
     serverStatus.start()  # starts the presence update loop
-
-
-counter = {}
 
 
 @client.event
 async def on_message(message):
-    global counter
+    with open('file.txt', 'rb') as handle:
+        counter = pickle.loads(handle.read())
+    print(counter)
     if message.author == client.user:
         return
     # commands
@@ -657,11 +676,20 @@ async def on_message(message):
                             value="If the bot runs out of ammo, then doing this will clear the memory and the bot "
                                   "will start repeating itself", inline=False)
             embed.add_field(name="--refuel",
-                            value="If the bot runs out of ammo, then doing this will fetch new phrases from the google form",
+                            value="If the bot runs out of ammo, then doing this will fetch new phrases from the "
+                                  "google form",
+                            inline=False)
+            embed.add_field(name="--joke",
+                            value="Tells you a moderately funny joke",
                             inline=False)
             await message.channel.send(embed=embed)
-
-
+        elif message.content.lower() == '--joke':
+            await message.channel.send(joke())
+        elif message.content.lower() == '--apod':
+            APoD = await Nasa('APoD')
+            embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
+            embed.set_image(url=APoD[1])
+            await message.channel.send(embed=embed)
         elif message.content.lower() == '--porn':
             await message.channel.send(Frase())
         elif message.content.lower() == '--monke':
@@ -672,15 +700,22 @@ async def on_message(message):
             await message.channel.send(mine())
         elif message.content.lower() == '--website':
             await message.channel.send(site())
+        elif message.content.lower() == '--counter all':
+            await message.channel.send(str(counter))
         elif message.content.lower() == '--wait':
             await message.channel.send("Time is an infinite void, aren't we all waiting for something that never "
                                        "comes closer yet feels like it is. Certified Billi Eyelash moment. " + Frase() + ' moment')
     else:
-        author = message.author
+        author = str(message.author)
         if author not in counter.keys():
             counter.setdefault(author, 1)
+            with open('file.txt', 'wb') as handle:
+                pickle.dump(counter, handle)
         else:
             counter[author] += 1
+            with open('file.txt', 'wb') as handle:
+                pickle.dump(counter, handle)
+
         if counter[author] % 20 == 0 and cooldown == 0 and len(message.content) <= 2048:
             Text = await translate(message.content, str(author))
             embed = discord.Embed(description="*" + Text[0] + "*", colour=0x1ed9c0)
@@ -693,6 +728,13 @@ async def serverStatus():
     global cooldown
     if cooldown > 0:
         cooldown = cooldown - 5
+    if str(datetime.now().strftime('%H:%M:%S')) == '1:30:00':
+        channel = client.get_channel(799957897017688065)
+        APoD = await Nasa('APoD')
+        embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
+        embed.set_image(APoD[1])
+        embed.set_footer('Good Morning Cunts!')
+        await channel.send(embed=embed)
     return
 
 

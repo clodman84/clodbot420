@@ -1,10 +1,7 @@
-import requests
-
-def Shake(txt):
-    response = requests.get('https://api.funtranslations.com/translate/shakespeare.json', params={"text": txt})
-    if response.status_code == 200:
-        output = response.json()['contents']['translated']
-    else:
-        output = "You guys fucking talk so much"
-    return output
-print(Shake(input()))
+import pickle
+a = {'a':0}
+a['a'] +=1
+with open('file.txt', 'wb') as handle:
+    pickle.dump(a, handle)
+with open('file.txt', 'rb') as handle:
+    b = pickle.loads(handle.read())
