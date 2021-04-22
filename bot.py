@@ -8,7 +8,6 @@ import requests
 from discord.ext import tasks
 from oauth2client.service_account import ServiceAccountCredentials
 
-
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']  # this part requests the api
 creds = ServiceAccountCredentials.from_json_keyfile_name('Kepler.json', scope)
 client = gspread.authorize(creds)
@@ -463,6 +462,7 @@ sitesBlack = []
 cooldown = 0
 loud = False
 
+
 # defining the functions here only
 def Frase():
     while True:
@@ -525,6 +525,7 @@ outputs = [["Thee men talk too much i am did tire of translating thy words espec
            ["I be so tired o' translatin' ye, that talkative ", 'Pirates_of_the_CUNT']]
 links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'chef.json', 'valspeak.json']
 
+
 #  API definitions
 async def translate(txt, author):
     global cooldown
@@ -554,12 +555,14 @@ async def joke():
     elif response.json()['type'] == 'twopart' and response.json()['error'] == False:
         return response.json()['setup'] + '\n' + response.json()['delivery']
 
+
 async def Nasa(type):
     if type == 'APoD':
         url = "https://api.nasa.gov/planetary/apod"
         querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ'}
         response = requests.request("GET", url, params=querystring)
         return (response.json()['explanation'], response.json()['hdurl'], response.json()['title'])
+
 
 @client.event
 async def on_ready():
@@ -612,7 +615,7 @@ async def on_message(message):
         elif message.content.lower() == '--counter':
             await message.channel.send(
                 message.author.mention + " For as long as I have been online, you have spoken " + str(
-                    counter[message.author]) + " times.")
+                    counter[str(message.author)]) + " times.")
         elif message.content.lower() == '--athar1':
             author = message.author
             if str(author) == 'AbsolA1#4589':
@@ -684,7 +687,7 @@ async def on_message(message):
                             inline=False)
             await message.channel.send(embed=embed)
         elif message.content.lower() == '--joke':
-            await message.channel.send(joke())
+            await message.channel.send(str(joke()))
         elif message.content.lower() == '--apod':
             APoD = await Nasa('APoD')
             embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
