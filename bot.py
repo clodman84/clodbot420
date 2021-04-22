@@ -1,4 +1,3 @@
-import pickle
 import random
 from datetime import datetime
 
@@ -582,9 +581,8 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    with open('file.txt', 'rb') as handle:
-        counter = pickle.loads(handle.read())
-    print(counter)
+    with open('file.txt', 'r') as handle:
+        counter = eval(handle.read())
     if message.author == client.user:
         return
     # commands
@@ -687,7 +685,7 @@ async def on_message(message):
                             inline=False)
             await message.channel.send(embed=embed)
         elif message.content.lower() == '--joke':
-            await message.channel.send(str(joke()))
+            await message.channel.send(await joke())
         elif message.content.lower() == '--apod':
             APoD = await Nasa('APoD')
             embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
@@ -712,12 +710,12 @@ async def on_message(message):
         author = str(message.author)
         if author not in counter.keys():
             counter.setdefault(author, 1)
-            with open('file.txt', 'wb') as handle:
-                pickle.dump(counter, handle)
+            with open('file.txt', 'wt') as handle:
+                handle.write(str(counter))
         else:
             counter[author] += 1
-            with open('file.txt', 'wb') as handle:
-                pickle.dump(counter, handle)
+            with open('file.txt', 'wt') as handle:
+                handle.write(str(counter))
 
         if counter[author] % 20 == 0 and cooldown == 0 and len(message.content) <= 2048:
             Text = await translate(message.content, str(author))
