@@ -458,7 +458,7 @@ minecraftBlack = []
 sitesBlack = []
 
 cooldown = 0
-loud = True
+loud = False
 
 
 # defining the functions here only
@@ -559,7 +559,17 @@ async def Nasa(type):
         url = "https://api.nasa.gov/planetary/apod"
         querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ', 'thumbs':True}
         response = requests.request("GET", url, params=querystring)
-        return (response.json()['explanation'], response.json()['hdurl'], response.json()['title'])
+        if response.json()['media_type'] == "video":
+            img_url = response.json()['thumbnail_url']
+            description = response.json()['explanation'] +'\n Video Link : ' + response.json()['url']
+        else:
+            try:
+                img_url = response.json()['hdurl']
+            except:
+                img_url = response.json()['url']
+            description = response.json()['explanation']
+        return description, img_url, response.json()['title']
+
     if type == 'people':
         url = "http://api.open-notify.org/astros.json"
         response = requests.request("GET", url)
@@ -749,7 +759,7 @@ async def on_message(message):
             embed.set_footer(text="-" + Text[1])
             await message.channel.send(embed=embed)
 
-calendar = ['22/04/2021']
+calendar = ['22/04/2021', '23/04/2021']
 @tasks.loop(seconds=5.0)
 async def serverStatus():
     global cooldown
