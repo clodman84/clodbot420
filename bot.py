@@ -1,6 +1,6 @@
 import random
 from datetime import datetime
-
+from country_bounding_boxes import (country_subunits_by_iso_code, country_subunits_containing_point)
 import discord
 import gspread
 import requests
@@ -540,6 +540,42 @@ async def translate(txt, author):
     return output, auth
 
 
+async def aero(type,iso=1,bbox=1, icao=1):
+    url = 'https://opensky-network.org/api'
+    if type == 'bbox':
+        if iso != 1:
+            url = url + '/states/all'
+            box = [c.bbox for c in country_subunits_by_iso_code(iso)]
+            name = [c.name for c in country_subunits_by_iso_code(iso)]
+            result = []
+            for i in range(0, len(box)):
+                b = box[i]
+                n = name[i]
+                param = {'lomin':b[0], 'lamin':b[1], 'lomax':b[2], 'lamax':b[3]}
+                response = requests.get(url=url, params=param)
+                try:
+                    data = response.json()['states']
+                    number = len(data)
+                except TypeError:
+                    data ='Wow such nothing'
+                    number = "<=3"
+                result.append([n, number, data])
+            return result
+
+        if bbox != 1:
+            url = url + '/states/all'
+            b = bbox
+            param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
+            response = requests.get(url=url, params=param)
+            return response.json()
+
+    if type == 'ind' and icao != 1:
+            url = url+ '/states/all'
+            param = {"icao24":icao}
+            response = requests.get(url=url, params=param)
+            return response.json()['states'][0]
+
+
 async def joke():
     url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
     querystring = {"type": "single, twopart"}
@@ -615,8 +651,10 @@ async def on_message(message):
     if message.author == client.user:
         return
     # commands
+
     if message.content.startswith('--'):
         now = datetime.now()
+        print(message.content.lower()[0:5])
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         if message.content.lower() == '--start':
@@ -742,6 +780,54 @@ async def on_message(message):
         elif message.content.lower() == '--wait':
             await message.channel.send("Time is an infinite void, aren't we all waiting for something that never "
                                        "comes closer yet feels like it is. Certified Billi Eyelash moment. " + Frase() + ' moment')
+
+        elif message.content.lower()[0:8] == "--icao24":
+            aircraft = await aero('ind', icao=message.content.lower()[9:])
+            if aircraft != None:
+                embed = discord.Embed(title="Aircraft Callsign = " + aircraft[1])
+                embed.add_field(name="icao24", value=aircraft[0])
+                embed.add_field(name='Origin', value=aircraft[2])
+                embed.add_field(name='Time_Pos', value=datetime.fromtimestamp(aircraft[3]).strftime('%H:%M:%S  %d/%m/%y'))
+                embed.add_field(name='Last_Contact', value=datetime.fromtimestamp(aircraft[4]).strftime('%H:%M:%S  %d/%m/%y'))
+                embed.add_field(name="Latitude", value=aircraft[5])
+                embed.add_field(name='Longitude', value=aircraft[6])
+                embed.add_field(name='Baro_Altitude', value=aircraft[7])
+                embed.add_field(name='On_Ground', value=aircraft[8])
+                embed.add_field(name='Velocity', value=aircraft[9])
+                embed.add_field(name='True_Track', value=aircraft[10])
+                embed.add_field(name='Vertical Rate', value=aircraft[11])
+                embed.add_field(name='Geo_Altitude', value=aircraft[13])
+                await message.channel.send(embed=embed)
+            else:
+                await message.channel.send('That fly is nowhere to be found. Try another aircraft')
+
+        elif message.content.lower()[0:5] == '--iso':
+            for area in await aero(type='bbox', iso=message.content.lower()[6:]):
+                Name = area[0]
+                Number = area[1]
+                embed = discord.Embed(title=Name, description= "This area has this many aircraft(s) that I can sense "
+                                                               ":- " + str(Number),colour=0x1ed9c0)
+                await message.channel.send(embed=embed)
+                a = 0
+                for aircraft in area[2]:
+                    if len(aircraft) == 17 and a < 10:
+                        embed = discord.Embed(title="Aircraft Callsign = "+ aircraft[1])
+                        embed.add_field(name="icao24", value=aircraft[0])
+                        embed.add_field(name='Origin', value=aircraft[2])
+                        embed.add_field(name='Time_Pos',
+                                        value=datetime.fromtimestamp(aircraft[3]).strftime('%H:%M:%S  %d/%m/%y'))
+                        embed.add_field(name='Last_Contact',
+                                        value=datetime.fromtimestamp(aircraft[4]).strftime('%H:%M:%S  %d/%m/%y'))
+                        embed.add_field(name="Latitude", value=aircraft[5])
+                        embed.add_field(name='Longitude', value=aircraft[6])
+                        embed.add_field(name='Baro_Altitude', value=aircraft[7])
+                        embed.add_field(name='On_Ground', value=aircraft[8])
+                        embed.add_field(name='Velocity', value=aircraft[9])
+                        embed.add_field(name='True_Track', value=aircraft[10])
+                        embed.add_field(name='Vertical Rate', value=aircraft[11])
+                        embed.add_field(name='Geo_Altitude', value=aircraft[13])
+                        await message.channel.send(embed=embed)
+                        a+=1
     else:
         author = str(message.author)
         if author not in counter.keys():
