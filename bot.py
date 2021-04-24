@@ -573,8 +573,10 @@ async def aero(type,iso=1,bbox=1, icao=1):
             url = url+ '/states/all'
             param = {"icao24":icao}
             response = requests.get(url=url, params=param)
-            return response.json()['states'][0]
-
+            try:
+                return response.json()['states'][0]
+            except TypeError:
+                return None
 
 async def joke():
     url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
@@ -654,7 +656,6 @@ async def on_message(message):
 
     if message.content.startswith('--'):
         now = datetime.now()
-        print(message.content.lower()[0:5])
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         if message.content.lower() == '--start':
@@ -783,6 +784,7 @@ async def on_message(message):
 
         elif message.content.lower()[0:8] == "--icao24":
             aircraft = await aero('ind', icao=message.content.lower()[9:])
+            await message.channel.send('Searching ...')
             if aircraft != None:
                 embed = discord.Embed(title="Aircraft Callsign = " + aircraft[1])
                 embed.add_field(name="icao24", value=aircraft[0])
@@ -799,9 +801,10 @@ async def on_message(message):
                 embed.add_field(name='Geo_Altitude', value=aircraft[13])
                 await message.channel.send(embed=embed)
             else:
-                await message.channel.send('That fly is nowhere to be found. Try another aircraft')
+                await message.channel.send("Can't spot it chief, try another aircraft or try again later.")
 
         elif message.content.lower()[0:5] == '--iso':
+            await message.channel.send('Searching ...')
             for area in await aero(type='bbox', iso=message.content.lower()[6:]):
                 Name = area[0]
                 Number = area[1]
@@ -810,7 +813,7 @@ async def on_message(message):
                 await message.channel.send(embed=embed)
                 a = 0
                 for aircraft in area[2]:
-                    if len(aircraft) == 17 and a < 10:
+                    if len(aircraft) == 17 and a < 7:
                         embed = discord.Embed(title="Aircraft Callsign = "+ aircraft[1])
                         embed.add_field(name="icao24", value=aircraft[0])
                         embed.add_field(name='Origin', value=aircraft[2])
@@ -845,7 +848,7 @@ async def on_message(message):
             embed.set_footer(text="-" + Text[1])
             await message.channel.send(embed=embed)
 
-calendar = ['22/04/2021', '23/04/2021']
+calendar = ['22/04/2021', '23/04/2021', '24/04/2021']
 @tasks.loop(seconds=5.0)
 async def serverStatus():
     global cooldown
