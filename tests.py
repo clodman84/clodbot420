@@ -1,25 +1,48 @@
 import requests
-import random
 import time
-async def joke():
-    if random.randint(0,10) < 7:
-        url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
-        querystring = {"type": "single, twopart"}
-        headers = {
-            'x-rapidapi-key': "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
-            'x-rapidapi-host': "jokeapi-v2.p.rapidapi.com"
-        }
-        response = requests.request("GET", url, headers=headers, params=querystring)
-        if response.json()['type'] == 'single' and response.json()['error'] == False:
-            return response.json()['joke']
-        elif response.json()['type'] == 'twopart' and response.json()['error'] == False:
-            return response.json()['setup'] + '\n' + response.json()['delivery']
-    else:
-        return
-def joke2():
-    url = 'https://official-joke-api.appspot.com/random_joke'
-    response = requests.request('GET', url)
+from country_bounding_boxes import (country_subunits_by_iso_code, country_subunits_containing_point)
+def aero(type,iso=1,bbox=1, icao=1):
+    url = 'https://opensky-network.org/api'
+    if type == 'all':
+        url = url+'/states/all'
+        response = requests.get(url=url)
+        return response.json()['states']
+    if type == 'bbox':
+        if iso != 1:
+            url = url + '/states/all'
+            box = [c.bbox for c in country_subunits_by_iso_code(iso)]
+            print(box)
+            name = [c.name for c in country_subunits_by_iso_code(iso)]
+            result = []
+            for i in range(0, len(box)):
+                b = box[i]
+                n = name[i]
+                param = {'lomin':b[0], 'lamin':b[1], 'lomax':b[2], 'lamax':b[3]}
+                response = requests.get(url=url, params=param)
+                try:
+                    data = response.json()['states']
+                    number = len(data)
+                except TypeError:
+                    data ='Wow such nothing'
+                    number = "<=3"
+                result.append([n, number, data])
+            return result
 
-    return response.json()['setup'], response.json()['punchline']
+        if bbox != 1:
+            url = url + '/states/all'
+            b = bbox
+            param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
+            response = requests.get(url=url, params=param)
+            return response.json()['states']
+
+    if type == 'ind' and icao != 1:
+            url = url+ '/states/all'
+            param = {"icao24":icao}
+            response = requests.get(url=url, params=param)
+            return response.json()['states'][0]
+
+print(aero('ind', icao='a9a399'))
+
+
 
 

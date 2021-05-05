@@ -240,7 +240,7 @@ async def on_ready():
              "structure though, changes won't be felt. Also I got my sister to get her credit card verified for use " \
              "in the hosting service I am using. It is free, but verification gives me access to a MySQL server and " \
              "also 1000 hours of computation every month (there are 720 hours in a month btw)."
-        embed = discord.Embed(title=await joke(), description=de, colour=0x1ed9c0)
+        embed = discord.Embed(title=await generator(phrases, 'phrases'), description=de, colour=0x1ed9c0)
         embed.add_field(name='Spam Protecc', value='Reduced spam in all airplane commands by giving reply in tables, '
                                                    'tilt phone to view.', inline=True)
         embed.add_field(name='--counter', value='The counter and counter all commands are accurate now',
