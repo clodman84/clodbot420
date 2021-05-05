@@ -7,10 +7,10 @@ import requests
 import texttable as T
 from discord.ext import tasks
 
-
 # Words and phrases update _____________________________________________________________________________________________
 
-mycon = sql.connect(host='us-cdbr-east-03.cleardb.com', user='b8789cc50fa0f6', password='65e31def', auth_plugin= 'mysql_native_password', database='heroku_474862b9ab817cb')
+mycon = sql.connect(host='us-cdbr-east-03.cleardb.com', user='b8789cc50fa0f6', password='65e31def',
+                    auth_plugin='mysql_native_password', database='heroku_474862b9ab817cb', ssl_disabled=True)
 cursor = mycon.cursor(buffered=True)
 
 intros = []
@@ -29,7 +29,7 @@ def generator(type, list_name):
     if cursor.rowcount == 0:
         return "I am out of ammo chief"
     while True:
-        cancer = type[random.randint(0, len(type)-1)][0]
+        cancer = type[random.randint(0, len(type) - 1)][0]
         cursor.execute(f'select {list_name}_black from {list_name} where {list_name} = "{cancer}"')
         data = cursor.fetchall()
         if data[0][0] == 'not used':
@@ -42,6 +42,7 @@ def generator(type, list_name):
                 return cancer
             else:
                 return cancer
+
 
 def ammo():
     count = []
@@ -67,10 +68,11 @@ def clear(a):
     except:
         return "Something went wrong"
 
+
 # ______________________________________________________________________________________________________________________
 
 cooldown = 0
-loud = False
+loud = True
 client = discord.Client()
 
 # defining the functions here only
@@ -103,7 +105,7 @@ async def translate(txt, author):
 async def aero(type, iso=1, bbox=1, icao=1):
     url = 'https://opensky-network.org/api'
     if type == 'all':
-        url = url+'/states/all'
+        url = url + '/states/all'
         response = requests.get(url=url)
         return response.json()['states']
     # Searches a geographic area
@@ -151,36 +153,43 @@ async def aero(type, iso=1, bbox=1, icao=1):
     # Gives One week of Data
     if type == 'plan' and icao != 1:
         url = url + '/flights/aircraft'
-        param = {'icao24':icao, 'begin': int(datetime.utcnow().timestamp()) - 604800, 'end': int(datetime.utcnow().timestamp())}
+        param = {'icao24': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
+                 'end': int(datetime.utcnow().timestamp())}
         response = requests.get(url=url, params=param)
         return response.json()
     # searches 7 days of data and returns latest 20
-    if type == 'arrival' and icao !=1:
+    if type == 'arrival' and icao != 1:
         url = url + '/flights/arrival'
         param = {'airport': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
                  'end': int(datetime.utcnow().timestamp())}
         response = requests.get(url=url, params=param)
         return response.json()
-    if type == 'departure' and icao !=1:
+    if type == 'departure' and icao != 1:
         url = url + '/flights/departure'
         param = {'airport': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
                  'end': int(datetime.utcnow().timestamp())}
         response = requests.get(url=url, params=param)
         return response.json()
 
-async def joke():
-    url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
-    querystring = {"type": "single, twopart"}
-    headers = {
-        'x-rapidapi-key': "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
-        'x-rapidapi-host': "jokeapi-v2.p.rapidapi.com"
-    }
-    response = requests.request("GET", url, headers=headers, params=querystring)
-    if response.json()['type'] == 'single' and response.json()['error'] == False:
-        return response.json()['joke']
-    elif response.json()['type'] == 'twopart' and response.json()['error'] == False:
-        return response.json()['setup'] + '\n' + response.json()['delivery']
 
+async def joke():
+    if random.randint(0,10) < 5:
+        url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
+        querystring = {"type": "single, twopart"}
+        headers = {
+            'x-rapidapi-key': "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
+            'x-rapidapi-host': "jokeapi-v2.p.rapidapi.com"
+        }
+        response = requests.request("GET", url, headers=headers, params=querystring)
+        if response.json()['type'] == 'single' and response.json()['error'] == False:
+            return response.json()['joke']
+        elif response.json()['type'] == 'twopart' and response.json()['error'] == False:
+            return response.json()['setup'] + '\n' + response.json()['delivery']
+    else:
+        url = 'https://official-joke-api.appspot.com/random_joke'
+        response = requests.request('GET', url)
+
+        return response.json()['setup'] + '\n' + response.json()['punchline']
 
 async def Nasa(type):
     # Astronomy photo of the day
@@ -223,23 +232,32 @@ async def Nasa(type):
 async def on_ready():
     now = datetime.now()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # logs into aternos
-    channel = client.get_channel(799957897017688065)
+    channel = client.get_channel(830074957954023427)
     print(channel)
     print('The bot is logged in as {0.user}'.format(client))
     if loud:
-        de = "The bot is now in its final form. I don't think I will update it any time soon"
+        de = "I think the bootus is the in teh finale formus lol. Loads of new featurs, main changes is the code " \
+             "structure though, changes won't be felt. Also I got my sister to get her credit card verified for use " \
+             "in the hosting service I am using. It is free, but verification gives me access to a MySQL server and " \
+             "also 1000 hours of computation every month (there are 720 hours in a month btw)."
         embed = discord.Embed(title=await joke(), description=de, colour=0x1ed9c0)
-        embed.add_field(name='--joke', value=' Added a Joke command', inline=True)
-        embed.add_field(name='--iss', value=' Tells the current location of the International Space Station',
+        embed.add_field(name='Spam Protecc', value='Reduced spam in all airplane commands by giving reply in tables, '
+                                                   'tilt phone to view.', inline=True)
+        embed.add_field(name='--counter', value='The counter and counter all commands are accurate now',
                         inline=True)
-        embed.add_field(name='--apod', value=' Astronomy Picture of the Day', inline=True)
+        embed.add_field(name='--global', value='Global aircraft data, I have my eyes everywhere. MUAHAHAHAHA.', inline=True)
         embed.add_field(name='--refuel',
-                        value=' After filling the Uranium Google Form passing this command will load that data into the bot',
+                        value='The refuel command has been disabled and removed, nobody used it. And the google form '
+                              'is also not being used anymore :-( ',
                         inline=True)
-        embed.add_field(name='--counter',
-                        value=' Will tell you how many times you have spoken in the presence of Aternos_CUNT',
+        embed.add_field(name='--history (icao24 code)',
+                        value="Tells you where an aircraft has been in the last 7 days",
                         inline=True)
-        embed.add_field(name='--people', value=' Tells how many people are in spcae right now', inline=True)
+        embed.add_field(name='--arrival/departure (icao code of airport)', value='Displays 20 most recent arrivals or '
+                                                                                 'departures. Use only icao codes, '
+                                                                                 'not iata for example, JFK is IATA '
+                                                                                 'code, KJFK is ICAO code.',
+                        inline=True)
         embed.set_footer(text="That's it nothing more " + current_time)
         await channel.send(embed=embed)
     serverStatus.start()  # starts the presence update loop
@@ -324,7 +342,8 @@ async def on_message(message):
         # Global Aircraft Data
         elif message.content.lower() == '--global':
             penis = await aero(type='all')
-            embed = discord.Embed(title='World', description="I can sense " + str(len(penis)) + ' aircrafts in this area',
+            embed = discord.Embed(title='World',
+                                  description="I can sense " + str(len(penis)) + ' aircrafts in this area',
                                   colour=0x1ed9c0)
             table = T.Texttable()
             table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
@@ -360,21 +379,23 @@ async def on_message(message):
             await message.channel.send('Searching ...')
             table = T.Texttable()
             table.set_cols_width([3, 8, 20, 6, 20, 6])
-            table.set_cols_align(['l','l', 'c', 'c', 'c', 'c'])
-            table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER|T.Texttable.BORDER)
-            data = [['No.','Callsign', 'FirstSeen', 'Depart', 'LastSeen', 'Arive']]
+            table.set_cols_align(['l', 'l', 'c', 'c', 'c', 'c'])
+            table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
+            data = [['No.', 'Callsign', 'FirstSeen', 'Depart', 'LastSeen', 'Arive']]
             a = 1
             for plan in await aero(type='plan', icao=message.content.lower()[10:]):
                 if a < 16:
-                    data.append([a, plan['callsign'], datetime.fromtimestamp(plan['firstSeen']).strftime('%H:%M:%S  %d/%m/%y'),
-                             plan['estDepartureAirport'],
-                             datetime.fromtimestamp(plan['lastSeen']).strftime('%H:%M:%S  %d/%m/%y'),
-                             plan['estArrivalAirport']])
-                    a+=1
+                    data.append(
+                        [a, plan['callsign'], datetime.fromtimestamp(plan['firstSeen']).strftime('%H:%M:%S  %d/%m/%y'),
+                         plan['estDepartureAirport'],
+                         datetime.fromtimestamp(plan['lastSeen']).strftime('%H:%M:%S  %d/%m/%y'),
+                         plan['estArrivalAirport']])
+                    a += 1
             else:
                 table.add_rows(data)
                 if len(data) > 1:
-                    embed = discord.Embed(title=message.content.upper()[10:], description='```' + table.draw() + '```', colour=0x1ed9c0)
+                    embed = discord.Embed(title=message.content.upper()[10:], description='```' + table.draw() + '```',
+                                          colour=0x1ed9c0)
                     embed.set_footer(text="7 days of aircraft data")
                     await message.channel.send(embed=embed)
                 else:
@@ -386,13 +407,13 @@ async def on_message(message):
             penis = await aero(type='arrival', icao=message.content.lower()[10:])
             table = T.Texttable()
             table.set_cols_width([3, 6, 8, 20, 6, 20])
-            table.set_cols_align(['l','c', 'l', 'c', 'c', 'c'])
+            table.set_cols_align(['l', 'c', 'l', 'c', 'c', 'c'])
             table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER)
             data = [['No.', 'Icao24', 'CallSign', 'FirstSeen', 'Depart', 'LastSeen']]
             a = 1
             for plan in penis:
                 if a < 21:
-                    data.append([a , plan['icao24'], plan['callsign'],
+                    data.append([a, plan['icao24'], plan['callsign'],
                                  datetime.fromtimestamp(plan['firstSeen']).strftime('%H:%M:%S  %d/%m/%y'),
                                  plan['estDepartureAirport'],
                                  datetime.fromtimestamp(plan['lastSeen']).strftime('%H:%M:%S  %d/%m/%y'), ])
@@ -400,9 +421,11 @@ async def on_message(message):
             else:
                 if len(data) > 1:
                     table.add_rows(data)
-                    embed = discord.Embed(title=message.content.upper()[10:], description= '```'+table.draw()+'```', colour=0x1ed9c0)
-                    embed.set_footer(text=str(len(penis)) + ' aircrafts have been tracked in the last 7 days arriving at this '
-                                                       'airport')
+                    embed = discord.Embed(title=message.content.upper()[10:], description='```' + table.draw() + '```',
+                                          colour=0x1ed9c0)
+                    embed.set_footer(
+                        text=str(len(penis)) + ' aircrafts have been tracked in the last 7 days arriving at this '
+                                               'airport')
                     await message.channel.send(embed=embed)
                 else:
                     await message.channel.send('Airport not found')
@@ -413,13 +436,13 @@ async def on_message(message):
             penis = await aero(type='departure', icao=message.content.lower()[12:])
             table = T.Texttable()
             table.set_cols_width([3, 6, 8, 20, 6, 20])
-            table.set_cols_align(['l','c', 'l', 'c', 'c', 'c'])
+            table.set_cols_align(['l', 'c', 'l', 'c', 'c', 'c'])
             table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER)
             data = [['No.', 'Icao24', 'CallSign', 'FirstSeen', 'Arrive', 'LastSeen']]
             a = 1
             for plan in penis:
                 if a < 21:
-                    data.append([a , plan['icao24'], plan['callsign'],
+                    data.append([a, plan['icao24'], plan['callsign'],
                                  datetime.fromtimestamp(plan['firstSeen']).strftime('%H:%M:%S  %d/%m/%y'),
                                  plan['estArrivalAirport'],
                                  datetime.fromtimestamp(plan['lastSeen']).strftime('%H:%M:%S  %d/%m/%y'), ])
@@ -427,9 +450,11 @@ async def on_message(message):
             else:
                 if len(data) > 1:
                     table.add_rows(data)
-                    embed = discord.Embed(title=message.content.upper()[12:], description= '```'+table.draw()+'```', colour=0x1ed9c0)
-                    embed.set_footer(text=str(len(penis)) + ' aircrafts have been tracked in the last 7 days departing from this '
-                                                       'airport')
+                    embed = discord.Embed(title=message.content.upper()[12:], description='```' + table.draw() + '```',
+                                          colour=0x1ed9c0)
+                    embed.set_footer(
+                        text=str(len(penis)) + ' aircrafts have been tracked in the last 7 days departing from this '
+                                               'airport')
                     await message.channel.send(embed=embed)
                 else:
                     await message.channel.send('Airport not found')
@@ -449,7 +474,8 @@ async def on_message(message):
                                            f" PussyBitch has been detected \n" + generator(sentences, 'sentences'))
                 await message.channel.send("Ah I miss the good old days, alas I am no longer capable of providing "
                                            "that info. All of you have aternos accounts, check it on your own from "
-                                           "your phone. But I will give you a cool porn site I found " + generator(sites, 'site'))
+                                           "your phone. But I will give you a cool porn site I found " + generator(
+                    sites, 'site'))
             else:
                 await message.channel.send(
                     "No idea bro, all of you have aternos account now check from phone, take this mienecraft yellow "
@@ -460,7 +486,8 @@ async def on_message(message):
 
         elif message.content.lower() == '--wait':
             await message.channel.send("Time is an infinite void, aren't we all waiting for something that never "
-                                       "comes closer yet feels like it is. Certified Billi Eyelash moment. " + generator(phrases, 'phrases') + ' moment')
+                                       "comes closer yet feels like it is. Certified Billi Eyelash moment. " + generator(
+                phrases, 'phrases') + ' moment')
 
 
         # text based _____________________________________________________________________________________
@@ -477,7 +504,8 @@ async def on_message(message):
         elif message.content.lower() == '--joke':
             await message.channel.send(await joke())
         elif message.content.lower() == '--ping':
-            await message.channel.send("pong! " + str(client.latency) + " seconds\n" + generator(minecraft, 'minecraft'))
+            await message.channel.send(
+                "pong! " + str(client.latency) + " seconds\n" + generator(minecraft, 'minecraft'))
         elif message.content.lower() == '--counter':
             cursor.execute(f'select * from users where userID = "{str(message.author)}"')
             data = cursor.fetchall()[0]
@@ -502,14 +530,13 @@ async def on_message(message):
             cursor.execute('select * from users order by total desc')
             data = [('Name', 'Today', 'Total')]
             table = T.Texttable()
-            table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER|T.Texttable.BORDER)
+            table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
             table.set_cols_align(['l', 'r', 'r'])
             table.set_cols_width([25, 5, 5])
             data.extend(cursor.fetchall())
             table.add_rows(data)
             await message.channel.send(f"```{table.draw()}```")
         # ______________________________________________________________________________________________________________
-
 
     author = str(message.author)
     content = str(message.content)
@@ -531,21 +558,18 @@ async def on_message(message):
         await message.channel.send(embed=embed)
 
 
-cursor.execute('select _date from _date')
-date = cursor.fetchall()[0][0]
-
 @tasks.loop(seconds=5.0)
 async def serverStatus():
     global cooldown
-    global date
-    date = (datetime.now() + timedelta(days=1)).strftime('%d/%m/%Y')
+    cursor.execute('select _date from _date')
+    date = cursor.fetchall()[0][0]
     if cooldown > 0:
         cooldown = cooldown - 5
     if int(datetime.now().strftime('%H')) >= 1 and datetime.now().strftime('%d/%m/%Y') == date:
-        channel = client.get_channel(799957897017688065)
+        channel = client.get_channel(830074957954023427)
         date = (datetime.now() + timedelta(days=1)).strftime('%d/%m/%Y')
         cursor.execute(f'update _date set _date = "{date}" where sl = 1')
-        cursor.commit()
+        mycon.commit()
         APoD = await Nasa('APoD')
         embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
         embed.set_image(url=APoD[1])

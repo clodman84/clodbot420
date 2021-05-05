@@ -1,29 +1,25 @@
-import discord
-import mysql.connector as sql
-
-mycon = sql.connect(host='localhost', user='bot', password='Questionsco1234', auth_plugin= 'mysql_native_password', database='aternos_reborn')
-cursor = mycon.cursor(buffered=True)
-client = discord.Client()
-
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:
+import requests
+import random
+import time
+async def joke():
+    if random.randint(0,10) < 7:
+        url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
+        querystring = {"type": "single, twopart"}
+        headers = {
+            'x-rapidapi-key': "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
+            'x-rapidapi-host': "jokeapi-v2.p.rapidapi.com"
+        }
+        response = requests.request("GET", url, headers=headers, params=querystring)
+        if response.json()['type'] == 'single' and response.json()['error'] == False:
+            return response.json()['joke']
+        elif response.json()['type'] == 'twopart' and response.json()['error'] == False:
+            return response.json()['setup'] + '\n' + response.json()['delivery']
+    else:
         return
-    # commands
+def joke2():
+    url = 'https://official-joke-api.appspot.com/random_joke'
+    response = requests.request('GET', url)
 
-    if message.content.lower() == 'analyse':
-        await message.channel.send("All right chief, creating user profiles")
-        for message in await message.channel.history(limit=1000000000).flatten():
-            author = str(message.author)
-            cursor.execute(f'select * from users where userID = "{author}"')
-            data = cursor.fetchall()
-            if data == []:
-                cursor.execute(f'insert into users values ("{author}", 0, 1)')
-                mycon.commit()
-            else:
-                cursor.execute(f'update users set total = {data[0][2] + 1} where userID = "{author}"')
-                mycon.commit()
-        else:
-            await message.channel.send("Analysis complete")
-client.run("Nzk1OTYwMjQ0MzUzMzY4MTA0.X_Q9vg.gPgPZT4xIY81CQCfPiGYm3NYSPg")
+    return response.json()['setup'], response.json()['punchline']
+
+
