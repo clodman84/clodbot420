@@ -232,7 +232,7 @@ async def Nasa(type):
 async def on_ready():
     now = datetime.now()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # logs into aternos
-    channel = client.get_channel(830074957954023427)
+    channel = client.get_channel(799957897017688065)
     print(channel)
     print('The bot is logged in as {0.user}'.format(client))
     if loud:
@@ -240,7 +240,7 @@ async def on_ready():
              "structure though, changes won't be felt. Also I got my sister to get her credit card verified for use " \
              "in the hosting service I am using. It is free, but verification gives me access to a MySQL server and " \
              "also 1000 hours of computation every month (there are 720 hours in a month btw)."
-        embed = discord.Embed(title=await generator(phrases, 'phrases'), description=de, colour=0x1ed9c0)
+        embed = discord.Embed(title=generator(phrases, 'phrases'), description=de, colour=0x1ed9c0)
         embed.add_field(name='Spam Protecc', value='Reduced spam in all airplane commands by giving reply in tables, '
                                                    'tilt phone to view.', inline=True)
         embed.add_field(name='--counter', value='The counter and counter all commands are accurate now',
@@ -378,15 +378,15 @@ async def on_message(message):
         elif message.content.lower()[0:9] == '--history':
             await message.channel.send('Searching ...')
             table = T.Texttable()
-            table.set_cols_width([3, 8, 20, 6, 20, 6])
-            table.set_cols_align(['l', 'l', 'c', 'c', 'c', 'c'])
+            table.set_cols_width([3, 8, 6, 20, 6])
+            table.set_cols_align(['l', 'l', 'c', 'c', 'c'])
             table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
-            data = [['No.', 'Callsign', 'FirstSeen', 'Depart', 'LastSeen', 'Arive']]
+            data = [['No.', 'Callsign', 'Depart', 'LastSeen', 'Arive']]
             a = 1
             for plan in await aero(type='plan', icao=message.content.lower()[10:]):
                 if a < 16:
                     data.append(
-                        [a, plan['callsign'], datetime.fromtimestamp(plan['firstSeen']).strftime('%H:%M:%S  %d/%m/%y'),
+                        [a, plan['callsign'],
                          plan['estDepartureAirport'],
                          datetime.fromtimestamp(plan['lastSeen']).strftime('%H:%M:%S  %d/%m/%y'),
                          plan['estArrivalAirport']])
@@ -394,10 +394,7 @@ async def on_message(message):
             else:
                 table.add_rows(data)
                 if len(data) > 1:
-                    embed = discord.Embed(title=message.content.upper()[10:], description='```' + table.draw() + '```',
-                                          colour=0x1ed9c0)
-                    embed.set_footer(text="7 days of aircraft data")
-                    await message.channel.send(embed=embed)
+                    await message.channel.send('```' + table.draw() + '```')
                 else:
                     await message.channel.send('Aircraft not found')
 
@@ -421,12 +418,7 @@ async def on_message(message):
             else:
                 if len(data) > 1:
                     table.add_rows(data)
-                    embed = discord.Embed(title=message.content.upper()[10:], description='```' + table.draw() + '```',
-                                          colour=0x1ed9c0)
-                    embed.set_footer(
-                        text=str(len(penis)) + ' aircrafts have been tracked in the last 7 days arriving at this '
-                                               'airport')
-                    await message.channel.send(embed=embed)
+                    await message.channel.send('```' + table.draw() + '```',)
                 else:
                     await message.channel.send('Airport not found')
 
@@ -450,12 +442,7 @@ async def on_message(message):
             else:
                 if len(data) > 1:
                     table.add_rows(data)
-                    embed = discord.Embed(title=message.content.upper()[12:], description='```' + table.draw() + '```',
-                                          colour=0x1ed9c0)
-                    embed.set_footer(
-                        text=str(len(penis)) + ' aircrafts have been tracked in the last 7 days departing from this '
-                                               'airport')
-                    await message.channel.send(embed=embed)
+                    await message.channel.send('```' + table.draw() + '```')
                 else:
                     await message.channel.send('Airport not found')
 
@@ -566,7 +553,7 @@ async def serverStatus():
     if cooldown > 0:
         cooldown = cooldown - 5
     if int(datetime.now().strftime('%H')) >= 1 and datetime.now().strftime('%d/%m/%Y') == date:
-        channel = client.get_channel(830074957954023427)
+        channel = client.get_channel(799957897017688065)
         date = (datetime.now() + timedelta(days=1)).strftime('%d/%m/%Y')
         cursor.execute(f'update _date set _date = "{date}" where sl = 1')
         mycon.commit()
