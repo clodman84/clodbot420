@@ -1,6 +1,6 @@
 import random
 from datetime import datetime, timedelta
-import mysql.connector as sql
+import sqlite3 as sql
 from country_bounding_boxes import (country_subunits_by_iso_code)
 import discord
 import requests
@@ -9,56 +9,36 @@ from discord.ext import tasks
 
 # Words and phrases update _____________________________________________________________________________________________
 
-mycon = sql.connect(host='us-cdbr-east-03.cleardb.com', user='b8789cc50fa0f6', password='65e31def',
-                    auth_plugin='mysql_native_password', database='heroku_474862b9ab817cb', ssl_disabled=True)
-cursor = mycon.cursor(buffered=True)
+mycon = sql.connect('data.db')
+cursor = mycon.cursor()
 
-intros = []
-cursor.execute(' select phrases from phrases ')
-phrases = cursor.fetchall()
-cursor.execute(' select sentences from sentences ')
-sentences = cursor.fetchall()
-cursor.execute(' select sites from sites ')
-sites = cursor.fetchall()
-cursor.execute(' select minecraft from minecraft ')
-minecraft = cursor.fetchall()
-
-
-def generator(type, list_name):
-    cursor.execute(f"select {list_name}_black from {list_name} where {list_name}_black = 'not used'")
-    if cursor.rowcount == 0:
+def generator(list_name): # This is pure bullshit, I wrote it and now I regret it, it could be much smaller, just select  once :facepalm:
+    cursor.execute(f"select {list_name} from {list_name} where {list_name}_black = 'not used'")
+    phrases = cursor.fetchall()
+    if len(phrases) == 0:
         return "I am out of ammo chief"
     while True:
-        cancer = type[random.randint(0, len(type) - 1)][0]
-        cursor.execute(f'select {list_name}_black from {list_name} where {list_name} = "{cancer}"')
-        data = cursor.fetchall()
-        if data[0][0] == 'not used':
-            cursor.execute(f'update {list_name} set {list_name}_black = "{cancer}" where {list_name} = "{cancer}"')
-            mycon.commit()
-            if list_name == 'sites':
-                if cancer[0] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                    cancer = cancer.split(')')[1] + ' (Banned in India) '
+        cancer = phrases[random.randint(0, len(phrases) - 1)][0]
 
-                return cancer
-            else:
-                return cancer
+        cursor.execute(f'update {list_name} set {list_name}_black = "used" where {list_name} = "{cancer}"')
+        mycon.commit()
+        if list_name == 'sites':
+            if cancer[0] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                cancer = cancer.split(')')[1] + ' (Banned in India) '
+
+            return cancer
+        else:
+            return cancer
 
 
 def ammo():
     count = []
     for i in ['phrases', 'sentences', 'minecraft', 'sites']:
-        cursor.execute(f' select {i}_black from {i}')
-        data = cursor.fetchall()
-        c = 0
-        for x in data:
-            if x[0] != 'not used':
-                c += 1
-        else:
-            count.append(c)
-    return ("Porn titles : - " + str(len(phrases) - count[0]) + "\nPink Guy lyrics : - " + str(
-        len(sentences) - count[1]) + "\nMinecraft yellow text : - " + str(
-        len(minecraft) - count[2]) + "\nPorn sites loaded : - " + str(
-        len(sites) - count[3]))
+        cursor.execute(f' select {i}_black from {i} where {i}_black = "not used"')
+        data = len(cursor.fetchall())
+        count.append(data)
+    return (f"Porn Titles :- {count[0]}\nPink Guy Lyrics :- {count[1]}\nMinecraft Yellow Text :- {count[2]}\nPorn Sites :- {count[3]}")
+
 
 
 def clear(a):
@@ -72,7 +52,7 @@ def clear(a):
 # ______________________________________________________________________________________________________________________
 
 cooldown = 0
-loud = True
+loud = False
 client = discord.Client()
 
 # defining the functions here only
@@ -240,7 +220,7 @@ async def on_ready():
              "structure though, changes won't be felt. Also I got my sister to get her credit card verified for use " \
              "in the hosting service I am using. It is free, but verification gives me access to a MySQL server and " \
              "also 1000 hours of computation every month (there are 720 hours in a month btw)."
-        embed = discord.Embed(title=generator(phrases, 'phrases'), description=de, colour=0x1ed9c0)
+        embed = discord.Embed(title=generator('phrases'), description=de, colour=0x1ed9c0)
         embed.add_field(name='Spam Protecc', value='Reduced spam in all airplane commands by giving reply in tables, '
                                                    'tilt phone to view.', inline=True)
         embed.add_field(name='--counter', value='The counter and counter all commands are accurate now',
@@ -418,7 +398,7 @@ async def on_message(message):
             else:
                 if len(data) > 1:
                     table.add_rows(data)
-                    await message.channel.send('```' + table.draw() + '```',)
+                    await message.channel.send(f"``` {table.draw()}```\nI have tracked {len(penis)} aircraft arriving at this airport in the last 7 days")
                 else:
                     await message.channel.send('Airport not found')
 
@@ -442,39 +422,39 @@ async def on_message(message):
             else:
                 if len(data) > 1:
                     table.add_rows(data)
-                    await message.channel.send('```' + table.draw() + '```')
+                    await message.channel.send(f"``` {table.draw()}```\nI have tracked {len(penis)} aircraft departing from this airport in the last 7 days")
                 else:
                     await message.channel.send('Airport not found')
 
 
         # OLD COMMANDS R.I.P ___________________________________________________________________________________________
         elif message.content.lower() == '--start':
-            await message.channel.send("I don't do that anymore :-P\n" + generator(minecraft, 'minecraft'))
+            await message.channel.send("I don't do that anymore :-P\n" + generator('minecraft'))
 
         elif message.content.lower() == '--status':
-            await message.channel.send("I have no idea bro. \nEnjoying porno : " + generator(phrases, 'phrases'))
+            await message.channel.send("I have no idea bro. \nEnjoying porno : " + generator('phrases'))
 
         elif message.content.lower() == '--athar1':
             author = message.author
             if str(author) == 'AbsolA1#4589':
                 await message.channel.send(f"{author.mention}, the "
-                                           f" PussyBitch has been detected \n" + generator(sentences, 'sentences'))
+                                           f" PussyBitch has been detected \n" + generator('sentences'))
                 await message.channel.send("Ah I miss the good old days, alas I am no longer capable of providing "
                                            "that info. All of you have aternos accounts, check it on your own from "
                                            "your phone. But I will give you a cool porn site I found " + generator(
-                    sites, 'site'))
+                    'site'))
             else:
                 await message.channel.send(
-                    "No idea bro, all of you have aternos account now check from phone, take this mienecraft yellow "
-                    "text instead. " + generator(minecraft, "minecraft"))
+                    "No idea bro, all of you have aternos account now check from phone, take this minecraft yellow "
+                    "text instead. " + generator("minecraft"))
 
         elif message.content.lower() == '--stop':
-            await message.channel.send(generator(minecraft, 'minecraft'))
+            await message.channel.send(generator('minecraft'))
 
         elif message.content.lower() == '--wait':
             await message.channel.send("Time is an infinite void, aren't we all waiting for something that never "
                                        "comes closer yet feels like it is. Certified Billi Eyelash moment. " + generator(
-                phrases, 'phrases') + ' moment')
+                'phrases') + ' moment')
 
 
         # text based _____________________________________________________________________________________
@@ -492,26 +472,26 @@ async def on_message(message):
             await message.channel.send(await joke())
         elif message.content.lower() == '--ping':
             await message.channel.send(
-                "pong! " + str(client.latency) + " seconds\n" + generator(minecraft, 'minecraft'))
+                "pong! " + str(client.latency) + " seconds\n" + generator('minecraft'))
         elif message.content.lower() == '--counter':
             cursor.execute(f'select * from users where userID = "{str(message.author)}"')
             data = cursor.fetchall()[0]
             await message.channel.send(
                 message.author.mention + f" you have spoken {data[1]} times today.")
         elif message.content.lower() == '--porn':
-            await message.channel.send(generator(phrases, 'phrases'))
+            await message.channel.send(generator('phrases'))
         elif message.content.lower() == '--people':
             await message.channel.send(await Nasa('people'))
         elif message.content.lower() == '--iss':
             await message.channel.send(await Nasa('iss'))
         elif message.content.lower() == '--monke':
-            await message.channel.send(generator(sentences, 'sentences'))
+            await message.channel.send(generator('sentences'))
         elif message.content.lower() == '--cooldown':
             await message.channel.send(cooldown)
         elif message.content.lower() == '--minecraft':
-            await message.channel.send(generator(minecraft, 'minecraft'))
+            await message.channel.send(generator('minecraft'))
         elif message.content.lower() == '--website':
-            await message.channel.send(generator(sites, 'sites'))
+            await message.channel.send(generator('sites'))
 
         elif message.content.lower() == '--counter all':
             cursor.execute('select * from users order by total desc')
