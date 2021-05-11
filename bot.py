@@ -1,6 +1,6 @@
 import random
-from datetime import datetime, timedelta
-import mysql.connector as sql
+from datetime import datetime
+import sqlite3 as sql
 from country_bounding_boxes import (country_subunits_by_iso_code)
 import discord
 import requests
@@ -9,9 +9,8 @@ from discord.ext import tasks
 
 # Words and phrases update _____________________________________________________________________________________________
 
-mycon = sql.connect(host='us-cdbr-east-03.cleardb.com', user='bf6f7b442605c4', password='f431b821',
-                    auth_plugin='mysql_native_password', database='heroku_92371bff2cc0cb5')
-cursor = mycon.cursor(buffered=True)
+mycon = sql.connect('data.db')
+cursor = mycon.cursor()
 
 
 def generator(list_name): # This is pure bullshit, I wrote it and now I regret it, it could be much smaller, just select  once :facepalm:
@@ -471,17 +470,6 @@ async def on_message(message):
             await message.channel.send(generator('minecraft'))
         elif message.content.lower() == '--website':
             await message.channel.send(generator('sites'))
-
-        elif message.content.lower() == '--counter all':
-            cursor.execute('select * from users order by total desc')
-            data = [('Name', 'Today', 'Total')]
-            table = T.Texttable()
-            table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
-            table.set_cols_align(['l', 'r', 'r'])
-            table.set_cols_width([25, 5, 5])
-            data.extend(cursor.fetchall())
-            table.add_rows(data)
-            await message.channel.send(f"```{table.draw()}```")
         # ______________________________________________________________________________________________________________
 
     author = str(message.author)
@@ -507,29 +495,8 @@ async def on_message(message):
 @tasks.loop(seconds=5.0)
 async def serverStatus():
     global cooldown
-    cursor.execute('select _date from _date')
-    date = cursor.fetchall()[0][0]
     if cooldown > 0:
         cooldown = cooldown - 5
-    if int(datetime.now().strftime('%H')) >= 1 and datetime.now().strftime('%d/%m/%Y') == date:
-        channel = client.get_channel(799957897017688065)
-        date = (datetime.now() + timedelta(days=1)).strftime('%d/%m/%Y')
-        cursor.execute(f'update _date set _date = "{date}" where sl = 1')
-        mycon.commit()
-        APoD = await Nasa('APoD')
-        embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
-        embed.set_image(url=APoD[1])
-        embed.set_footer(text='Good Morning Cunts!')
-        await channel.send(embed=embed)
-        cursor.execute('select * from users')
-        data = cursor.fetchall()
-        for i in data:
-            cursor.execute(f'update users set total = {i[1] + i[2]} where userID = "{i[0]}"')
-            print(i)
-        else:
-            cursor.execute(f'update users set daily = 0')
-            mycon.commit()
-            print(f'{date} is next, all complete for the day')
     return
 
 
