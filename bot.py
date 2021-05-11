@@ -1,6 +1,6 @@
 import random
 from datetime import datetime, timedelta
-import sqlite3 as sql
+import mysql.connector as sql
 from country_bounding_boxes import (country_subunits_by_iso_code)
 import discord
 import requests
@@ -9,8 +9,10 @@ from discord.ext import tasks
 
 # Words and phrases update _____________________________________________________________________________________________
 
-mycon = sql.connect('data.db')
-cursor = mycon.cursor()
+mycon = sql.connect(host='us-cdbr-east-03.cleardb.com', user='bf6f7b442605c4', password='f431b821',
+                    auth_plugin='mysql_native_password', database='heroku_92371bff2cc0cb5')
+cursor = mycon.cursor(buffered=True)
+
 
 def generator(list_name): # This is pure bullshit, I wrote it and now I regret it, it could be much smaller, just select  once :facepalm:
     cursor.execute(f"select {list_name} from {list_name} where {list_name}_black = 'not used'")
@@ -52,7 +54,7 @@ def clear(a):
 # ______________________________________________________________________________________________________________________
 
 cooldown = 0
-loud = False
+loud = True
 client = discord.Client()
 
 # defining the functions here only
@@ -216,28 +218,9 @@ async def on_ready():
     print(channel)
     print('The bot is logged in as {0.user}'.format(client))
     if loud:
-        de = "I think the bootus is the in teh finale formus lol. Loads of new featurs, main changes is the code " \
-             "structure though, changes won't be felt. Also I got my sister to get her credit card verified for use " \
-             "in the hosting service I am using. It is free, but verification gives me access to a MySQL server and " \
-             "also 1000 hours of computation every month (there are 720 hours in a month btw)."
+        de = "Guess who's back."
         embed = discord.Embed(title=generator('phrases'), description=de, colour=0x1ed9c0)
-        embed.add_field(name='Spam Protecc', value='Reduced spam in all airplane commands by giving reply in tables, '
-                                                   'tilt phone to view.', inline=True)
-        embed.add_field(name='--counter', value='The counter and counter all commands are accurate now',
-                        inline=True)
-        embed.add_field(name='--global', value='Global aircraft data, I have my eyes everywhere. MUAHAHAHAHA.', inline=True)
-        embed.add_field(name='--refuel',
-                        value='The refuel command has been disabled and removed, nobody used it. And the google form '
-                              'is also not being used anymore :-( ',
-                        inline=True)
-        embed.add_field(name='--history (icao24 code)',
-                        value="Tells you where an aircraft has been in the last 7 days",
-                        inline=True)
-        embed.add_field(name='--arrival/departure (icao code of airport)', value='Displays 20 most recent arrivals or '
-                                                                                 'departures. Use only icao codes, '
-                                                                                 'not iata for example, JFK is IATA '
-                                                                                 'code, KJFK is ICAO code.',
-                        inline=True)
+
         embed.set_footer(text="That's it nothing more " + current_time)
         await channel.send(embed=embed)
     serverStatus.start()  # starts the presence update loop
@@ -348,11 +331,7 @@ async def on_message(message):
             else:
                 if a > 1:
                     table.add_rows(data)
-                    embed = discord.Embed(title='World',
-                                          description="```" + table.draw() + '```',
-                                          colour=0x1ed9c0)
-                    embed.set_footer(text="I can sense " + str(len(penis)) + ' aircrafts in this area')
-                    await message.channel.send(embed=embed)
+                    await message.channel.send(f"**World**``` {table.draw()} ```\nI can sense {len(penis)} aircrafts in this area")
 
         # tells a single aircraft's history for one week
         elif message.content.lower()[0:9] == '--history':
