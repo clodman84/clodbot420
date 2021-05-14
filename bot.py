@@ -271,7 +271,7 @@ async def on_message(message):
             embed.set_image(url=APoD[1])
             await message.channel.send(embed=embed)
         elif message.content.lower()[0:8] == '--target' and str(message.author) == 'clodman84#1215':
-            banned.append(message.content.lower()[9:])
+            banned.append(message.content[9:])
             await message.channel.send(f'{message.content.lower()[9:0]} successfully targeted chief')
         elif message.content.lower() == '--show targets' and str(message.author) == 'clodman84#1215':
             await message.channel.send(banned)
