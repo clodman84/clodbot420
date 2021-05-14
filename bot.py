@@ -236,7 +236,16 @@ async def on_message(message):
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         # New Commands _________________________________________________________________________________________________
-
+        if message.content.lower() == '--map':
+            embed = discord.Embed(title='Overworld', color=0x1ed9c0)
+            embed.set_image(url='https://cdn.discordapp.com/attachments/830074957954023427/842644631195353088/map-min_1.png')
+            embed.set_footer(text="Original was 300 megapixels this one is 75")
+            await message.channel.send(embed=embed)
+        if message.content.lower() == '--map riccardo':
+            embed = discord.Embed(title='Riccardo\'s Domain', color=0x1ed9c0)
+            embed.set_image(url='https://cdn.discordapp.com/attachments/830074957954023427/842668179460325440/riccardo.png')
+            embed.set_footer(text="View original and zoom in")
+            await message.channel.send(embed=embed)
         if message.content.lower() == '--apod':
             APoD = await Nasa('APoD')
             embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)

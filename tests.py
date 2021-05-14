@@ -51,5 +51,5 @@ CREATE TABLE `users` (
 INSERT INTO `users` VALUES ("AbsolA1#4589",0,6950),("AIRHORN SOLUTIONS#0001",0,1),("Aternos_CUNT#4899",0,11199),("clodman84#1215",0,11507),("Deleted User#0000",0,1),("Divyansh#3439",0,9179),("Dyno#3861",0,175),("Google Assistant#5197",0,81),("GoogleBot#0847",0,3),("Groovy#7254",0,399),("HaikuBot#6950",0,102),("Message Count +#7918",0,1),("Message Counter#8013",0,1),("Music_CUNT#5451",0,232),("Naila#1361",0,5),("Sirona#3754",0,19),("Snapman#9033",0,4536),("Soul Massive#5757",0,459),("wiki_CUNT#8287",0,97),("Wikipedia#0936",0,27);
 ''')
 mycon.commit()
-for row in cursor.execute("select * from minecraft"):
+for row in cursor.execute("select * from users"):
     print(row)
