@@ -11,7 +11,7 @@ from discord.ext import tasks
 
 mycon = sql.connect('data.db')
 cursor = mycon.cursor()
-
+reply_url = ['https://media1.tenor.com/images/5fc568729ede3645080391e871bce197/tenor.gif?itemid=20747133','https://tenor.com/view/stop-it-stop-get-some-help-michael-jordan-gif-7964841','https://tenor.com/view/its-time-to-stop-stop-clock-time-gif-5001372','https://tenor.com/view/clapping-leonardo-dicaprio-leo-dicaprio-gif-10584134' ]
 
 def generator(list_name): # This is pure bullshit, I wrote it and now I regret it, it could be much smaller, just select  once :facepalm:
     cursor.execute(f"select {list_name} from {list_name} where {list_name}_black = 'not used'")
@@ -154,7 +154,7 @@ async def aero(type, iso=1, bbox=1, icao=1):
 
 
 async def joke():
-    if random.randint(0,10) < 5:
+    if random.randint(0,10) <= 6:
         url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
         querystring = {"type": "single, twopart"}
         headers = {
@@ -224,12 +224,17 @@ async def on_ready():
         await channel.send(embed=embed)
     serverStatus.start()  # starts the presence update loop
 
-
+flagged = ['Screenshot_2021-04-25-12-08-22-72.jpg', 'bb36ca8.jpg', '1.png']
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
     # commands
+    if message.attachments:
+        for attachment in message.attachments:
+            if attachment.filename in flagged:
+                cancer = reply_url[random.randint(0, len(reply_url) - 1)]
+                await message.reply(cancer)
 
     if message.content.startswith('--'):
         now = datetime.now()
