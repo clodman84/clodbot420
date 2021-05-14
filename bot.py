@@ -2,6 +2,7 @@ import random
 from datetime import datetime
 import sqlite3 as sql
 from country_bounding_boxes import (country_subunits_by_iso_code)
+import asyncio
 import discord
 import requests
 import texttable as T
@@ -224,17 +225,30 @@ async def on_ready():
         await channel.send(embed=embed)
     serverStatus.start()  # starts the presence update loop
 
-flagged = ['Screenshot_2021-04-25-12-08-22-72.jpg', 'bb36ca8.jpg', '1.png']
+
+nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif', 'https://c.tenor.com/Bupb0hg8c-EAAAAM/cat-launch.gif', 'https://c.tenor.com/xW6YocQ1DokAAAAM/nasa-rocket-launch.gif',
+              'https://c.tenor.com/4O7uNcs8vHgAAAAM/rocket-launch.gif', 'https://c.tenor.com/1s8cZTvNNMsAAAAM/sup-dog.gif', 'https://c.tenor.com/uGwGAzGhP50AAAAM/shooting-missiles-zeo-zord-i.gif'
+              'https://tenor.com/view/star-wars-death-star-laser-gif-9916316']
+banned = []
+explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif', 'https://c.tenor.com/CWV41b03zPMAAAAM/jenmotzu.gif', 'https://c.tenor.com/9n0weQuYRQ8AAAAM/explosion-dragon-ball.gif',
+              'https://c.tenor.com/2vTxvF4JV7UAAAAM/blue-planet.gif', 'https://c.tenor.com/_bbChuywxYsAAAAM/%D0%BF%D0%BB%D0%B0%D0%BD%D0%B5%D1%82%D0%B0-explosion.gif',
+              'https://c.tenor.com/lMVdiUIZamcAAAAM/planet-collide-collision.gif', 'https://c.tenor.com/eM_H-IQfig8AAAAM/fedisbomb-explode.gif', 'https://c.tenor.com/LRPLtCBu1WYAAAAM/run-bombs.gif',
+              'https://c.tenor.com/Rqe9gYz_WPcAAAAM/explosion-boom.gif', 'https://c.tenor.com/u8jwYAiT_DgAAAAM/boom-bomb.gif', 'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif'
+              'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif', 'https://c.tenor.com/jkRrt2SrlMkAAAAM/pepe-nuke.gif', 'https://c.tenor.com/24gGug50GqQAAAAM/nuke-nuclear.gif']
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
     # commands
-    if message.attachments:
-        for attachment in message.attachments:
-            if attachment.filename in flagged:
-                cancer = reply_url[random.randint(0, len(reply_url) - 1)]
-                await message.reply(cancer)
+    if str(message.author) in banned:
+        explosion = explosions[random.randint(0, len(explosions)-1)]
+        launch = nukeLaunch[random.randint(0, len(nukeLaunch)-1)]
+        if message.attachments or 'tenor' in message.content:
+            await message.reply(launch)
+            await asyncio.sleep(5)
+            await message.reply(explosion)
+            await asyncio.sleep(5)
+            await message.delete()
 
     if message.content.startswith('--'):
         now = datetime.now()
@@ -256,7 +270,22 @@ async def on_message(message):
             embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
             embed.set_image(url=APoD[1])
             await message.channel.send(embed=embed)
-
+        elif message.content.lower()[0:8] == '--target' and str(message.author) == 'clodman84#1215':
+            banned.append(message.content.lower()[9:])
+            await message.channel.send(f'{message.content.lower()[9:0]} successfully targeted chief')
+        elif message.content.lower() == '--show targets' and str(message.author) == 'clodman84#1215':
+            await message.channel.send(banned)
+        elif message.content.lower()[0:6] == '--drop' and str(message.author) == 'clodman84#1215':
+            banned.remove(message.content.lower()[7:])
+            await message.channel.send(f'{message.content.lower()[7:]} was removed')
+        elif message.content.lower()[0:6] == '--nuke':
+            if len(banned) > 0 and int(message.content.lower()[7:]) > 0:
+                for i in nukeLaunch:
+                    await message.channel.send(i)
+                async for message in message.channel.history(limit=int(message.content.lower()[7:])):
+                    if str(message.author) in banned and ('tenor' in message.content or message.attachments):
+                        await message.reply(explosions[random.randint(0, len(explosions)-1)])
+                        await message.delete()
         elif message.content.lower()[0:8] == "--icao24":
             aircraft = await aero('ind', icao=message.content.lower()[9:])
             await message.channel.send('Searching ...')
