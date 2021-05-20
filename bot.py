@@ -91,12 +91,14 @@ async def on_message(message):
             if '' in (date, time, year):
                 await message.channel.send('Request incomplete')
                 return
-            a = await module.isro(date.upper(), year, time)
-            if a[0] == 200:
-                embed.set_image(url=a[1])
-            else:
-                embed.set_footer(text='Not Found')
-            await message.channel.send(embed=embed)
+            if len(date) != 5 or len(year) != 4 or len(time) != 4 or int(time) > 2400:
+                a = await module.isro(date.upper(), year, time)
+                if a[0] == 200:
+                    embed.set_image(url=a[1])
+                else:
+                    embed.set_footer(text='Not Found')
+                await message.channel.send(embed=embed)
+
 
         elif message.content.lower() == '--map':
             embed = discord.Embed(title='Overworld', color=0x1ed9c0)
