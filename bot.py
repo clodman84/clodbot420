@@ -5,7 +5,7 @@ import asyncio
 import discord
 import texttable as T
 from discord.ext import tasks
-from Project import module
+import module
 
 # Words and phrases update _____________________________________________________________________________________________
 
