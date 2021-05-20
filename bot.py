@@ -5,7 +5,8 @@ import asyncio
 import discord
 import texttable as T
 from discord.ext import tasks
-import module
+from Project import module
+
 # Words and phrases update _____________________________________________________________________________________________
 
 mycon = sql.connect('data.db')
