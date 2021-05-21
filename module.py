@@ -80,42 +80,46 @@ async def bbox(bbox):
         response = requests.get(url=url, params=param)
         return response.json()
 
+
 async def iso(iso):
         url = 'https://opensky-network.org/api/states/all'
         box = [c.bbox for c in country_subunits_by_iso_code(iso)]  # the bounding box coords
         name = [c.name for c in country_subunits_by_iso_code(iso)]  # the name of the corresponding bounding box
+        if box == [] or name == []:
+            return None
         result = []
         for i in range(0, len(box)):
             b = box[i]
             n = name[i]
             param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
             response = requests.get(url=url, params=param)
-        try:
-            data = response.json()['states']
-            number = len(data)
-        except TypeError:
-            data = 'Wow such nothing'
-            number = "<=3"
-        result.append([n, number, data])
+            try:
+                data = response.json()['states']
+                number = len(data)
+            except TypeError:
+                data = 'Wow such nothing'
+                number = "<=3"
+            result.append([n, number, data])
         return result
         # returns a multi dimensional list, which element containinng the name of the bounding box
         # specified, the number of aircraft and the data of each and every aircraft
 
+
 async def ind(icao):
-    url = 'https://opensky-network.org/api/states/all'
-    param = {"icao24": icao}
-    response = requests.get(url=url, params=param)
-    try:
-        return response.json()['states'][0]
-    except TypeError:
-        return None
+        url = 'https://opensky-network.org/api/states/all'
+        param = {"icao24": icao}
+        response = requests.get(url=url, params=param)
+        try:
+            return response.json()['states'][0]
+        except TypeError:
+            return None
 
 async def history(icao):
-    url = 'https://opensky-network.org/api/flights/aircraft'
-    param = {'icao24': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
-             'end': int(datetime.utcnow().timestamp())}
-    response = requests.get(url=url, params=param)
-    return response.json()
+        url = 'https://opensky-network.org/api/flights/aircraft'
+        param = {'icao24': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
+                 'end': int(datetime.utcnow().timestamp())}
+        response = requests.get(url=url, params=param)
+        return response.json()
 
 async def airport(type, icao):
     if type == 'arrival' and icao != 1:
@@ -185,22 +189,38 @@ async def Nasa(type):
         return pos
 
 
-async def isro(date, year, time):
+async def isro_BIMG(date, year, time):
     a = 0
+    count = 0
     if int(time[2:]) >= 30:
         time = str(int(time[0:2])+1) + '00'
         if len(time) == 3:
             time = '0' + time
     else:
         time = time[0:2] + '30'
-    while a != 200 and int(time) > 0:
+    while a != 200 and int(time) > 0 and count < 49:
         if time[2:] == '00':
             time = str(int(time[:-2]) - 1) + '30'
         else:
             time = time[:-2] + "00"
         if len(time) == 3:
             time = '0'+time
-        request = requests.get(f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg")
+        url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
+        request = requests.get(url=url)
+        count += 1
         a = request.status_code
-    return a, f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
+        # trying 29 and 59
+        if a == 404:
+            if time[2:] == '00':
+                time = str(int(time[:-2]) - 1) + '59'
+            else:
+                time = time[:-2] + "29"
+
+            url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
+            request = requests.get(url=url)
+            count +=1
+            a = request.status_code
+    return a, url
+
+
 

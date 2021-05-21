@@ -68,31 +68,31 @@ async def on_message(message):
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         # New Commands _________________________________________________________________________________________________
-        if message.content.lower() == '--satellite now':
+        if message.content.lower() == '--insat3d bimg now':
             await message.channel.send("Getting ISRO satellite images")
-            embed = discord.Embed(title='INSAT-3D', colour=0x1ed9c0)
+            embed = discord.Embed(title='INSAT-3D Blended Image', colour=0x1ed9c0)
             date = now.strftime('%d%b')
             year = now.strftime('%Y')
             time = now.strftime('%H%M')
-            a = await module.isro(date.upper(), year, time)
+            a = await module.isro_BIMG(date.upper(), year, time)
             if a[0] == 200:
                 embed.set_image(url=a[1])
             else:
                 embed.set_footer(text='Not Found')
             await message.channel.send(embed=embed)
 
-        elif message.content.lower()[0:11] == '--satellite':
+        elif message.content.lower()[0:14] == '--insat3d bimg':
             await message.channel.send("Getting ISRO satellite images")
-            embed = discord.Embed(title='INSAT-3D', colour=0x1ed9c0)
-            dat = message.content[12:]
+            embed = discord.Embed(title='INSAT-3D Blended Image', colour=0x1ed9c0)
+            dat = message.content[14:]
             date = dat[0:5]
             year = dat[5:9]
             time = dat[10:]
             if '' in (date, time, year):
                 await message.channel.send('Request incomplete')
                 return
-            if len(date) == 5 and len(year) == 4 and len(time) == 4 and int(time) < 2400:
-                a = await module.isro(date.upper(), year, time)
+            if len(date) == 5 and len(year) == 4 and len(time) == 4 and int(time) <= 2400:
+                a = await module.isro_BIMG(date.upper(), year, time)
                 if a[0] == 200:
                     embed.set_image(url=a[1])
                 else:
@@ -133,8 +133,9 @@ async def on_message(message):
                         await message.reply(explosions[random.randint(0, len(explosions)-1)])
                         await message.delete()
         elif message.content.lower()[0:8] == "--icao24":
-            aircraft = await module.ind()
             await message.channel.send('Searching ...')
+            aircraft = await module.ind(message.content.lower()[9:])
+
             if aircraft != None:
                 embed = discord.Embed(title=aircraft[1])
                 embed.add_field(name="icao24", value=aircraft[0])
@@ -157,7 +158,11 @@ async def on_message(message):
 
         elif message.content.lower()[0:5] == '--iso':
             await message.channel.send('Searching ...')
-            for area in await module.iso(message.content.lower()[6:]):
+            result = await module.iso(message.content.lower()[6:])
+            if result == None:
+                await message.channel.send('The ISO code you sent does not exist')
+                return
+            for area in result:
                 Name = area[0]
                 Number = area[1]
                 # Generating tables hehe boai
@@ -184,7 +189,7 @@ async def on_message(message):
                 else:
                     if a > 1:
                         table.add_rows(data)
-                        await message.channel.send(f"**{Name}**\n\n```{table.draw()}```\n\nI can sense {Number} aircraft in this area.")
+                        await message.channel.send(f"**{Name}**\n```{table.draw()}```I can sense {Number} aircraft in this area.\n\n{'-'*10}")
 
         # Global Aircraft Data
         elif message.content.lower() == '--global':
@@ -244,7 +249,7 @@ async def on_message(message):
         # displays 20 most recent flights and tells how many flights in last 7 days arrived here
         elif message.content.lower()[0:9] == '--arrival':
             await message.channel.send('Searching ...')
-            zebra = await module.airport(type='arrivl', icao=message.content.lower()[10:])
+            zebra = await module.airport(type='arrival', icao=message.content.lower()[10:])
             table = T.Texttable()
             table.set_cols_width([3, 6, 8, 20, 6, 20])
             table.set_cols_align(['l', 'c', 'l', 'c', 'c', 'c'])
