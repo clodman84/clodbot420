@@ -216,7 +216,8 @@ async def isro_BIMG(date, year, time):
                 time = str(int(time[:-2]) - 1) + '59'
             else:
                 time = time[:-2] + "29"
-
+            if len(time) == 3:
+                time = '0' + time
             url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
             request = requests.get(url=url)
             count +=1
