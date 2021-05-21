@@ -46,7 +46,7 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif', 'https://c.
               'https://c.tenor.com/lMVdiUIZamcAAAAM/planet-collide-collision.gif', 'https://c.tenor.com/eM_H-IQfig8AAAAM/fedisbomb-explode.gif', 'https://c.tenor.com/LRPLtCBu1WYAAAAM/run-bombs.gif',
               'https://c.tenor.com/Rqe9gYz_WPcAAAAM/explosion-boom.gif', 'https://c.tenor.com/u8jwYAiT_DgAAAAM/boom-bomb.gif', 'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif'
               'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif', 'https://c.tenor.com/jkRrt2SrlMkAAAAM/pepe-nuke.gif', 'https://c.tenor.com/24gGug50GqQAAAAM/nuke-nuclear.gif']
-
+satList = ['isrocast', '3dimager', '3drimager']
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -68,7 +68,7 @@ async def on_message(message):
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         # New Commands _________________________________________________________________________________________________
-        if message.content.lower() == '--insat3d bimg now':
+        if message.content.lower() == '--bimg now':
             await message.channel.send("Getting ISRO satellite images")
             embed = discord.Embed(title='INSAT-3D Blended Image', colour=0x1ed9c0)
             date = now.strftime('%d%b')
@@ -81,10 +81,21 @@ async def on_message(message):
                 embed.set_footer(text='Not Found')
             await message.channel.send(embed=embed)
 
-        elif message.content.lower()[0:14] == '--insat3d bimg':
+        elif message.content.lower()[0:6] == '--feed':
+            if message.content.lower()[7:] in satList:
+                data = await module.feed(message.content.lower()[7:])
+                for i in data:
+                    embed = discord.Embed(title=i[0],description=i[2], color=0x1ed9c0)
+                    embed.set_image(url=i[1])
+                    embed.set_footer(text=f"PubDate = {i[3]}")
+                    await message.channel.send(embed=embed)
+
+        elif message.content.lower() == '--satlist':
+            await message.channel.send(satList)
+        elif message.content.lower()[0:6] == '--bimg':
             await message.channel.send("Getting ISRO satellite images")
             embed = discord.Embed(title='INSAT-3D Blended Image', colour=0x1ed9c0)
-            dat = message.content[15:]
+            dat = message.content[7:]
             date = dat[0:5]
             year = dat[5:9]
             time = dat[10:]

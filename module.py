@@ -3,6 +3,7 @@ import requests
 import random
 import sqlite3 as sql
 from datetime import datetime
+import xml.etree.ElementTree as ET
 
 mycon = sql.connect('data.db')
 cursor = mycon.cursor()
@@ -222,5 +223,12 @@ async def isro_BIMG(date, year, time):
             a = request.status_code
     return a, url
 
-
+async def feed(sat):
+    response = []
+    request = requests.get(f'https://mosdac.gov.in/{sat}.xml')
+    root = ET.fromstring(request.text)[0]
+    for item in root.findall('item'):
+        if item.find('guid').attrib['isPermaLink'] == 'true':
+            response.append([item.find('title').text, item.find('link').text, item.find('description').text, item.find('pubDate').text])
+    return response
 
