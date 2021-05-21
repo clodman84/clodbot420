@@ -84,7 +84,7 @@ async def on_message(message):
         elif message.content.lower()[0:14] == '--insat3d bimg':
             await message.channel.send("Getting ISRO satellite images")
             embed = discord.Embed(title='INSAT-3D Blended Image', colour=0x1ed9c0)
-            dat = message.content[14:]
+            dat = message.content[15:]
             date = dat[0:5]
             year = dat[5:9]
             time = dat[10:]
