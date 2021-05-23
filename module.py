@@ -188,7 +188,17 @@ async def Nasa(type):
         response = requests.request("GET", url)
         pos = response.json()['iss_position']
         return pos
+def EPIC():
+    url = 'https://epic.gsfc.nasa.gov/api/images.php'
+    querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ'}
+    request = requests.get(url=url, params=querystring)
+    return list(request)
 
+def EONET():
+    return
+
+def MARS():
+    return
 
 async def isro_BIMG(date, year, time):
     a = 0
@@ -213,12 +223,12 @@ async def isro_BIMG(date, year, time):
         # trying 29 and 59
         if a == 404:
             if time[2:] == '00':
-                time = str(int(time[:-2]) - 1) + '59'
+                NEWtime = str(int(time[:-2]) - 1) + '59'
             else:
-                time = time[:-2] + "29"
-            if len(time) == 3:
-                time = '0' + time
-            url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
+                NEWtime = time[:-2] + "29"
+            if len(NEWtime) == 3:
+                NEWtime = '0' + NEWtime
+            url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{NEWtime}_L1C_ASIA_MER_BIMG.jpg"
             request = requests.get(url=url)
             count +=1
             a = request.status_code
@@ -233,3 +243,6 @@ async def feed(sat):
             response.append([item.find('title').text, item.find('link').text, item.find('description').text, item.find('pubDate').text])
     return response
 
+for i in EPIC():
+    print(i)
+    print()
