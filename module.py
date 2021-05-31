@@ -62,11 +62,13 @@ async def translate(txt, author):
     if response.status_code == 200:
         output = response.json()['contents']['translated']
         auth = author.split('#')[0]
+        code = 200
     else:
         A = outputs[random.randint(0, len(outputs) - 1)]
         output = A[0] + author.split('#')[0]
         auth = A[1]
-    return output, auth
+        code = 69
+    return output, auth, code
 
 
 async def globe():

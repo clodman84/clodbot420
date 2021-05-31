@@ -103,7 +103,9 @@ async def on_message(message):
                         # example
                         print(reaction, user, author.author)
 
-                        if str(reaction.emoji) == "▶️" and cur_page != pages and user == author.author:
+                        if user == client.user:
+                            None
+                        elif str(reaction.emoji) == "▶️" and cur_page != pages and user == author.author:
                             cur_page += 1
                             embed = discord.Embed(title=contents[cur_page - 1][0],
                                                   description=contents[cur_page - 1][2], color=0x1ed9c0)
@@ -134,7 +136,7 @@ async def on_message(message):
                             # removes reactions if the user tries to go forward on the last page or
                             # backwards on the first page
                     except asyncio.TimeoutError:
-                        await message.channel.send(f"Time is up {str(author.author)}")
+                        await message.channel.send(f"Time is up {author.mention}")
                         break
                         # ending the loop if user doesn't react after x seconds
 
@@ -442,6 +444,8 @@ async def on_message(message):
         embed = discord.Embed(description="*" + Text[0] + "*", colour=0x1ed9c0)
         embed.set_footer(text="-" + Text[1])
         await message.channel.send(embed=embed)
+        if Text[2] == 200:
+            message.delete()
         if Text[1][-4:] == 'CUNT':
             cooldown = 3600
 
