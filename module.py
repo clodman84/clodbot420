@@ -242,7 +242,3 @@ async def feed(sat):
         if item.find('guid').attrib['isPermaLink'] == 'true':
             response.append([item.find('title').text, item.find('link').text, item.find('description').text, item.find('pubDate').text])
     return response
-
-for i in EPIC():
-    print(i)
-    print()

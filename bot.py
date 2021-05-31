@@ -82,13 +82,62 @@ async def on_message(message):
             await message.channel.send(embed=embed)
 
         elif message.content.lower()[0:6] == '--feed':
+            author = message
             if message.content.lower()[7:] in satList:
-                data = await module.feed(message.content.lower()[7:])
-                for i in data:
-                    embed = discord.Embed(title=i[0],description=i[2], color=0x1ed9c0)
-                    embed.set_image(url=i[1])
-                    embed.set_footer(text=f"PubDate = {i[3]}")
-                    await message.channel.send(embed=embed)
+                contents = await module.feed(message.content.lower()[7:])
+                cur_page = 1
+                pages = len(contents) + 1
+                embed = discord.Embed(title=contents[cur_page - 1][0],description=contents[cur_page -1][2], color=0x1ed9c0)
+                embed.set_image(url=contents[cur_page -1][1])
+                embed.set_footer(text=f"PubDate = {contents[cur_page-1][3]} page {cur_page}/{pages}")
+                message = await message.channel.send(embed=embed)
+                # getting the message object for editing and reacting
+                await message.add_reaction("◀️")
+                await message.add_reaction("▶️")
+
+
+                while True:
+                    try:
+                        reaction, user = await client.wait_for("reaction_add", timeout=120)
+                        # waiting for a reaction to be added - times out after x seconds, 60 in this
+                        # example
+                        print(reaction, user, author.author)
+
+                        if str(reaction.emoji) == "▶️" and cur_page != pages and user == author.author:
+                            cur_page += 1
+                            embed = discord.Embed(title=contents[cur_page - 1][0],
+                                                  description=contents[cur_page - 1][2], color=0x1ed9c0)
+                            embed.set_image(url=contents[cur_page - 1][1])
+                            embed.set_footer(text=f"PubDate = {contents[cur_page - 1][3]} page {cur_page} / {pages}")
+                            await message.edit(embed=embed)
+                            try:
+                                await message.remove_reaction(reaction, user)
+                            except:
+                                None
+
+                        elif str(reaction.emoji) == "◀️" and cur_page > 1 and user == author.author:
+                            cur_page -= 1
+                            embed = discord.Embed(title=contents[cur_page - 1][0],
+                                                  description=contents[cur_page - 1][2], color=0x1ed9c0)
+                            embed.set_image(url=contents[cur_page - 1][1])
+                            embed.set_footer(text=f"PubDate = {contents[cur_page - 1][3]} page {cur_page} / {pages}")
+                            await message.edit(embed=embed)
+                            try:
+                                await message.remove_reaction(reaction, user)
+                            except:
+                                None
+                        else:
+                            try:
+                                await message.remove_reaction(reaction, user)
+                            except:
+                                None
+                            # removes reactions if the user tries to go forward on the last page or
+                            # backwards on the first page
+                    except asyncio.TimeoutError:
+                        await message.channel.send(f"Time is up {str(author.author)}")
+                        break
+                        # ending the loop if user doesn't react after x seconds
+
 
         elif message.content.lower() == '--satlist':
             await message.channel.send(satList)
