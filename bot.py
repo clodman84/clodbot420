@@ -49,7 +49,7 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif', 'https://c.
 satList = ['isrocast', '3dimager', '3drimager']
 @client.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author == client.user or message.author.bot:
         return
     # commands
     global cooldown
@@ -437,14 +437,14 @@ async def on_message(message):
         mycon.commit()
 
 
-    if message.attachments or any(ele in content for ele in ['/', '%', 'https', ':', 'http', '--']):
+    if message.attachments or any(ele in content for ele in ['/', '%', 'https', ':', 'http', '--']) or message.reference:
         return
-    elif (data[0][1] + 1) % 25 == 0 and cooldown == 0 and len(content) <= 2048:
+    elif (data[0][1] + 1) % 50 == 0 and cooldown == 0 and len(content) <= 2048:
         Text = await module.translate(message.content, str(author))
         embed = discord.Embed(description="*" + Text[0] + "*", colour=0x1ed9c0)
         embed.set_footer(text="-" + Text[1])
-        await message.channel.send(embed=embed)
         if Text[2] == 200:
+            await message.channel.send(embed=embed)
             await message.delete()
         if Text[1][-4:] == 'CUNT':
             cooldown = 3600
