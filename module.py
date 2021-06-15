@@ -56,7 +56,7 @@ async def translate(txt, author):
                ["I am tired of translatin' you dudes. I just wanna smoke crack with ", "Valley_CUNT"],
                ['I im su tured ouff truonsleting yuou, zeet talkateev ', 'European_CUNT'],
                ["I be so tired o' translatin' ye, that talkative ", 'Pirates_of_the_CUNT']]
-    links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'chef.json', 'valspeak.json']
+    links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'valspeak.json']
     response = requests.get('https://api.funtranslations.com/translate/' + links[random.randint(0, len(links) - 1)],
                             params={"text": txt})
     if response.status_code == 200:
@@ -72,11 +72,14 @@ async def translate(txt, author):
 
 
 async def globe():
+        """OPEN SKY API. Global airplane data"""
         url = 'https://opensky-network.org/api/states/all'
         response = requests.get(url=url)
         return response.json()['states']
 
 async def bbox(bbox):
+        """OPEN SKY API. Returns data within a specofic bounding box, not implemented yet"""
+        
         url = 'https://opensky-network.org/api/states/all'
         b = bbox
         param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
@@ -85,6 +88,8 @@ async def bbox(bbox):
 
 
 async def iso(iso):
+        """OPEN SKY API. Uses the same bounding box parameters as before but instead the data comes from a database of bounding boxes of various areas by iso code"""
+        
         url = 'https://opensky-network.org/api/states/all'
         box = [c.bbox for c in country_subunits_by_iso_code(iso)]  # the bounding box coords
         name = [c.name for c in country_subunits_by_iso_code(iso)]  # the name of the corresponding bounding box
@@ -109,6 +114,8 @@ async def iso(iso):
 
 
 async def ind(icao):
+        """OPEN SKY API. Searches for a specific airplane with its icao code."""
+        
         url = 'https://opensky-network.org/api/states/all'
         param = {"icao24": icao}
         response = requests.get(url=url, params=param)
@@ -118,6 +125,8 @@ async def ind(icao):
             return None
 
 async def history(icao):
+        """OPEN SKY API. Searches the history of an airplane with its icao code"""
+        
         url = 'https://opensky-network.org/api/flights/aircraft'
         param = {'icao24': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
                  'end': int(datetime.utcnow().timestamp())}
@@ -125,6 +134,8 @@ async def history(icao):
         return response.json()
 
 async def airport(type, icao):
+    """OPEN SKY API. 7 days of arrival or departure data for an aiport's icao code"""
+        
     if type == 'arrival' and icao != 1:
         url = 'https://opensky-network.org/api/flights/arrival'
         param = {'airport': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
@@ -139,6 +150,8 @@ async def airport(type, icao):
         return response.json()
 
 async def joke():
+    """JOKE API. Returns a Joke"""
+        
     if random.randint(0,10) <= 6:
         url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
         querystring = {"type": "single, twopart"}
@@ -158,6 +171,8 @@ async def joke():
         return response.json()['setup'] + '\n' + response.json()['punchline']
 
 async def Nasa(type):
+    """For space related operations that have no paramteres"""
+        
     # Astronomy photo of the day
     if type == 'APoD':
         url = "https://api.nasa.gov/planetary/apod"
@@ -191,6 +206,8 @@ async def Nasa(type):
         pos = response.json()['iss_position']
         return pos
 def EPIC():
+    """A function for EPIC images from NASA. Should this be a class?"""
+        
     url = 'https://epic.gsfc.nasa.gov/api/images.php'
     querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ'}
     request = requests.get(url=url, params=querystring)
@@ -203,6 +220,7 @@ def MARS():
     return
 
 async def isro_BIMG(date, year, time):
+    """Generates URLs and performs a GET request on them and and sniffs out the latest ISRO satellite image, plans to open this to every type of image"""
     a = 0
     count = 0
     if int(time[2:]) >= 30:
@@ -237,6 +255,8 @@ async def isro_BIMG(date, year, time):
     return a, url
 
 async def feed(sat):
+    """Extracts data from the rich site summary of the mosdac website"""
+        
     response = []
     request = requests.get(f'https://mosdac.gov.in/{sat}.xml')
     root = ET.fromstring(request.text)[0]
@@ -244,3 +264,16 @@ async def feed(sat):
         if item.find('guid').attrib['isPermaLink'] == 'true':
             response.append([item.find('title').text, item.find('link').text, item.find('description').text, item.find('pubDate').text])
     return response
+
+def F1():
+    """"Formula One API. Might use Ergast"""
+    url = "https://api-formula-1.p.rapidapi.com/timezone"
+
+    headers = {
+        'x-rapidapi-key': "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
+        'x-rapidapi-host': "api-formula-1.p.rapidapi.com"
+    }
+
+    response = requests.request("GET", url, headers=headers)
+
+    return response.text

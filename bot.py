@@ -16,7 +16,7 @@ reply_url = ['https://media1.tenor.com/images/5fc568729ede3645080391e871bce197/t
 # ______________________________________________________________________________________________________________________
 
 cooldown = 0
-loud = True
+loud = False
 client = discord.Client()
 
 # ______________________________________________________________________________________________________________________
@@ -47,12 +47,14 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif', 'https://c.
               'https://c.tenor.com/Rqe9gYz_WPcAAAAM/explosion-boom.gif', 'https://c.tenor.com/u8jwYAiT_DgAAAAM/boom-bomb.gif', 'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif'
               'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif', 'https://c.tenor.com/jkRrt2SrlMkAAAAM/pepe-nuke.gif', 'https://c.tenor.com/24gGug50GqQAAAAM/nuke-nuclear.gif']
 satList = ['isrocast', '3dimager', '3drimager']
+puppeteer = [False, None]
 @client.event
 async def on_message(message):
     if message.author == client.user or message.author.bot:
         return
     # commands
     global cooldown
+    global puppeteer
     if str(message.author) in banned:
         explosion = explosions[random.randint(0, len(explosions)-1)]
         launch = nukeLaunch[random.randint(0, len(nukeLaunch)-1)]
@@ -62,7 +64,9 @@ async def on_message(message):
             await message.reply(explosion)
             await asyncio.sleep(5)
             await message.delete()
-
+    if message.channel.id == 842796682114498570 and puppeteer[0] and message.content[0:2] != '--':
+        channel = client.get_channel(int(puppeteer[1]))
+        await channel.send(str(message.content))
     if message.content.startswith('--'):
         now = datetime.utcnow()
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -80,6 +84,14 @@ async def on_message(message):
             else:
                 embed.set_footer(text='Not Found')
             await message.channel.send(embed=embed)
+
+        elif message.content.lower()[0:8] == '--puppet' and str(message.author) == 'clodman84#1215':
+            if puppeteer[0]:
+                puppeteer[0] = False
+                await message.channel.send("I am now free")
+            else:
+                puppeteer = [True, message.content.lower()[9:]]
+                await message.channel.send(f"I am now being controlled in channel, {message.content.lower()}")
 
         elif message.content.lower()[0:6] == '--feed':
             author = message
@@ -178,10 +190,10 @@ async def on_message(message):
             embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
             embed.set_image(url=APoD[1])
             await message.channel.send(embed=embed)
-        elif message.content.lower()[0:8] == '--target' and str(message.author) == 'clodman84#1215':
+        elif message.content.lower()[0:8] == '--target' and str(message.author) == 'clodman84#6969':
             banned.append(message.content[9:])
             await message.channel.send(f'{message.content.lower()[9:0]} successfully targeted chief')
-        elif message.content.lower() == '--show targets' and str(message.author) == 'clodman84#1215':
+        elif message.content.lower() == '--show targets' and str(message.author) == 'clodman84#6969':
             await message.channel.send(banned)
         elif message.content.lower()[0:6] == '--drop' and str(message.author) == 'clodman84#1215':
             banned.remove(message.content[7:])
