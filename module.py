@@ -265,15 +265,8 @@ async def feed(sat):
             response.append([item.find('title').text, item.find('link').text, item.find('description').text, item.find('pubDate').text])
     return response
 
-def F1():
-    """"Formula One API. Might use Ergast"""
-    url = "https://api-formula-1.p.rapidapi.com/timezone"
+def schedule(season='current'):
+    url = f'http://ergast.com/api/f1/{season}.json'
+    request = requests.get(url)
+    return [request.status_code, request.json()["MRData"]["RaceTable"]["Races"]]
 
-    headers = {
-        'x-rapidapi-key': "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
-        'x-rapidapi-host': "api-formula-1.p.rapidapi.com"
-    }
-
-    response = requests.request("GET", url, headers=headers)
-
-    return response.text

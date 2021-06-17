@@ -71,8 +71,48 @@ async def on_message(message):
         now = datetime.utcnow()
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
-        # New Commands _________________________________________________________________________________________________
-        if message.content.lower() == '--bimg now':
+        # formula1 commands --------------------------------------------------------------------------------------------
+        if message.content.lower()[0:10] == '--schedule':
+            if len(message.content) == 10:
+                schedule = module.schedule()
+                if schedule[0] == 200:
+                    table = T.Texttable()
+                    table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
+                    data = [['Country', 'Search ID', 'Date']]
+                    for i in schedule[1]:
+                        country = i["Circuit"]['Location']['country']
+                        searchID = i["Circuit"]['circuitId']
+                        date = i["date"]
+                        data.append([country, searchID, date])
+                    else:
+                        table.add_rows(data)
+                        await message.channel.send(
+                            f"```{table.draw()}```")
+
+                else:
+                    await message.channel.send(f"Error {schedule[0]}")
+            else:
+                print(message.content[10:])
+                schedule = module.schedule(int(message.content[10:]))
+
+                if schedule[0] == 200:
+                    table = T.Texttable()
+                    table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
+                    data = [['Country', 'Search ID', 'Date']]
+                    for i in schedule[1]:
+                        country = i["Circuit"]['Location']['country']
+                        searchID = i["Circuit"]['circuitId']
+                        date = i["date"]
+                        data.append([country, searchID, date])
+                    else:
+                        table.add_rows(data)
+                        await message.channel.send(
+                            f"```{table.draw()}```")
+
+                else:
+                    await message.channel.send(f"Error {schedule[0]}")
+        # Older Commands _________________________________________________________________________________________________
+        elif message.content.lower() == '--bimg now':
             await message.channel.send("Getting ISRO satellite images")
             embed = discord.Embed(title='INSAT-3D Blended Image', colour=0x1ed9c0)
             date = now.strftime('%d%b')
@@ -190,10 +230,10 @@ async def on_message(message):
             embed = discord.Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
             embed.set_image(url=APoD[1])
             await message.channel.send(embed=embed)
-        elif message.content.lower()[0:8] == '--target' and str(message.author) == 'clodman84#6969':
+        elif message.content.lower()[0:8] == '--target' and str(message.author) == 'clodman84#1215':
             banned.append(message.content[9:])
             await message.channel.send(f'{message.content.lower()[9:0]} successfully targeted chief')
-        elif message.content.lower() == '--show targets' and str(message.author) == 'clodman84#6969':
+        elif message.content.lower() == '--show targets' and str(message.author) == 'clodman84#1215':
             await message.channel.send(banned)
         elif message.content.lower()[0:6] == '--drop' and str(message.author) == 'clodman84#1215':
             banned.remove(message.content[7:])
