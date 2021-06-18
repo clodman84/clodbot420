@@ -205,6 +205,7 @@ async def Nasa(type):
         response = requests.request("GET", url)
         pos = response.json()['iss_position']
         return pos
+
 def EPIC():
     """A function for EPIC images from NASA. Should this be a class?"""
         
@@ -265,8 +266,105 @@ async def feed(sat):
             response.append([item.find('title').text, item.find('link').text, item.find('description').text, item.find('pubDate').text])
     return response
 
-def schedule(season='current'):
+
+# need to put this and the some other functions in a utils.py
+def countdown(target: datetime):
+    """
+    Calculate time to `target` datetime object from current time when invoked.
+    Returns a list containing the string output and tuple of (days, hrs, mins, sec).
+    """
+    delta = target - datetime.utcnow()
+    d = delta.days if delta.days > 0 else 0
+    # timedelta only stores seconds so calculate mins and hours by dividing remainder
+    h, rem = divmod(delta.seconds, 3600)
+    m, s = divmod(rem, 60)
+    # text representation
+    stringify = (
+        f"{int(d)} {'days' if d is not 1 else 'day'}, "
+        f"{int(h)} {'hours' if h is not 1 else 'hour'}, "
+        f"{int(m)} {'minutes' if m is not 1 else 'minute'}, "
+        f"{int(s)} {'seconds' if s is not 1 else 'second'} "
+    )
+    return [stringify, (d, h, m, s)]
+
+def date_parser(date_str):
+    return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %b')
+
+def time_parser(time_str):
+    return datetime.strptime(time_str, '%H:%M:%SZ').strftime('%H:%M UTC')
+
+async def get_wiki_thumbnail(url):
+    """Get image thumbnail from Wikipedia link. Returns the thumbnail URL."""
+    if url is None or url == '':
+        return 'https://i.imgur.com/kvZYOue.png'
+    # Get URL name after the first '/'
+    wiki_title = url.rsplit('/', 1)[1]
+    # Get page thumbnail from wikipedia API if it exists
+    api_query = ('https://en.wikipedia.org/w/api.php?action=query&format=json&formatversion=2' +
+                 '&prop=pageimages&piprop=thumbnail&pithumbsize=600' + f'&titles={wiki_title}')
+    res = requests.get(api_query).json()
+    first = res['query']['pages'][0]
+    # Get page thumb or return placeholder
+    if 'thumbnail' in first:
+        return first['thumbnail']['source']
+    else:
+        return 'https://i.imgur.com/kvZYOue.png'
+
+
+async def schedule(season='current'):
     url = f'http://ergast.com/api/f1/{season}.json'
     request = requests.get(url)
     return [request.status_code, request.json()["MRData"]["RaceTable"]["Races"]]
+
+async def nextRace():
+    """Get the next race in the calendar and a countdown (from moment of req) as dict.
+        Returns
+        -------
+        `res` : dict
+            {
+                'season': str,
+                'countdown': str,
+                'url': str,
+                'data': list[dict] [{
+                    'Round': int,
+                    'Name': str,
+                    'Date': str,
+                    'Time': str,
+                    'Circuit': str,
+                    'Country': str,
+                    'id':str
+                    'url':str
+                }]
+            }
+        Raises
+        ------
+        `MissingDataError`
+            if API response unavailable.
+        """
+    url: str = f'http://ergast.com/api/f1/current/next.json'
+    request = requests.get(url)
+    root = request.json()["MRData"]["RaceTable"]
+    season = root['season']
+
+    root = root["Races"][0]
+    date, time = (root["date"], root["time"])
+    cd = countdown(datetime.strptime(f'{date} {time}', '%Y-%m-%d %H:%M:%SZ'))
+    result = {
+                'season': season,
+                'countdown': cd[0],
+                'url': root['url'],
+                'data': {
+                    'Round': int(root['round']),
+                    'Name': root["raceName"],
+                    'Date': f"{date_parser(date)} {root['season']}",
+                    'Time': time_parser(time),
+                    'Circuit': root["Circuit"]['circuitName'],
+                    'Country': f"{root['Circuit']['Location']['locality']} , {root['Circuit']['Location']['country']}",
+                    'url':root['Circuit']['url'],
+                    'id': root["Circuit"]['circuitId']
+                }
+            }
+    return result
+
+
 

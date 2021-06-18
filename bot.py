@@ -16,7 +16,7 @@ reply_url = ['https://media1.tenor.com/images/5fc568729ede3645080391e871bce197/t
 # ______________________________________________________________________________________________________________________
 
 cooldown = 0
-loud = True
+loud = False
 client = discord.Client()
 
 # ______________________________________________________________________________________________________________________
@@ -72,9 +72,30 @@ async def on_message(message):
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         # formula1 commands --------------------------------------------------------------------------------------------
-        if message.content.lower()[0:10] == '--schedule':
+
+        if message.content.lower() == '--next':
+            result = await module.nextRace()
+            track_url = result['url'].replace(f"{result['season']}_", '')
+            track_url_img = asyncio.create_task(module.get_wiki_thumbnail(track_url))
+            embed = discord.Embed(
+                title=f"**{result['data']['Name']}**",
+                description=f"{result['countdown']} left",
+                url=track_url,
+                colour=0x1ed9c0,
+            )
+            embed.set_thumbnail(url='https://i.imgur.com/kvZYOue.png')
+            embed.add_field(name='Circuit', value=f"[{result['data']['Circuit']}]({result['data']['url']})", inline=False)
+            embed.add_field(name='Round', value=result['data']['Round'], inline=True)
+            embed.add_field(name='Location', value=result['data']['Country'], inline=True)
+            embed.add_field(name='Date', value=result['data']['Date'], inline=True)
+            embed.add_field(name='Time', value=result['data']['Time'], inline=True)
+            embed.set_image(url=await track_url_img)
+            embed.set_footer(text=f'SearchID = {result["data"]["id"]}')
+            await message.channel.send(embed=embed)
+
+        elif message.content.lower()[0:10] == '--schedule':
             if len(message.content) == 10:
-                schedule = module.schedule()
+                schedule = await module.schedule()
                 if schedule[0] == 200:
                     table = T.Texttable()
                     table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
