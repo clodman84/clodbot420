@@ -4,6 +4,8 @@ import sqlite3 as sql
 import asyncio
 import discord
 import texttable as T
+from errors import DriverNotFoundError
+from utils import is_future, make_table, filter_times, rank_best_lap_times, rank_pitstops, filter_laps_by_driver
 from discord.ext import tasks
 import module
 
@@ -36,7 +38,10 @@ async def on_ready():
         await channel.send(embed=embed)
     serverStatus.start()  # starts the presence update loop
 
-
+async def check_season(ctx, season):
+    """Raise error if the given season is in the future."""
+    if is_future(season):
+        await ctx.send(f"Can't predict future :thinking:")
 nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif', 'https://c.tenor.com/Bupb0hg8c-EAAAAM/cat-launch.gif', 'https://c.tenor.com/xW6YocQ1DokAAAAM/nasa-rocket-launch.gif',
               'https://c.tenor.com/4O7uNcs8vHgAAAAM/rocket-launch.gif', 'https://c.tenor.com/1s8cZTvNNMsAAAAM/sup-dog.gif', 'https://c.tenor.com/uGwGAzGhP50AAAAM/shooting-missiles-zeo-zord-i.gif'
               'https://tenor.com/view/star-wars-death-star-laser-gif-9916316']
@@ -67,13 +72,44 @@ async def on_message(message):
     if message.channel.id == 842796682114498570 and puppeteer[0] and message.content[0:2] != '--':
         channel = client.get_channel(int(puppeteer[1]))
         await channel.send(str(message.content))
+
     if message.content.startswith('--'):
         now = datetime.utcnow()
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         # formula1 commands --------------------------------------------------------------------------------------------
+        if message.content.lower()[0:5] == '--wdc':
+            season = message.content.lower()
 
-        if message.content.lower() == '--next':
+            if len(season) == 5:
+                season = 'current'
+            else:
+                season = season[6:]
+            await check_season(message, season)
+            result = await module.get_driver_standings(season)
+            table = make_table(result['data'], fmt='simple')
+            await message.channel.send(
+                f"**World Driver Championship**\n" +
+                f"Season: {result['season']} Round: {result['round']}\n"
+            )
+            await message.channel.send(f"```\n{table}\n```")
+        elif message.content.lower()[0:5] == '--wcc':
+            season = message.content.lower()
+
+            if len(season) == 5:
+                season = 'current'
+            else:
+                season = season[6:]
+            await check_season(message, season)
+            result = await module.get_team_standings(season)
+            table = make_table(result['data'])
+            target = message.channel
+            await target.send(
+                f"**World Constructor Championship**\n" +
+                f"Season: {result['season']} Round: {result['round']}\n"
+            )
+            await target.send(f"```\n{table}\n```")
+        elif message.content.lower() == '--next':
             result = await module.nextRace()
             track_url = result['url'].replace(f"{result['season']}_", '')
             track_url_img = asyncio.create_task(module.get_wiki_thumbnail(track_url))
