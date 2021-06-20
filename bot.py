@@ -5,7 +5,6 @@ import asyncio
 import discord
 import texttable as T
 from errors import DriverNotFoundError
-
 from utils import is_future, make_table, filter_times, rank_best_lap_times, rank_pitstops, filter_laps_by_driver
 from discord.ext import tasks
 import module
@@ -210,12 +209,13 @@ async def on_message(message):
                 subcommand = command.split(' ')
                 if len(subcommand) == 2:
                     season = subcommand[1]
+                    if int(season) < 2003:
+                        await message.channel.send("Qualifying data is available only from 2003 onwards")
+                        return
                 else:
                     season, rnd = subcommand[1:]
             await check_season(message.channel, season)
-            if int(season) < 2003:
-                await message.channel.send("Qualifying data is available only from 2003 onwards")
-                return
+
             result = await module.get_qualifying_results(rnd, season)
             try:
                 table = [make_table(result['data'])]
