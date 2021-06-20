@@ -37,7 +37,7 @@ def make_table(data, headers='keys', fmt='fancy_grid'):
         # cannot send table if too large even without borders
         if too_long(table):
             raise MessageTooLongError('Table too large to send.', table)
-    return table
+    return (table)
 
 
 def age(yob):
@@ -47,13 +47,17 @@ def age(yob):
     return current_year - int(yob)
 
 
-def date_parser(date_str):
-    return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %b')
-
+def date_parser(date_str, type='r'):
+    if type =='r':
+        return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %b')
+    else:
+        return datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y')
 
 def time_parser(time_str):
-    return datetime.strptime(time_str, '%H:%M:%SZ').strftime('%H:%M UTC')
-
+    try:
+        return datetime.strptime(time_str, '%H:%M:%SZ').strftime('%H:%M UTC')
+    except ValueError:
+        return datetime.strptime(time_str,'%H:%M:%S.%f').strftime('%H:%M UTC')
 
 def countdown(target: datetime):
     """

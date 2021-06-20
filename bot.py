@@ -5,6 +5,7 @@ import asyncio
 import discord
 import texttable as T
 from errors import DriverNotFoundError
+
 from utils import is_future, make_table, filter_times, rank_best_lap_times, rank_pitstops, filter_laps_by_driver
 from discord.ext import tasks
 import module
@@ -53,6 +54,7 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif', 'https://c.
               'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif', 'https://c.tenor.com/jkRrt2SrlMkAAAAM/pepe-nuke.gif', 'https://c.tenor.com/24gGug50GqQAAAAM/nuke-nuclear.gif']
 satList = ['isrocast', '3dimager', '3drimager']
 puppeteer = [False, None]
+
 @client.event
 async def on_message(message):
     if message.author == client.user or message.author.bot:
@@ -85,7 +87,7 @@ async def on_message(message):
                 season = 'current'
             else:
                 season = season[6:]
-            await check_season(message, season)
+            await check_season(message.channel, season)
             result = await module.get_driver_standings(season)
             table = make_table(result['data'], fmt='simple')
             await message.channel.send(
@@ -93,6 +95,7 @@ async def on_message(message):
                 f"Season: {result['season']} Round: {result['round']}\n"
             )
             await message.channel.send(f"```\n{table}\n```")
+
         elif message.content.lower()[0:5] == '--wcc':
             season = message.content.lower()
 
@@ -100,7 +103,7 @@ async def on_message(message):
                 season = 'current'
             else:
                 season = season[6:]
-            await check_season(message, season)
+            await check_season(message.channel, season)
             result = await module.get_team_standings(season)
             table = make_table(result['data'])
             target = message.channel
@@ -109,6 +112,186 @@ async def on_message(message):
                 f"Season: {result['season']} Round: {result['round']}\n"
             )
             await target.send(f"```\n{table}\n```")
+
+        elif message.content.lower()[0:9] == '--results':
+            command = message.content.lower()
+            season = 'current'
+            rnd = 'last'
+            if len(command) > 9:
+                subcommand = command.split(' ')
+                if len(subcommand) == 2:
+                    season = subcommand[1]
+                else:
+                    season, rnd = subcommand[1:]
+            await check_season(message.channel, season)
+
+            result = await module.get_race_results(rnd, season)
+            try:
+                table = [make_table(result['data'], fmt='simple')]
+            except:
+                data = result['data']
+                middle = int(len(data)/2)
+                table = (make_table(data[0:middle]), make_table(data[middle:]))
+            target = message.channel
+            await target.send(f"**Race Results - {result['race']} ({result['season']})**")
+            for i in table:
+                await target.send(f"```\n{i}\n```")
+
+
+        elif message.content.lower()[0:8] == '--driver':
+            command = message.content
+            if len(command) > 8:
+                driver_id = command.split(' ')[1]
+            else:
+                await message.channel.send('You need to specify a driver, example vettel, VET or 55')
+                return
+            """Career stats for the `driver_id`.
+                Includes total poles, wins, points, seasons, teams, fastest laps, and DNFs.
+                Parameters:
+                -----------
+                `driver_id`
+                    Supported Ergast API ID, e.g. 'alonso', 'michael_schumacher', 'vettel', 'di_resta'.
+                Usage:
+                --------
+                    !f1 career vettel | VET | 55   Get career stats for Sebastian Vettel.
+                """
+            target = message.channel
+            await target.send("*Gathering driver data, this may take a few moments...*")
+            try:
+                driver = module.get_driver_info(driver_id)
+            except DriverNotFoundError:
+                await target.send('Driver not found')
+            result = await module.get_driver_career(driver)
+            thumb_url_task = asyncio.create_task(module.get_wiki_thumbnail(driver['url']))
+            season_list = result['data']['Seasons']['years']
+            champs_list = result['data']['Championships']['years']
+            embed = discord.Embed(
+                title=f"**{result['driver']['firstname']} {result['driver']['surname']} Career**",
+                url=result['driver']['url'],
+                colour=0x1ed9c0,
+            )
+            embed.set_thumbnail(url=await thumb_url_task)
+            embed.add_field(name='Number', value=result['driver']['number'], inline=True)
+            embed.add_field(name='Nationality', value=result['driver']['nationality'], inline=True)
+            embed.add_field(name='Age', value=result['driver']['age'], inline=True)
+            embed.add_field(
+                name='Seasons',
+                # Total and start to latest season
+                value=f"{result['data']['Seasons']['total']} ({season_list[0]}-{season_list[len(season_list) - 1]})",
+                inline=True
+            )
+            embed.add_field(name='Wins', value=result['data']['Wins'], inline=True)
+            embed.add_field(name='Poles', value=result['data']['Poles'], inline=True)
+            embed.add_field(
+                name='Championships',
+                # Total and list of seasons
+                value=(
+                        f"{result['data']['Championships']['total']} " + "\n"
+                        + ", ".join(y for y in champs_list if champs_list)
+                ),
+                inline=False
+            )
+            embed.add_field(
+                name='Teams',
+                # Total and list of teams
+                value=(
+                        f"{result['data']['Teams']['total']} " + "\n"
+                        + ", ".join(t for t in result['data']['Teams']['names'])
+                ),
+                inline=False
+            )
+            await target.send(embed=embed)
+
+        elif message.content.lower()[0:7] == '--quali':
+            command = message.content.lower()
+            season = 'current'
+            rnd = 'last'
+            if len(command) > 7:
+                subcommand = command.split(' ')
+                if len(subcommand) == 2:
+                    season = subcommand[1]
+                else:
+                    season, rnd = subcommand[1:]
+            await check_season(message.channel, season)
+            if int(season) < 2003:
+                await message.channel.send("Qualifying data is available only from 2003 onwards")
+                return
+            result = await module.get_qualifying_results(rnd, season)
+            try:
+                table = [make_table(result['data'])]
+            except:
+                data = result['data']
+                middle = int(len(data) / 2)
+                table = (make_table(data[0:middle]), make_table(data[middle:]))
+            target = message.channel
+            await target.send(f"**Qualifying Results - {result['race']} ({result['season']})**")
+            for i in table:
+                await target.send(f"```\n{i}\n```")
+
+        elif message.content.lower()[0:6] == '--wins':
+            command = message.content
+            if len(command) > 6:
+                driver_id = command.split(' ')[1]
+            else:
+                await message.channel.send('You need to specify a driver, example vettel, VET or 55')
+                return
+            target = message.channel
+            await target.send("*Gathering driver data, this may take a few moments...*")
+            driver = module.get_driver_info(driver_id)
+            await target.send(f"**{driver['firstname']} {driver['surname']}** Age:{driver['age']}")
+            wins = await module.get_driver_wins(driver['id'])
+            try:
+                table = [make_table(wins['data'], fmt='simple')]
+            except:
+                data = wins['data']
+                middle = int(len(data)/4)
+                table = (make_table(data[0:middle]), make_table(data[middle:2*middle]), make_table(data[2*middle:3*middle]), make_table(data[3*middle:]))
+            for i in table:
+                await target.send(f"```\n{i}\n```")
+
+        elif message.content.lower()[0:6] == '--pole':
+            command = message.content
+            if len(command) > 6:
+                driver_id = command.split(' ')[1]
+            else:
+                await message.channel.send('You need to specify a driver, example vettel, VET or 55')
+                return
+
+            target = message.channel
+            await target.send("*Gathering driver data, this may take a few moments...*")
+            driver = module.get_driver_info(driver_id)
+            await target.send(f"**{driver['firstname']} {driver['surname']} ** Age:{driver['age']}")
+            poles = await module.get_driver_poles(driver['id'])
+            try:
+                table = [make_table(poles['data'], fmt='simple')]
+            except:
+                data = poles['data']
+                middle = int(len(data)/4)
+                table = (make_table(data[0:middle]), make_table(data[middle:2*middle]), make_table(data[2*middle:3*middle]), make_table(data[3*middle:]))
+            for i in table:
+                await target.send(f"```\n{i}\n```")
+
+        elif message.content.lower()[0:6] == '--best':
+            command = message.content
+            season = 'current'
+            rnd = 'last'
+            if len(command) > 9:
+                subcommand = command.split(' ')
+                if len(subcommand) == 2:
+                    season = subcommand[1]
+                else:
+                    season, rnd = subcommand[1:]
+            best = await module.get_best_laps(rnd, season)
+            await message.channel.send(f"**{best['race']} {best['season']}** ")
+            try:
+                table = [make_table(rank_best_lap_times(best), fmt='simple')]
+            except:
+                data = rank_best_lap_times(best)
+                middle = int(len(data)/2)
+                table = (make_table(data[0:middle]), make_table(data[middle:]))
+            for i in table:
+                await message.channel.send(f"```\n{i}\n```")
+
         elif message.content.lower() == '--next':
             result = await module.nextRace()
             track_url = result['url'].replace(f"{result['season']}_", '')
@@ -128,6 +311,7 @@ async def on_message(message):
             embed.set_image(url=await track_url_img)
             embed.set_footer(text=f'SearchID = {result["data"]["id"]}')
             await message.channel.send(embed=embed)
+
 
         elif message.content.lower()[0:10] == '--schedule':
             if len(message.content) == 10:
@@ -557,6 +741,7 @@ async def on_message(message):
             await message.delete()
         if Text[1][-4:] == 'CUNT':
             cooldown = 3600
+
 
 @tasks.loop(seconds=5.0)
 async def serverStatus():

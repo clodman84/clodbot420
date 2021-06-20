@@ -835,11 +835,9 @@ async def get_driver_wins(driver_id):
             res['data'].append(
                 {
                     'Race': race.racename.string,
-                    'Circuit': race.circuitname.string,
-                    'Date': utils.date_parser(race.date.string),
+                    'Date': utils.date_parser(race.date.string, type='dick'),
                     'Team': race_result.constructor.find('name').string,
                     'Grid': int(race_result.grid.string),
-                    'Laps': int(race_result.laps.string),
                     'Time': race_result.time.string,
                 }
             )
@@ -885,8 +883,7 @@ async def get_driver_poles(driver_id):
             res['data'].append(
                 {
                     'Race': race.racename.string,
-                    'Circuit': race.circuitname.string,
-                    'Date': utils.date_parser(race.date.string),
+                    'Date': utils.date_parser(race.date.string, type='benis'),
                     'Team': quali_result.constructor.find('name').string,
                     'Q1': quali_result.q1.string if quali_result.q1 is not None else None,
                     'Q2': quali_result.q2.string if quali_result.q2 is not None else None,
