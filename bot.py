@@ -23,7 +23,7 @@ reply_url = ['https://media1.tenor.com/images/5fc568729ede3645080391e871bce197/t
 # ______________________________________________________________________________________________________________________
 
 cooldown = 0
-loud = False
+loud = True
 islive = False
 client = discord.Client()
 
@@ -184,9 +184,9 @@ async def on_message(message):
                     for j in range(len(i['Sectors'])):
                         sectorData = i['Sectors'][j]
                         if sectorData['OverallFastest']:
-                            descrption += f'*Sector {j + 1} Time: {sectorData["Value"]}* **Overall Fastest** \n'
+                            descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Overall Fastest** \n'
                         elif sectorData['PersonalFastest']:
-                            descrption += f'*Sector {j + 1} Time:{sectorData["Value"]}* **Personal Fastest**\n'
+                            descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Personal Fastest**\n'
 
                     embed = discord.Embed(
                         title=f'**{driver}** {i["GapToLeader"]}',
@@ -966,9 +966,9 @@ async def serverStatus():
                 for j in range(len(i['Sectors'])):
                     sectorData = i['Sectors'][j]
                     if sectorData['OverallFastest']:
-                        descrption += f'*Sector {j + 1} Time: {sectorData["Value"]}* **Overall Fastest** \n'
+                        descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Overall Fastest** \n'
                     elif sectorData['PersonalFastest']:
-                        descrption += f'*Sector {j + 1} Time:{sectorData["Value"]}* **Personal Fastest**\n'
+                        descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Personal Fastest**\n'
 
                 embed = discord.Embed(
                     title=f'**{driver}** {i["GapToLeader"]}',
