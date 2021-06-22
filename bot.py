@@ -951,4 +951,4 @@ async def serverStatus():
     return
 
 
-client.run("Nzk1OTYwMjQ0MzUzMzY4MTA0.X_Q9vg.gPgPZT4xIY81CQCfPiGYm3NYSPg")
+client.run(YOUR TOKEN)
