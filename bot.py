@@ -192,11 +192,11 @@ async def on_message(message):
                 Update_messages['Timing'].append(await message.channel.send(embed=embed))
 
 
-
             islive = True
             cooldown = 72000
         elif message.content.lower() == '--stoplive':
             islive = False
+            Update_messages = {'Timing': [], 'weather': None}
             await message.channel.send('Live F1 over')
 
         elif message.content.lower() == '--plotpos':
