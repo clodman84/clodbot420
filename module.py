@@ -7,16 +7,19 @@ import asyncio
 from errors import MissingDataError
 from datetime import datetime
 from bs4 import BeautifulSoup
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import xml.etree.ElementTree as ET
-
+from operator import itemgetter
 
 mycon = sql.connect('data.db')
 cursor = mycon.cursor()
 
 """Only for cosmetic purposes."""
 
-def generator(list_name): # Generates curse words and spicy phrases to make the bot feel alive
-    
+
+def generator(list_name):  # Generates curse words and spicy phrases to make the bot feel alive
+
     """Returns a random phrase from a database of phrases, also ensures that the same phrase is not returned twice. This function is used frequently
     to make the bot's responses more human."""
     cursor.execute(f"select {list_name} from {list_name} where {list_name}_black = 'not used'")
@@ -36,22 +39,26 @@ def generator(list_name): # Generates curse words and spicy phrases to make the 
         else:
             return cancer
 
-def ammo(): # tells how many of the above phrases are available for use
+
+def ammo():  # tells how many of the above phrases are available for use
     """Shows how many of the phrases haven't been used yet"""
     count = []
     for i in ['phrases', 'sentences', 'minecraft', 'sites']:
         cursor.execute(f' select {i}_black from {i} where {i}_black = "not used"')
         data = len(cursor.fetchall())
         count.append(data)
-    return (f"Porn Titles :- {count[0]}\nPink Guy Lyrics :- {count[1]}\nMinecraft Yellow Text :- {count[2]}\nPorn Sites :- {count[3]}")
+    return (
+        f"Porn Titles :- {count[0]}\nPink Guy Lyrics :- {count[1]}\nMinecraft Yellow Text :- {count[2]}\nPorn Sites :- {count[3]}")
 
-def clear(a): # clears the blacklist in case the bot runs out of phrases
+
+def clear(a):  # clears the blacklist in case the bot runs out of phrases
     """Clears the blacklist of phrases and it allows phrases to be used again, just in case"""
     try:
         cursor.execute(f'update {a} set {a}_black = "not used"')
         return "A blacklist was cleared on " + str(datetime.utcnow())
     except:
         return "Something went wrong"
+
 
 async def translate(txt, author):
     """Translates whatever text is passed through it into 5 different accents. Also strips the author names and returns only the name without the number"""
@@ -77,70 +84,73 @@ async def translate(txt, author):
 
 
 async def globe():
-        """OPEN SKY API. Global airplane data"""
-        url = 'https://opensky-network.org/api/states/all'
-        response = requests.get(url=url)
-        return response.json()['states']
+    """OPEN SKY API. Global airplane data"""
+    url = 'https://opensky-network.org/api/states/all'
+    response = requests.get(url=url)
+    return response.json()['states']
+
 
 async def bbox(bbox):
-        """OPEN SKY API. Returns data within a specofic bounding box, not implemented yet"""
-        
-        url = 'https://opensky-network.org/api/states/all'
-        b = bbox
-        param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
-        response = requests.get(url=url, params=param)
-        return response.json()
+    """OPEN SKY API. Returns data within a specofic bounding box, not implemented yet"""
+
+    url = 'https://opensky-network.org/api/states/all'
+    b = bbox
+    param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
+    response = requests.get(url=url, params=param)
+    return response.json()
 
 
 async def iso(iso):
-        """OPEN SKY API. Uses the same bounding box parameters as before but instead the data comes from a database of bounding boxes of various areas by iso code"""
-        
-        url = 'https://opensky-network.org/api/states/all'
-        box = [c.bbox for c in country_subunits_by_iso_code(iso)]  # the bounding box coords
-        name = [c.name for c in country_subunits_by_iso_code(iso)]  # the name of the corresponding bounding box
-        if box == [] or name == []:
-            return None
-        result = []
-        for i in range(0, len(box)):
-            b = box[i]
-            n = name[i]
-            param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
-            response = requests.get(url=url, params=param)
-            try:
-                data = response.json()['states']
-                number = len(data)
-            except TypeError:
-                data = 'Wow such nothing'
-                number = "<=3"
-            result.append([n, number, data])
-        return result
-        # returns a multi dimensional list, which element containinng the name of the bounding box
-        # specified, the number of aircraft and the data of each and every aircraft
+    """OPEN SKY API. Uses the same bounding box parameters as before but instead the data comes from a database of bounding boxes of various areas by iso code"""
+
+    url = 'https://opensky-network.org/api/states/all'
+    box = [c.bbox for c in country_subunits_by_iso_code(iso)]  # the bounding box coords
+    name = [c.name for c in country_subunits_by_iso_code(iso)]  # the name of the corresponding bounding box
+    if box == [] or name == []:
+        return None
+    result = []
+    for i in range(0, len(box)):
+        b = box[i]
+        n = name[i]
+        param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
+        response = requests.get(url=url, params=param)
+        try:
+            data = response.json()['states']
+            number = len(data)
+        except TypeError:
+            data = 'Wow such nothing'
+            number = "<=3"
+        result.append([n, number, data])
+    return result
+    # returns a multi dimensional list, which element containinng the name of the bounding box
+    # specified, the number of aircraft and the data of each and every aircraft
 
 
 async def ind(icao):
-        """OPEN SKY API. Searches for a specific airplane with its icao code."""
-        
-        url = 'https://opensky-network.org/api/states/all'
-        param = {"icao24": icao}
-        response = requests.get(url=url, params=param)
-        try:
-            return response.json()['states'][0]
-        except TypeError:
-            return None
+    """OPEN SKY API. Searches for a specific airplane with its icao code."""
+
+    url = 'https://opensky-network.org/api/states/all'
+    param = {"icao24": icao}
+    response = requests.get(url=url, params=param)
+    try:
+        return response.json()['states'][0]
+    except TypeError:
+        return None
+
 
 async def history(icao):
-        """OPEN SKY API. Searches the history of an airplane with its icao code"""
-        
-        url = 'https://opensky-network.org/api/flights/aircraft'
-        param = {'icao24': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
-                 'end': int(datetime.utcnow().timestamp())}
-        response = requests.get(url=url, params=param)
-        return response.json()
+    """OPEN SKY API. Searches the history of an airplane with its icao code"""
+
+    url = 'https://opensky-network.org/api/flights/aircraft'
+    param = {'icao24': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
+             'end': int(datetime.utcnow().timestamp())}
+    response = requests.get(url=url, params=param)
+    return response.json()
+
 
 async def airport(type, icao):
     """OPEN SKY API. 7 days of arrival or departure data for an aiport's icao code"""
-        
+
     if type == 'arrival' and icao != 1:
         url = 'https://opensky-network.org/api/flights/arrival'
         param = {'airport': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
@@ -154,10 +164,11 @@ async def airport(type, icao):
         response = requests.get(url=url, params=param)
         return response.json()
 
+
 async def joke():
     """JOKE API. Returns a Joke"""
-        
-    if random.randint(0,10) <= 6:
+
+    if random.randint(0, 10) <= 6:
         url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
         querystring = {"type": "single, twopart"}
         headers = {
@@ -175,9 +186,10 @@ async def joke():
 
         return response.json()['setup'] + '\n' + response.json()['punchline']
 
+
 async def Nasa(type):
     """For space related operations that have no paramteres"""
-        
+
     # Astronomy photo of the day
     if type == 'APoD':
         url = "https://api.nasa.gov/planetary/apod"
@@ -211,26 +223,30 @@ async def Nasa(type):
         pos = response.json()['iss_position']
         return pos
 
+
 def EPIC():
     """A function for EPIC images from NASA. Should this be a class?"""
-        
+
     url = 'https://epic.gsfc.nasa.gov/api/images.php'
     querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ'}
     request = requests.get(url=url, params=querystring)
     return list(request)
 
+
 def EONET():
     return
 
+
 def MARS():
     return
+
 
 async def isro_BIMG(date, year, time):
     """Generates URLs and performs a GET request on them and and sniffs out the latest ISRO satellite image, plans to open this to every type of image"""
     a = 0
     count = 0
     if int(time[2:]) >= 30:
-        time = str(int(time[0:2])+1) + '00'
+        time = str(int(time[0:2]) + 1) + '00'
         if len(time) == 3:
             time = '0' + time
     else:
@@ -241,7 +257,7 @@ async def isro_BIMG(date, year, time):
         else:
             time = time[:-2] + "00"
         if len(time) == 3:
-            time = '0'+time
+            time = '0' + time
         url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
         request = requests.get(url=url)
         count += 1
@@ -256,25 +272,27 @@ async def isro_BIMG(date, year, time):
                 NEWtime = '0' + NEWtime
             url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{NEWtime}_L1C_ASIA_MER_BIMG.jpg"
             request = requests.get(url=url)
-            count +=1
+            count += 1
             a = request.status_code
     return a, url
 
+
 async def feed(sat):
     """Extracts data from the rich site summary of the mosdac website"""
-        
+
     response = []
     request = requests.get(f'https://mosdac.gov.in/{sat}.xml')
     root = ET.fromstring(request.text)[0]
     for item in root.findall('item'):
         if item.find('guid').attrib['isPermaLink'] == 'true':
-            response.append([item.find('title').text, item.find('link').text, item.find('description').text, item.find('pubDate').text])
+            response.append([item.find('title').text, item.find('link').text, item.find('description').text,
+                             item.find('pubDate').text])
     return response
-
 
 
 BASE_URL = 'http://ergast.com/api/f1'
 DRIVERS = utils.load_drivers()
+
 
 async def get_soup(url):
     """Request the URL and return response as BeautifulSoup object or None."""
@@ -283,6 +301,7 @@ async def get_soup(url):
         print('Unable to get soup, response was None.')
         return None
     return BeautifulSoup(res, 'lxml')
+
 
 async def check_status():
     """Monitor connection to Ergast API by recording connection status and time for response.
@@ -300,6 +319,7 @@ async def check_status():
         return 3
     else:
         return 1
+
 
 async def get_all_drivers():
     """Fetch all driver data as JSON. Returns a dict."""
@@ -350,6 +370,8 @@ def get_driver_info(driver_id):
         'nationality': driver['nationality'],
     }
     return res
+
+
 async def get_driver_standings(season):
     """Get the driver championship standings.
     Fetches results from API. Response XML is parsed into a list of dicts to be tabulated.
@@ -394,6 +416,7 @@ async def get_driver_standings(season):
         return results
     raise MissingDataError()
 
+
 async def get_team_standings(season):
     """Get the constructor championship standings.
     Fetches results from API. Response XML is parsed into a list of dicts to be tabulated.
@@ -436,6 +459,7 @@ async def get_team_standings(season):
             )
         return results
     raise MissingDataError()
+
 
 async def get_race_results(rnd, season, winner_only=False):
     """Get race results for `round` in `season` as dict.
@@ -525,6 +549,7 @@ async def get_race_results(rnd, season, winner_only=False):
         return res
     raise MissingDataError()
 
+
 async def get_all_laps(rnd, season):
     """Get time and position data for each driver per lap in the race.
     Parameters
@@ -577,6 +602,7 @@ async def get_all_laps(rnd, season):
                 for t in lap.find_all('timing')]
         return res
     raise MissingDataError()
+
 
 async def get_all_laps_for_driver(driver, laps):
     """Get the lap times for each lap of the race for one driver to tabulate.
@@ -633,6 +659,7 @@ async def get_all_laps_for_driver(driver, laps):
             }
         )
     return res
+
 
 async def get_qualifying_results(rnd, season):
     """Gets qualifying results for `round` in `season`.
@@ -697,6 +724,7 @@ async def get_qualifying_results(rnd, season):
         return res
     raise MissingDataError()
 
+
 async def get_pitstops(rnd, season):
     """Get the race pitstop times for each driver.
     Parameters
@@ -754,6 +782,8 @@ async def get_pitstops(rnd, season):
             )
         return res
     raise MissingDataError()
+
+
 async def get_driver_championship_wins(driver_id):
     """Returns dict with driver standings results where the driver placed first.
     Parameters
@@ -796,6 +826,8 @@ async def get_driver_championship_wins(driver_id):
             )
         return res
     raise MissingDataError()
+
+
 async def get_driver_wins(driver_id):
     """Get total wins for the driver and a list of dicts with details for each race.
     Parameters
@@ -844,6 +876,7 @@ async def get_driver_wins(driver_id):
         return res
     raise MissingDataError()
 
+
 async def get_driver_poles(driver_id):
     """Get total pole positions for driver with details for each race.
     Parameters
@@ -875,7 +908,7 @@ async def get_driver_poles(driver_id):
     if soup:
         races = soup.racetable.find_all('race')
         res = {
-            'total':  int(soup.mrdata['total']),
+            'total': int(soup.mrdata['total']),
             'data': []
         }
         for race in races:
@@ -1020,6 +1053,7 @@ async def get_best_laps(rnd, season):
     }
     return res
 
+
 def countdown(target: datetime):
     """
     Calculate time to `target` datetime object from current time when invoked.
@@ -1039,11 +1073,14 @@ def countdown(target: datetime):
     )
     return [stringify, (d, h, m, s)]
 
+
 def date_parser(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %b')
 
+
 def time_parser(time_str):
     return datetime.strptime(time_str, '%H:%M:%SZ').strftime('%H:%M UTC')
+
 
 async def get_wiki_thumbnail(url):
     """Get image thumbnail from Wikipedia link. Returns the thumbnail URL."""
@@ -1062,10 +1099,12 @@ async def get_wiki_thumbnail(url):
     else:
         return 'https://i.imgur.com/kvZYOue.png'
 
+
 async def schedule(season='current'):
     url = f'http://ergast.com/api/f1/{season}.json'
     request = requests.get(url)
     return [request.status_code, request.json()["MRData"]["RaceTable"]["Races"]]
+
 
 async def nextRace():
     """Get the next race in the calendar and a countdown (from moment of req) as dict.
@@ -1101,21 +1140,182 @@ async def nextRace():
     date, time = (root["date"], root["time"])
     cd = countdown(datetime.strptime(f'{date} {time}', '%Y-%m-%d %H:%M:%SZ'))
     result = {
-                'season': season,
-                'countdown': cd[0],
-                'url': root['url'],
-                'data': {
-                    'Round': int(root['round']),
-                    'Name': root["raceName"],
-                    'Date': f"{date_parser(date)} {root['season']}",
-                    'Time': time_parser(time),
-                    'Circuit': root["Circuit"]['circuitName'],
-                    'Country': f"{root['Circuit']['Location']['locality']} , {root['Circuit']['Location']['country']}",
-                    'url':root['Circuit']['url'],
-                    'id': root["Circuit"]['circuitId']
-                }
-            }
+        'season': season,
+        'countdown': cd[0],
+        'url': root['url'],
+        'data': {
+            'Round': int(root['round']),
+            'Name': root["raceName"],
+            'Date': f"{date_parser(date)} {root['season']}",
+            'Time': time_parser(time),
+            'Circuit': root["Circuit"]['circuitName'],
+            'Country': f"{root['Circuit']['Location']['locality']} , {root['Circuit']['Location']['country']}",
+            'url': root['Circuit']['url'],
+            'id': root["Circuit"]['circuitId']
+        }
+    }
     return result
 
 
+async def get_status():
+    status = requests.get('https://livetiming.formula1.com/static/StreamingStatus.json')
 
+    if status.status_code == 200:
+        status.encoding = 'utf-8-sig'
+        if status.json()['Status'] == 'Offline':
+            return False
+        else:
+            return True
+    else:
+        return False
+
+async def get_session_info():
+    info = requests.get('https://livetiming.formula1.com/static/SessionInfo.json')
+    info.encoding = 'utf-8-sig'
+    info = info.json()
+    resDICT = {
+        'name': info['Meeting']['Name'],
+        'location': f"{info['Meeting']['Location']}, {info['Meeting']['Country']['Name']}",
+        'circuit': info['Meeting']['Circuit']['ShortName'],
+        'path': info['Path']
+    }
+    return resDICT
+
+async def get_live(path):
+    live = requests.get(f'https://livetiming.formula1.com/static/{path}SPFeed.json')
+    live.encoding = 'utf-8-sig'
+    live = live.json()
+    return live
+
+
+def weather(live):
+    data = live['Weather']['graph']['data']
+    temps = {
+        'trackTemp': data['pTrack'][-1],
+        'airTemp': data['pAir'][-1],
+        'Rain': data['pRaining'][-1],
+        'windSpeed': data['pWind Speed'][-1],
+        'humidity': data['pHumidity'][-1],
+        'pressure': data['pPressure'][-1],
+        'windDir': data['pWind Dir'][-1]
+    }
+    return temps
+
+
+def scores(live):
+    res = {}
+    for metric in live['Scores']['graph'].keys():
+        data = live['Scores']['graph'][metric]
+
+        if metric == 'TrackStatus':
+            status = {'lap': data[-2], 'status': data[-1]}
+            break
+
+        res.setdefault(str(metric), [])
+        if metric == 'Performance':
+            searchIndex = -1
+        else:
+            searchIndex = 1
+        for i in data.keys():
+            dic = {'Driver': i[1:], 'Value': data[i][searchIndex]}
+            res[str(metric)].append(dic)
+    return res, status
+
+def save_figure(fig, name='plot.png'):
+    """Save the figure as a file."""
+    fig.savefig(name, bbox_inches='tight')
+    print(f"Figure saved as {name}")
+
+def get_colours(live):
+    data = live['init']['data']['Drivers']
+    res = {}
+    for i in data:
+        res.setdefault(i['Initials'], i['Color'])
+    return res
+
+def pos(live):
+    data = live['LapPos']['graph']['data']
+    res = {}
+    for i in data.keys():
+        res.setdefault(i[1:], {'laps':[], 'position':[]})
+        for x in range(len(data[i])):
+            if x%2==0:
+                res[i[1:]]['laps'].append(data[i][x])
+            else:
+                res[i[1:]]['position'].append(data[i][x])
+    return res
+
+async def plotPos(live, colours):
+    """Plots the position over lap time"""
+    data = pos(live)
+    plt.style.use('dark_background')
+    fig, ax= plt.subplots()
+    fig.set_size_inches(12, 6)
+    lastpos = []
+    laps = 0
+    for driver in data.keys():
+        driverData = data[driver]
+        plt.plot(driverData['laps'], driverData['position'], figure=fig, color=f"#{colours[driver]}", label=driver)
+        lastpos.append(driverData['position'][-1])
+        if driverData['laps'][-1] > laps:
+            laps = driverData['laps'][-1]
+    else:
+        plt.xlabel('Lap')
+        plt.ylabel('Position')
+        plt.gca().invert_yaxis()
+        plt.yticks(lastpos, data.keys())
+        plt.gca().tick_params(axis='y', right=True, left=True, labelleft=False,labelright=True)
+        ax.xaxis.set_minor_locator(MultipleLocator(1))
+        save_figure(fig, name='position-plot.png')
+    return
+
+def numberRelations(live):
+    '''Tells what the driver's name and team is from its number'''
+    res = {}
+    for i in live['init']['data']['Drivers']:
+        res.setdefault(i['Num'], [i['Initials'], i['Team']])
+    return res
+
+async def extracTimeData(path):
+    res = []
+    timeData = requests.get(f'https://livetiming.formula1.com/static/{path}TimingData.json')
+    timeData.encoding = 'utf-8-sig'
+    timeData = timeData.json()
+    for i in timeData['Lines'].keys():
+        data = timeData['Lines'][i]
+        data['Position'] = int(data['Position'])
+        for i in data['Sectors']:
+            del i['Segments']
+        res.append(data)
+        sorted_Position = sorted(res, key=itemgetter('Position'))
+    return sorted_Position
+
+async def plotScores(colours, score):
+    filenames = []
+    for i in score.keys():
+        sorted_metric = sorted(score[i], key=itemgetter('Value'))
+        drivers = []
+        values = []
+        colour = []
+        for j in sorted_metric:
+            drivers.append(j['Driver'])
+            colour.append(f"#{colours[j['Driver']]}")
+            values.append(j['Value'])
+        plt.style.use('dark_background')
+        fig = plt.figure(figsize=(12,6))
+        plt.title(i)
+        plt.grid(axis='y')
+        plt.bar(drivers, values, color=colour)
+        save_figure(fig, name=f'{i}.png')
+        filenames.append(f"{i}.png")
+    return filenames
+
+'''
+data  = scores()
+for i in data[0].keys():
+    print(i)
+    print(utils.make_table(utils.rank_values(data[0][i]),))
+    print()
+else:
+    print(data[1])
+'''

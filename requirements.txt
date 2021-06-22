@@ -11,6 +11,7 @@ iso3166==1.0.1
 multidict==5.1.0
 beautifulsoup4==4.9.3
 lxml
+matplotlib
 tabulate==0.8.9
 protobuf==3.15.8
 requests==2.25.1

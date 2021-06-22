@@ -134,7 +134,9 @@ def rank_pitstops(times):
     """Sort pitstop times based on the duration. `times` is the response from `api.get_pitstops()`."""
     sorted_times = sorted(times['data'], key=itemgetter('Duration'))
     return sorted_times
-
+def rank_values(data):
+    sorted_values = sorted(data, key=itemgetter('Value'), reverse=True)
+    return sorted_values
 
 def filter_laps_by_driver(laps, drivers):
     """Filter lap time data to get only laps driven by the driver in `drivers`.
