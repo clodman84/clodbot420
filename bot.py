@@ -23,7 +23,8 @@ reply_url = ['https://media1.tenor.com/images/5fc568729ede3645080391e871bce197/t
 # ______________________________________________________________________________________________________________________
 
 cooldown = 0
-loud = True
+loud = False
+islive = False
 client = discord.Client()
 
 TeamImage = {
@@ -39,18 +40,17 @@ TeamImage = {
 'Haas F1 Team':'https://www.formula1.com/content/dam/fom-website/teams/2021/haas-f1-team.png.transform/4col/image.png'
 }
 # ______________________________________________________________________________________________________________________
-
+Update_messages = {'Timing': [],'Chart':None, 'weather': None}
 @client.event
 async def on_ready():
     now = datetime.utcnow()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
     channel = client.get_channel(799957897017688065)
     print(channel)
-    print('The bot is logged in as {0.user}'.format(client))
-    global Update_messages  # these variables are going to be used again
+    print('The bot is logged in as {0.user}'.format(client))  # these variables are going to be used again
     global numberRelations
     global colours
-    Update_messages = {'Timing': [], 'weather': None}
+
     session = await module.get_session_info()
     path = session['path']
     live = await module.get_live(path)
@@ -156,47 +156,74 @@ async def on_message(message):
 
             # ranking messages lessgoo
             timeData = await module.extracTimeData(path)
-            for i in timeData:
+            table = T.Texttable()
+            table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
+            data = [['NO','DRI', 'LEADER', '+AHEAD', 'LAPTIME', 'BESTLAP', 'REMARK']]
+            for index in range(len(timeData)):
+                i = timeData[index]
                 driver = numberRelations[i["RacingNumber"]][0]
-                colour = int(colours[driver], 16)
-                descrption = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
-                if i['LastLapTime']['OverallFastest']:
-                    descrption += f'**FASTEST LAP SET**\n'
-                elif i['LastLapTime']['PersonalFastest']:
-                    descrption += f"**Personal Fastest Lap**\n"
+                if index <= 3:
+                    colour = int(colours[driver], 16)
+                    descrption = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
+                    if i['LastLapTime']['OverallFastest']:
+                        descrption += f'**FASTEST LAP SET**\n'
+                    elif i['LastLapTime']['PersonalFastest']:
+                        descrption += f"**Personal Fastest Lap**\n"
+                    else:
+                        descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
+                    if i['IntervalToPositionAhead']['Catching']:
+                        descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                    if i['InPit']:
+                        descrption += f'**In Pit** {i["NumberOfPitStops"]} stops so far\n'
+                    if i['PitOut']:
+                        descrption += f'**PitOut** {i["NumberOfPitStops"]} stops so far\n'
+                    if i['Retired']:
+                        descrption += f'**RETIRED**\n'
+                    if i['Stopped']:
+                        descrption += '**STOPPED**\n'
+                    for j in range(len(i['Sectors'])):
+                        sectorData = i['Sectors'][j]
+                        if sectorData['OverallFastest']:
+                            descrption += f'*Sector {j + 1} Time: {sectorData["Value"]}* **Overall Fastest** \n'
+                        elif sectorData['PersonalFastest']:
+                            descrption += f'*Sector {j + 1} Time:{sectorData["Value"]}* **Personal Fastest**\n'
+
+                    embed = discord.Embed(
+                        title=f'**{driver}** {i["GapToLeader"]}',
+                        colour=colour,
+                        description=descrption
+                    )
+                    embed.set_image(url=TeamImage[numberRelations[i["RacingNumber"]][1]])
+                    Update_messages['Timing'].append(await message.channel.send(embed=embed))
                 else:
-                    descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
-                if i['IntervalToPositionAhead']['Catching']:
-                    descrption += f"**{i['IntervalToPositionAhead']['Value']}** *Closing in on driver ahead* \n"
-                if i['InPit']:
-                    descrption+= f'*In Pit* {i["NumberOfPitStops"]} stops so far\n'
-                if i['PitOut']:
-                    descrption+= f'PitOut {i["NumberOfPitStops"]} stops so far\n'
-                if i['Retired']:
-                    descrption+= f'**RETIRED**\n'
-                if i['Stopped']:
-                    descrption+= '**STOPPED**\n'
-                for j in range(len(i['Sectors'])):
-                    sectorData = i['Sectors'][j]
-                    if sectorData['OverallFastest']:
-                        descrption+= f'*Overall Fastest in Sector {j+1}* Time: **{sectorData["Value"]}**\n'
-                    if sectorData['PersonalFastest']:
-                        descrption+= f'*Personal Fastest in Sector {j+1}* Time: **{sectorData["Value"]}**\n'
+                    des = ''
+                    if i['LastLapTime']['OverallFastest']:
+                        des += 'Fastest Lap '
+                    for j in range(len(i['Sectors'])):
+                        sectorData = i['Sectors'][j]
+                        if sectorData['OverallFastest']:
+                            des += f'Sector {j+1} Fastest'
+                    if i['InPit']:
+                        des = f'IN PITS'
+                    if i['PitOut']:
+                        des = f'PITOUT'
+                    if i['Retired']:
+                        des = f'RETIRED'
+                    if i['Stopped']:
+                        des = 'STOPPED'
+                    if i['IntervalToPositionAhead']['Catching']:
+                        des += 'Closing Gap'
+                    driverData = [index+1,driver, i["GapToLeader"], i['IntervalToPositionAhead']['Value'],i["LastLapTime"]["Value"],i['BestLapTime']['Value'], des]
+                    data.append(driverData)
 
-                embed = discord.Embed(
-                    title=f'**{driver}** {i["GapToLeader"]}',
-                    colour=colour,
-                    description=descrption
-                )
-                embed.set_image(url=TeamImage[numberRelations[i["RacingNumber"]][1]])
-                Update_messages['Timing'].append(await message.channel.send(embed=embed))
-
+            table.add_rows(data)
+            Update_messages['Chart'] = await message.channel.send(f'```{table.draw()}```')
 
             islive = True
             cooldown = 72000
         elif message.content.lower() == '--stoplive':
             islive = False
-            Update_messages = {'Timing': [], 'weather': None}
+            Update_messages = {'Timing': [],'Chart':None, 'weather': None}
             await message.channel.send('Live F1 over')
 
         elif message.content.lower() == '--plotpos':
@@ -878,13 +905,11 @@ async def on_message(message):
         if Text[1][-4:] == 'CUNT':
             cooldown = 3600
 
-islive = False
 @tasks.loop(seconds=5.0)
 async def serverStatus():
     global cooldown
     if cooldown > 0:
         cooldown = cooldown - 5.0
-
     if islive:
         session = await module.get_session_info()
         path = session['path']
@@ -913,41 +938,68 @@ async def serverStatus():
 
         # ranking messages lessgoo
         timeData = await module.extracTimeData(path)
+        table = T.Texttable()
+        table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
+        data = [['NO','DRI', 'LEADER', '+AHEAD', 'LAPTIME', 'BESTLAP', 'REMARK']]
         for index in range(len(timeData)):
             i = timeData[index]
             driver = numberRelations[i["RacingNumber"]][0]
-            colour = int(colours[driver], 16)
-            descrption = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
-            if i['LastLapTime']['OverallFastest']:
-                descrption += f'**FASTEST LAP SET**\n'
-            elif i['LastLapTime']['PersonalFastest']:
-                descrption += f"**Personal Fastest Lap**\n"
-            else:
-                descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
-            if i['IntervalToPositionAhead']['Catching']:
-                descrption += f"**{i['IntervalToPositionAhead']['Value']}** *Closing in on driver ahead* \n"
-            if i['InPit']:
-                descrption += f'*In Pit* {i["NumberOfPitStops"]} stops so far\n'
-            if i['PitOut']:
-                descrption += f'PitOut {i["NumberOfPitStops"]} stops so far\n'
-            if i['Retired']:
-                descrption += f'**RETIRED**\n'
-            if i['Stopped']:
-                descrption += '**STOPPED**\n'
-            for j in range(len(i['Sectors'])):
-                sectorData = i['Sectors'][j]
-                if sectorData['OverallFastest']:
-                    descrption += f'*Overall Fastest in Sector {j + 1}* Time: **{sectorData["Value"]}**\n'
-                if sectorData['PersonalFastest']:
-                    descrption += f'*Personal Fastest in Sector {j + 1}* Time: **{sectorData["Value"]}**\n'
+            if index <= 3:
+                colour = int(colours[driver], 16)
+                descrption = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
+                if i['LastLapTime']['OverallFastest']:
+                    descrption += f'**FASTEST LAP SET**\n'
+                elif i['LastLapTime']['PersonalFastest']:
+                    descrption += f"**Personal Fastest Lap**\n"
+                else:
+                    descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
+                if i['IntervalToPositionAhead']['Catching']:
+                    descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                if i['InPit']:
+                    descrption += f'**In Pit** {i["NumberOfPitStops"]} stops so far\n'
+                if i['PitOut']:
+                    descrption += f'**PitOut** {i["NumberOfPitStops"]} stops so far\n'
+                if i['Retired']:
+                    descrption += f'**RETIRED**\n'
+                if i['Stopped']:
+                    descrption += '**STOPPED**\n'
+                for j in range(len(i['Sectors'])):
+                    sectorData = i['Sectors'][j]
+                    if sectorData['OverallFastest']:
+                        descrption += f'*Sector {j + 1} Time: {sectorData["Value"]}* **Overall Fastest** \n'
+                    elif sectorData['PersonalFastest']:
+                        descrption += f'*Sector {j + 1} Time:{sectorData["Value"]}* **Personal Fastest**\n'
 
-            embed = discord.Embed(
-                title=f'**{driver}** {i["GapToLeader"]}',
-                colour=colour,
-                description=descrption
-            )
-            embed.set_image(url=TeamImage[numberRelations[i["RacingNumber"]][1]])
-            await Update_messages['Timing'][index].edit(embed=embed)
+                embed = discord.Embed(
+                    title=f'**{driver}** {i["GapToLeader"]}',
+                    colour=colour,
+                    description=descrption
+                )
+                embed.set_image(url=TeamImage[numberRelations[i["RacingNumber"]][1]])
+                await Update_messages['Timing'][index].edit(embed=embed)
+            else:
+                des = ''
+                if i['LastLapTime']['OverallFastest']:
+                    des += 'Fastest Lap '
+                for j in range(len(i['Sectors'])):
+                    sectorData = i['Sectors'][j]
+                    if sectorData['OverallFastest']:
+                        des += f'SCTR {j + 1} Fastest'
+                if i['InPit']:
+                    des = 'IN PITS'
+                if i['PitOut']:
+                    des = 'PITOUT'
+                if i['Retired']:
+                    des = 'RETIRED'
+                if i['Stopped']:
+                    des = 'STOPPED'
+                if i['IntervalToPositionAhead']['Catching']:
+                    des += 'Closing Gap'
+                driverData = [index + 1, driver, f' {i["GapToLeader"]}', f" {i['IntervalToPositionAhead']['Value']}",
+                              i["LastLapTime"]["Value"], i['BestLapTime']['Value'], des]
+                data.append(driverData)
+        table.add_rows(data)
+        await Update_messages['Chart'].edit(content=f'```{table.draw()}```')
     return
 
 
