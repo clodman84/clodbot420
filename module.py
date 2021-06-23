@@ -179,12 +179,11 @@ async def joke():
         if response.json()['type'] == 'single' and response.json()['error'] == False:
             return response.json()['joke']
         elif response.json()['type'] == 'twopart' and response.json()['error'] == False:
-            return response.json()['setup'] + '\n' + response.json()['delivery']
+            return f"{response.json()['setup']}\n||{response.json()['delivery']}||"
     else:
         url = 'https://official-joke-api.appspot.com/random_joke'
         response = requests.request('GET', url)
-
-        return response.json()['setup'] + '\n' + response.json()['punchline']
+        return f"{response.json()['setup']}\n||{response.json()['punchline']}||"
 
 
 async def Nasa(type):
