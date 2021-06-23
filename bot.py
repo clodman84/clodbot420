@@ -9,8 +9,6 @@ from utils import is_future, make_table,rank_best_lap_times
 from discord.ext import tasks
 import module
 
-# Initialising the F1 data ---------------------------------------------------------------------------------------------
-
 # Words and phrases update _____________________________________________________________________________________________
 
 mycon = sql.connect('data.db')
@@ -476,27 +474,10 @@ async def on_message(message):
         elif message.content.lower()[0:10] == '--schedule':
             if len(message.content) == 10:
                 schedule = await module.schedule()
-                if schedule[0] == 200:
-                    table = T.Texttable()
-                    table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
-                    data = [['Country', 'Search ID', 'Date']]
-                    for i in schedule[1]:
-                        country = i["Circuit"]['Location']['country']
-                        searchID = i["Circuit"]['circuitId']
-                        date = i["date"]
-                        data.append([country, searchID, date])
-                    else:
-                        table.add_rows(data)
-                        await message.channel.send(
-                            f"```{table.draw()}```")
-
-                else:
-                    await message.channel.send(f"Error {schedule[0]}")
             else:
-                print(message.content[10:])
-                schedule = module.schedule(int(message.content[10:]))
-
-                if schedule[0] == 200:
+                year = message.content.split(' ')[1]
+                schedule = await module.schedule(year)
+            if schedule[0] == 200:
                     table = T.Texttable()
                     table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
                     data = [['Country', 'Search ID', 'Date']]
@@ -510,8 +491,9 @@ async def on_message(message):
                         await message.channel.send(
                             f"```{table.draw()}```")
 
-                else:
-                    await message.channel.send(f"Error {schedule[0]}")
+            else:
+                await message.channel.send(f"Error {schedule[0]}")
+
         # Older Commands _________________________________________________________________________________________________
         elif message.content.lower() == '--bimg now':
             await message.channel.send("Getting ISRO satellite images")

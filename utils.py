@@ -48,23 +48,26 @@ def age(yob):
 
 
 def date_parser(date_str, type='r'):
+    """Takes the datetime value that ERGAST gives and then converts it into a betterlooking value, if r it give the season"""
     if type =='r':
         return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %b')
     else:
         return datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y')
 
 def time_parser(time_str):
+    """Has the ability to arse ERGAST's inconsistent adta"""
     try:
         return datetime.strptime(time_str, '%H:%M:%SZ').strftime('%H:%M UTC')
     except ValueError:
         return datetime.strptime(time_str,'%H:%M:%S.%f').strftime('%H:%M UTC')
+
 
 def countdown(target: datetime):
     """
     Calculate time to `target` datetime object from current time when invoked.
     Returns a list containing the string output and tuple of (days, hrs, mins, sec).
     """
-    delta = target - datetime.now()
+    delta = target - datetime.utcnow()
     d = delta.days if delta.days > 0 else 0
     # timedelta only stores seconds so calculate mins and hours by dividing remainder
     h, rem = divmod(delta.seconds, 3600)
@@ -135,6 +138,7 @@ def rank_pitstops(times):
     sorted_times = sorted(times['data'], key=itemgetter('Duration'))
     return sorted_times
 def rank_values(data):
+    """Sorts, but idk why I made this is."""
     sorted_values = sorted(data, key=itemgetter('Value'), reverse=True)
     return sorted_values
 

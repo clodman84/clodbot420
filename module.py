@@ -1053,27 +1053,6 @@ async def get_best_laps(rnd, season):
     }
     return res
 
-
-def countdown(target: datetime):
-    """
-    Calculate time to `target` datetime object from current time when invoked.
-    Returns a list containing the string output and tuple of (days, hrs, mins, sec).
-    """
-    delta = target - datetime.utcnow()
-    d = delta.days if delta.days > 0 else 0
-    # timedelta only stores seconds so calculate mins and hours by dividing remainder
-    h, rem = divmod(delta.seconds, 3600)
-    m, s = divmod(rem, 60)
-    # text representation
-    stringify = (
-        f"{int(d)} {'days' if d is not 1 else 'day'}, "
-        f"{int(h)} {'hours' if h is not 1 else 'hour'}, "
-        f"{int(m)} {'minutes' if m is not 1 else 'minute'}, "
-        f"{int(s)} {'seconds' if s is not 1 else 'second'} "
-    )
-    return [stringify, (d, h, m, s)]
-
-
 def date_parser(date_str):
     return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %b')
 
@@ -1100,11 +1079,40 @@ async def get_wiki_thumbnail(url):
         return 'https://i.imgur.com/kvZYOue.png'
 
 
-async def schedule(season='current'):
+def schedule(season='current'):
+    """
+    Returns the schedule for the season.
+    -------
+    List
+    [
+        ResponeStatusCode,
+
+        List[dict]
+        [
+        {
+            'season': str,
+            'round': str ,
+            'url': url,
+            'raceName': str,
+            'Circuit': dict {
+                'circuitId': str,
+                'url': str,
+                'circuitName': str,
+                'location': dict {
+                    'lat': str,
+                    'long': str,
+                    'locality': str,
+                    'country' : str,
+                }
+            }
+        }]
+
+
+    """
     url = f'http://ergast.com/api/f1/{season}.json'
     request = requests.get(url)
     return [request.status_code, request.json()["MRData"]["RaceTable"]["Races"]]
-
+print(schedule())
 
 async def nextRace():
     """Get the next race in the calendar and a countdown (from moment of req) as dict.
@@ -1138,7 +1146,7 @@ async def nextRace():
 
     root = root["Races"][0]
     date, time = (root["date"], root["time"])
-    cd = countdown(datetime.strptime(f'{date} {time}', '%Y-%m-%d %H:%M:%SZ'))
+    cd = utils.countdown(datetime.strptime(f'{date} {time}', '%Y-%m-%d %H:%M:%SZ'))
     result = {
         'season': season,
         'countdown': cd[0],
