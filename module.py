@@ -1078,7 +1078,7 @@ async def get_wiki_thumbnail(url):
         return 'https://i.imgur.com/kvZYOue.png'
 
 
-def schedule(season='current'):
+async def schedule(season='current'):
     """
     Returns the schedule for the season.
     -------
@@ -1111,7 +1111,6 @@ def schedule(season='current'):
     url = f'http://ergast.com/api/f1/{season}.json'
     request = requests.get(url)
     return [request.status_code, request.json()["MRData"]["RaceTable"]["Races"]]
-print(schedule())
 
 async def nextRace():
     """Get the next race in the calendar and a countdown (from moment of req) as dict.
