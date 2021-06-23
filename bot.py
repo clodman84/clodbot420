@@ -984,3 +984,4 @@ async def serverStatus():
         await Update_messages['Chart'].edit(content=f'```{table.draw()}```')
     return
 
+client.run('Nzk1OTYwMjQ0MzUzMzY4MTA0.X_Q9vg.jXalYoWmE-JrquPA84NbL1dVowU')
