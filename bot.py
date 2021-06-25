@@ -48,10 +48,14 @@ async def on_ready():
     print('The bot is logged in as {0.user}'.format(client))  # these variables are going to be used again
     global numberRelations
     global colours
-
     session = await module.get_session_info()
     path = session['path']
+    print(path)
     live = await module.get_live(path)
+    print(live)
+    if live == 404:
+        print('getting live')
+        live = await module.get_live('2021/2021-06-20_French_Grand_Prix/2021-06-20_Race/')
     numberRelations = module.numberRelations(live)
     colours = module.get_colours(live)
     if loud:
@@ -107,6 +111,7 @@ async def on_message(message):
     global numberRelations
     global colours
     global islive
+    global lastlive
     if str(message.author) in banned:
         explosion = explosions[random.randint(0, len(explosions) - 1)]
         launch = nukeLaunch[random.randint(0, len(nukeLaunch) - 1)]
@@ -129,6 +134,9 @@ async def on_message(message):
             session = await module.get_session_info()
             path = session['path']
             live = await module.get_live(path)
+            if live == 404:
+                await message.channel.send('Alas moment, 404, try again later')
+                return
             # Big Message showing the name of the Grand Prix
             result = await module.nextRace()
             track_url = result['url'].replace(f"{result['season']}_", '')
@@ -169,8 +177,11 @@ async def on_message(message):
                         descrption += f"**Personal Fastest Lap**\n"
                     else:
                         descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
-                    if i['IntervalToPositionAhead']['Catching']:
-                        descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                    try:
+                        if i['IntervalToPositionAhead']['Catching']:
+                            descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                    except KeyError:
+                        descrption += f"**{i['TimeDiffToPositionAhead']}**"
                     if i['InPit']:
                         descrption += f'**In Pit** {i["NumberOfPitStops"]} stops so far\n'
                     if i['PitOut']:
@@ -185,9 +196,12 @@ async def on_message(message):
                             descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Overall Fastest** \n'
                         elif sectorData['PersonalFastest']:
                             descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Personal Fastest**\n'
-
+                    try:
+                        gap = i['GapToLeader']
+                    except KeyError:
+                        gap = i['TimeDiffToFastest']
                     embed = discord.Embed(
-                        title=f'**{driver}** {i["GapToLeader"]}',
+                        title=f'**{driver}** {gap}',
                         colour=colour,
                         description=descrption
                     )
@@ -209,9 +223,14 @@ async def on_message(message):
                         des = f'RETIRED'
                     if i['Stopped']:
                         des = 'STOPPED'
-                    if i['IntervalToPositionAhead']['Catching']:
-                        des += 'Closing Gap'
-                    driverData = [index+1,driver, i["GapToLeader"], i['IntervalToPositionAhead']['Value'],i["LastLapTime"]["Value"],i['BestLapTime']['Value'], des]
+
+                    try:
+                        if i['IntervalToPositionAhead']['Catching']:
+                            des += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                            interval = i['IntervalToPositionAhead']['Value']
+                    except KeyError:
+                        interval = i['TimeDiffToPositionAhead']
+                    driverData = [index+1,driver, gap, interval, i["LastLapTime"]["Value"],i['BestLapTime']['Value'], des]
                     data.append(driverData)
 
             table.add_rows(data)
@@ -896,6 +915,8 @@ async def serverStatus():
         session = await module.get_session_info()
         path = session['path']
         live = await module.get_live(path)
+        if live == 404:
+            return
         result = await module.nextRace()
         track_url = result['url'].replace(f"{result['season']}_", '')
         track_url_img = await module.get_wiki_thumbnail(track_url)
@@ -935,8 +956,11 @@ async def serverStatus():
                     descrption += f"**Personal Fastest Lap**\n"
                 else:
                     descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
-                if i['IntervalToPositionAhead']['Catching']:
-                    descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                try:
+                    if i['IntervalToPositionAhead']['Catching']:
+                        descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                except KeyError:
+                    descrption += f"**{i['TimeDiffToPositionAhead']}**"
                 if i['InPit']:
                     descrption += f'**In Pit** {i["NumberOfPitStops"]} stops so far\n'
                 if i['PitOut']:
@@ -951,9 +975,12 @@ async def serverStatus():
                         descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Overall Fastest** \n'
                     elif sectorData['PersonalFastest']:
                         descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Personal Fastest**\n'
-
+                try:
+                    gap = i['GapToLeader']
+                except KeyError:
+                    gap = i['TimeDiffToFastest']
                 embed = discord.Embed(
-                    title=f'**{driver}** {i["GapToLeader"]}',
+                    title=f'**{driver}** {gap}',
                     colour=colour,
                     description=descrption
                 )
@@ -966,19 +993,24 @@ async def serverStatus():
                 for j in range(len(i['Sectors'])):
                     sectorData = i['Sectors'][j]
                     if sectorData['OverallFastest']:
-                        des += f'SCTR {j + 1} Fastest'
+                        des += f'Sector {j + 1} Fastest'
                 if i['InPit']:
-                    des = 'IN PITS'
+                    des = f'IN PITS'
                 if i['PitOut']:
-                    des = 'PITOUT'
+                    des = f'PITOUT'
                 if i['Retired']:
-                    des = 'RETIRED'
+                    des = f'RETIRED'
                 if i['Stopped']:
                     des = 'STOPPED'
-                if i['IntervalToPositionAhead']['Catching']:
-                    des += 'Closing Gap'
-                driverData = [index + 1, driver, f' {i["GapToLeader"]}', f" {i['IntervalToPositionAhead']['Value']}",
-                              i["LastLapTime"]["Value"], i['BestLapTime']['Value'], des]
+
+                try:
+                    if i['IntervalToPositionAhead']['Catching']:
+                        des += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                        interval = i['IntervalToPositionAhead']['Value']
+                except KeyError:
+                    interval = i['TimeDiffToPositionAhead']
+                driverData = [index + 1, driver, gap, interval, i["LastLapTime"]["Value"], i['BestLapTime']['Value'],
+                              des]
                 data.append(driverData)
         table.add_rows(data)
         await Update_messages['Chart'].edit(content=f'```{table.draw()}```')

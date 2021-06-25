@@ -1187,11 +1187,20 @@ async def get_session_info():
     }
     return resDICT
 
+
 async def get_live(path):
-    live = requests.get(f'https://livetiming.formula1.com/static/{path}SPFeed.json')
-    live.encoding = 'utf-8-sig'
-    live = live.json()
-    return live
+    code = 404
+    counter = 0
+    while code != 200 and counter <= 30:
+        live = requests.get(f'https://livetiming.formula1.com/static/{path}SPFeed.json')
+        code = live.status_code
+        counter += 1
+    if code == 200:
+        live.encoding = 'utf-8-sig'
+        live = live.json()
+        return live
+    else:
+        return 404
 
 
 def weather(live):
