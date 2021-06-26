@@ -22,23 +22,21 @@ reply_url = ['https://media1.tenor.com/images/5fc568729ede3645080391e871bce197/t
 
 cooldown = 0
 loud = True
-islive = False
 client = discord.Client()
 
 TeamImage = {
-'Red Bull Racing':'https://www.formula1.com/content/dam/fom-website/teams/2021/red-bull-racing.png.transform/4col/image.png',
-'Mercedes':'https://www.formula1.com/content/dam/fom-website/teams/2021/mercedes.png.transform/4col/image.png',
-'McLaren':'https://www.formula1.com/content/dam/fom-website/teams/2021/mclaren.png.transform/4col/image.png',
-'AlphaTauri':'https://www.formula1.com/content/dam/fom-website/teams/2021/alphatauri.png.transform/4col/image.png',
-'Alpine':'https://www.formula1.com/content/dam/fom-website/teams/2021/alpine.png.transform/4col/image.png',
-'Aston Martin':'https://www.formula1.com/content/dam/fom-website/teams/2021/aston-martin.png.transform/4col/image.png',
-'Ferrari':'https://www.formula1.com/content/dam/fom-website/teams/2021/ferrari.png.transform/4col/image.png',
-'Alfa Romeo Racing':'https://www.formula1.com/content/dam/fom-website/teams/2021/alfa-romeo-racing.png.transform/4col/image.png',
-'Williams': 'https://www.formula1.com/content/dam/fom-website/teams/2021/williams.png.transform/4col/image.png',
-'Haas F1 Team':'https://www.formula1.com/content/dam/fom-website/teams/2021/haas-f1-team.png.transform/4col/image.png'
+'Red Bull Racing':['https://www.formula1.com/content/dam/fom-website/teams/2021/red-bull-racing.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/red-bull-racing-logo.png.transform/2col/image.png'],
+'Mercedes':['https://www.formula1.com/content/dam/fom-website/teams/2021/mercedes.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/mercedes-logo.png.transform/2col/image.png'],
+'McLaren':['https://www.formula1.com/content/dam/fom-website/teams/2021/mclaren.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/mclaren-logo.png.transform/2col/image.png'],
+'AlphaTauri':['https://www.formula1.com/content/dam/fom-website/teams/2021/alphatauri.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/alphatauri-logo.png.transform/2col/image.png'],
+'Alpine':['https://www.formula1.com/content/dam/fom-website/teams/2021/alpine.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/alpine-logo.png.transform/2col/image.png'],
+'Aston Martin':['https://www.formula1.com/content/dam/fom-website/teams/2021/aston-martin.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/aston-martin-logo.png.transform/2col/image.png'],
+'Ferrari':['https://www.formula1.com/content/dam/fom-website/teams/2021/ferrari.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/ferrari-logo.png.transform/2col/image.png'],
+'Alfa Romeo Racing':['https://www.formula1.com/content/dam/fom-website/teams/2021/alfa-romeo-racing.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/alfa-romeo-racing-logo.png.transform/2col/image.png'],
+'Williams': ['https://www.formula1.com/content/dam/fom-website/teams/2021/williams.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/williams-logo.png.transform/2col/image.png'],
+'Haas F1 Team':['https://www.formula1.com/content/dam/fom-website/teams/2021/haas-f1-team.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/haas-f1-team-logo.png.transform/2col/image.png']
 }
 # ______________________________________________________________________________________________________________________
-Update_messages = {'Timing': [],'Chart':None, 'weather': None}
 @client.event
 async def on_ready():
     now = datetime.utcnow()
@@ -52,7 +50,6 @@ async def on_ready():
     path = session['path']
     print(path)
     live = await module.get_live(path)
-    print(live)
     if live == 404:
         print('getting live')
         live = await module.get_live('2021/2021-06-20_French_Grand_Prix/2021-06-20_Race/')
@@ -110,8 +107,6 @@ async def on_message(message):
     global Update_messages  # these variables are going to be used again
     global numberRelations
     global colours
-    global islive
-    global lastlive
     if str(message.author) in banned:
         explosion = explosions[random.randint(0, len(explosions) - 1)]
         launch = nukeLaunch[random.randint(0, len(nukeLaunch) - 1)]
@@ -130,12 +125,12 @@ async def on_message(message):
         current_time = now.strftime("%d/%m/%Y %H:%M:%S")
         print(str(message.author) + ' said ' + str(message.content) + ' at ' + current_time)
         # formula1 commands --------------------------------------------------------------------------------------------
-        if message.content.lower() == '--startlive':
+        if message.content.lower() == '--sessioninfo':
             session = await module.get_session_info()
             path = session['path']
             live = await module.get_live(path)
             if live == 404:
-                await message.channel.send('Alas moment, 404, try again later')
+                await message.channel.send('Alas moment, 404')
                 return
             # Big Message showing the name of the Grand Prix
             result = await module.nextRace()
@@ -158,91 +153,63 @@ async def on_message(message):
             embed.add_field(name='Pressure', value=temps['pressure'])
             embed.set_thumbnail(url='https://i.imgur.com/kvZYOue.png')
             embed.set_image(url=track_url_img)
-            Update_messages['weather'] = await message.channel.send(embed=embed)
+            await message.channel.send(embed=embed)
 
             # ranking messages lessgoo
             timeData = await module.extracTimeData(path)
-            table = T.Texttable()
-            table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
-            data = [['NO','DRI', 'LEADER', '+AHEAD', 'LAPTIME', 'BESTLAP', 'REMARK']]
             for index in range(len(timeData)):
                 i = timeData[index]
                 driver = numberRelations[i["RacingNumber"]][0]
-                if index <= 3:
-                    colour = int(colours[driver], 16)
-                    descrption = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
-                    if i['LastLapTime']['OverallFastest']:
+                colour = int(colours[driver], 16)
+                descrption = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
+                if i['LastLapTime']['Value'] == '':
+                    descrption += 'Did Not Enter'
+                    embed = discord.Embed(
+                        title=f'**{driver}**',
+                        colour=colour,
+                        description=descrption
+                    )
+                    embed.set_image(url=TeamImage[numberRelations[i["RacingNumber"]][1]][0])
+                    await message.channel.send(embed=embed)
+                    continue
+                if i['LastLapTime']['OverallFastest']:
                         descrption += f'**FASTEST LAP SET**\n'
-                    elif i['LastLapTime']['PersonalFastest']:
+                elif i['LastLapTime']['PersonalFastest']:
                         descrption += f"**Personal Fastest Lap**\n"
-                    else:
+                else:
                         descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
-                    try:
-                        if i['IntervalToPositionAhead']['Catching']:
+                try:
+                    if i['IntervalToPositionAhead']['Catching']:
                             descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
-                    except KeyError:
-                        descrption += f"**{i['TimeDiffToPositionAhead']}**"
-                    if i['InPit']:
-                        descrption += f'**In Pit** {i["NumberOfPitStops"]} stops so far\n'
-                    if i['PitOut']:
-                        descrption += f'**PitOut** {i["NumberOfPitStops"]} stops so far\n'
-                    if i['Retired']:
+                    else:
+                            descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead\n"
+                except KeyError:
+                        descrption += f"**{i['TimeDiffToPositionAhead']}** to driver ahead\n"
+                if i['InPit']:
+                        descrption += f'**In Pit** {i["NumberOfPitStops"]} stops\n'
+                if i['PitOut']:
+                        descrption += f'**PitOut** {i["NumberOfPitStops"]} stops\n'
+                if i['Retired']:
                         descrption += f'**RETIRED**\n'
-                    if i['Stopped']:
+                if i['Stopped']:
                         descrption += '**STOPPED**\n'
-                    for j in range(len(i['Sectors'])):
+                for j in range(len(i['Sectors'])):
                         sectorData = i['Sectors'][j]
                         if sectorData['OverallFastest']:
                             descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Overall Fastest** \n'
                         elif sectorData['PersonalFastest']:
                             descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Personal Fastest**\n'
-                    try:
+                try:
                         gap = i['GapToLeader']
-                    except KeyError:
+                except KeyError:
                         gap = i['TimeDiffToFastest']
-                    embed = discord.Embed(
+                embed = discord.Embed(
                         title=f'**{driver}** {gap}',
                         colour=colour,
                         description=descrption
                     )
-                    embed.set_image(url=TeamImage[numberRelations[i["RacingNumber"]][1]])
-                    Update_messages['Timing'].append(await message.channel.send(embed=embed))
-                else:
-                    des = ''
-                    if i['LastLapTime']['OverallFastest']:
-                        des += 'Fastest Lap '
-                    for j in range(len(i['Sectors'])):
-                        sectorData = i['Sectors'][j]
-                        if sectorData['OverallFastest']:
-                            des += f'Sector {j+1} Fastest'
-                    if i['InPit']:
-                        des = f'IN PITS'
-                    if i['PitOut']:
-                        des = f'PITOUT'
-                    if i['Retired']:
-                        des = f'RETIRED'
-                    if i['Stopped']:
-                        des = 'STOPPED'
-
-                    try:
-                        if i['IntervalToPositionAhead']['Catching']:
-                            des += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
-                            interval = i['IntervalToPositionAhead']['Value']
-                    except KeyError:
-                        interval = i['TimeDiffToPositionAhead']
-                    driverData = [index+1,driver, gap, interval, i["LastLapTime"]["Value"],i['BestLapTime']['Value'], des]
-                    data.append(driverData)
-
-            table.add_rows(data)
-            Update_messages['Chart'] = await message.channel.send(f'```{table.draw()}```')
-
-            islive = True
-            cooldown = 72000
-        elif message.content.lower() == '--stoplive':
-            islive = False
-            Update_messages = {'Timing': [],'Chart':None, 'weather': None}
-            await message.channel.send('Live F1 over')
-
+                embed.set_image(url=TeamImage[numberRelations[i["RacingNumber"]][1]][0])
+                await message.channel.send(embed=embed)
         elif message.content.lower() == '--plotpos':
             sessionInfo = await module.get_session_info()
             path = sessionInfo['path']
@@ -911,109 +878,6 @@ async def serverStatus():
     global cooldown
     if cooldown > 0:
         cooldown = cooldown - 5.0
-    if islive:
-        session = await module.get_session_info()
-        path = session['path']
-        live = await module.get_live(path)
-        if live == 404:
-            return
-        result = await module.nextRace()
-        track_url = result['url'].replace(f"{result['season']}_", '')
-        track_url_img = await module.get_wiki_thumbnail(track_url)
-        embed = discord.Embed(
-            title=f"**{session['name']}**",
-            description=f"{session['circuit']}\n{session['location']}",
-            colour=0x1ed9c0,
-            url=track_url
-        )
-        embed.set_thumbnail(url='https://i.imgur.com/kvZYOue.png')
-        temps = module.weather(live)
-        embed.add_field(name='Track Temperature', value=temps['trackTemp'])
-        embed.add_field(name='Air Temperature', value=temps['airTemp'])
-        embed.add_field(name='Rain', value=temps['Rain'])
-        embed.add_field(name='Wind Speed', value=temps['windSpeed'])
-        embed.add_field(name='Wind Direction', value=temps['windDir'])
-        embed.add_field(name='Humidity', value=temps['humidity'])
-        embed.add_field(name='Pressure', value=temps['pressure'])
-        embed.set_image(url=track_url_img)
-        embed.set_thumbnail(url='https://i.imgur.com/kvZYOue.png')
-        await Update_messages['weather'].edit(embed=embed)
-
-        # ranking messages lessgoo
-        timeData = await module.extracTimeData(path)
-        table = T.Texttable()
-        table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
-        data = [['NO','DRI', 'LEADER', '+AHEAD', 'LAPTIME', 'BESTLAP', 'REMARK']]
-        for index in range(len(timeData)):
-            i = timeData[index]
-            driver = numberRelations[i["RacingNumber"]][0]
-            if index <= 3:
-                colour = int(colours[driver], 16)
-                descrption = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
-                if i['LastLapTime']['OverallFastest']:
-                    descrption += f'**FASTEST LAP SET**\n'
-                elif i['LastLapTime']['PersonalFastest']:
-                    descrption += f"**Personal Fastest Lap**\n"
-                else:
-                    descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
-                try:
-                    if i['IntervalToPositionAhead']['Catching']:
-                        descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
-                except KeyError:
-                    descrption += f"**{i['TimeDiffToPositionAhead']}**"
-                if i['InPit']:
-                    descrption += f'**In Pit** {i["NumberOfPitStops"]} stops so far\n'
-                if i['PitOut']:
-                    descrption += f'**PitOut** {i["NumberOfPitStops"]} stops so far\n'
-                if i['Retired']:
-                    descrption += f'**RETIRED**\n'
-                if i['Stopped']:
-                    descrption += '**STOPPED**\n'
-                for j in range(len(i['Sectors'])):
-                    sectorData = i['Sectors'][j]
-                    if sectorData['OverallFastest']:
-                        descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Overall Fastest** \n'
-                    elif sectorData['PersonalFastest']:
-                        descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Personal Fastest**\n'
-                try:
-                    gap = i['GapToLeader']
-                except KeyError:
-                    gap = i['TimeDiffToFastest']
-                embed = discord.Embed(
-                    title=f'**{driver}** {gap}',
-                    colour=colour,
-                    description=descrption
-                )
-                embed.set_image(url=TeamImage[numberRelations[i["RacingNumber"]][1]])
-                await Update_messages['Timing'][index].edit(embed=embed)
-            else:
-                des = ''
-                if i['LastLapTime']['OverallFastest']:
-                    des += 'Fastest Lap '
-                for j in range(len(i['Sectors'])):
-                    sectorData = i['Sectors'][j]
-                    if sectorData['OverallFastest']:
-                        des += f'Sector {j + 1} Fastest'
-                if i['InPit']:
-                    des = f'IN PITS'
-                if i['PitOut']:
-                    des = f'PITOUT'
-                if i['Retired']:
-                    des = f'RETIRED'
-                if i['Stopped']:
-                    des = 'STOPPED'
-
-                try:
-                    if i['IntervalToPositionAhead']['Catching']:
-                        des += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
-                        interval = i['IntervalToPositionAhead']['Value']
-                except KeyError:
-                    interval = i['TimeDiffToPositionAhead']
-                driverData = [index + 1, driver, gap, interval, i["LastLapTime"]["Value"], i['BestLapTime']['Value'],
-                              des]
-                data.append(driverData)
-        table.add_rows(data)
-        await Update_messages['Chart'].edit(content=f'```{table.draw()}```')
     return
 
 client.run('Nzk1OTYwMjQ0MzUzMzY4MTA0.X_Q9vg.jXalYoWmE-JrquPA84NbL1dVowU')

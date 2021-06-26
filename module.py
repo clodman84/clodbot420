@@ -1191,7 +1191,7 @@ async def get_session_info():
 async def get_live(path):
     code = 404
     counter = 0
-    while code != 200 and counter <= 30:
+    while code != 200 and counter <= 3:
         live = requests.get(f'https://livetiming.formula1.com/static/{path}SPFeed.json')
         code = live.status_code
         counter += 1
