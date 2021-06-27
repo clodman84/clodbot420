@@ -4,6 +4,7 @@ import sqlite3 as sql
 import asyncio
 import discord
 import texttable as T
+import time
 from errors import DriverNotFoundError
 from utils import is_future, make_table,rank_best_lap_times
 from discord.ext import tasks
@@ -42,6 +43,9 @@ async def on_ready():
     now = datetime.utcnow()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
     channel = client.get_channel(799957897017688065)
+    a = time.perf_counter()
+    await module.isro_BIMG('27JUN', 2021, '0600')
+    print(time.perf_counter() - a, ' seconds')
     print(channel)
     print('The bot is logged in as {0.user}'.format(client))  # these variables are going to be used again
     global numberRelations
@@ -49,10 +53,9 @@ async def on_ready():
     session = await module.get_session_info()
     path = session['path']
     print(path)
-    live = await module.get_live(path)
-    if live == 404:
-        print('getting live')
-        live = await module.get_live('2021/2021-06-20_French_Grand_Prix/2021-06-20_Race/')
+    print('Getting live')
+    live = await module.get_live('2021/2021-06-20_French_Grand_Prix/2021-06-20_Race/')
+    print('Done')
     numberRelations = module.numberRelations(live)
     colours = module.get_colours(live)
     if loud:
@@ -61,6 +64,7 @@ async def on_ready():
 
         embed.set_footer(text="That's it nothing more " + current_time)
         await channel.send(embed=embed)
+    print('All tasks complete!')
     serverStatus.start()  # starts the presence update loop
 
 

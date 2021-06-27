@@ -1,6 +1,7 @@
 from country_bounding_boxes import (country_subunits_by_iso_code)
 import requests
 import random
+import httpx
 import sqlite3 as sql
 import utils
 import asyncio
@@ -241,16 +242,17 @@ def MARS():
 
 
 async def isro_BIMG(date, year, time):
-    """Generates URLs and performs a GET request on them and and sniffs out the latest ISRO satellite image, plans to open this to every type of image"""
-    a = 0
+    """Generates URLs and performs a GET request on them and gets the latest ISRO satellite image, plans to open this to every type of image"""
     count = 0
+    urls = []
     if int(time[2:]) >= 30:
         time = str(int(time[0:2]) + 1) + '00'
         if len(time) == 3:
             time = '0' + time
     else:
         time = time[0:2] + '30'
-    while a != 200 and int(time) > 0 and count < 49:
+    while int(time) > 0 and count <= 5:
+        count += 1
         if time[2:] == '00':
             time = str(int(time[:-2]) - 1) + '30'
         else:
@@ -258,23 +260,39 @@ async def isro_BIMG(date, year, time):
         if len(time) == 3:
             time = '0' + time
         url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
-        request = requests.get(url=url)
-        count += 1
-        a = request.status_code
+        urls.append(url)
         # trying 29 and 59
-        if a == 404:
-            if time[2:] == '00':
-                NEWtime = str(int(time[:-2]) - 1) + '59'
-            else:
-                NEWtime = time[:-2] + "29"
-            if len(NEWtime) == 3:
-                NEWtime = '0' + NEWtime
+        if time[2:] == '00':
+            NEWtime = str(int(time[:-2]) - 1) + '59'
+        else:
+            NEWtime = time[:-2] + "29"
+        if len(NEWtime) == 3:
+            NEWtime = '0' + NEWtime
             url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{NEWtime}_L1C_ASIA_MER_BIMG.jpg"
-            request = requests.get(url=url)
-            count += 1
-            a = request.status_code
-    return a, url
+            urls.append(url)
+    async with httpx.AsyncClient() as client:
+        tasks = (client.get(url) for url in urls)
+        reqs = await asyncio.gather(*tasks)
+    statusCodes = [req.status_code for req in reqs]
+    for i in range(len(statusCodes)):
+        if statusCodes[i] == 200:
+            return 200, urls[i]
+    else:
+        return 404, 'Alas Moment'
 
+def main():
+    import cProfile
+    import pstats
+    pr = cProfile.Profile()
+    pr.enable()
+    asyncio.run(isro_BIMG('27JUN', 2021, '0600'))
+    pr.disable()
+    stats = pstats.Stats(pr)
+    stats.sort_stats(pstats.SortKey.TIME)
+    stats.print_stats()
+
+if __name__ == '__main__':
+    main()
 
 async def feed(sat):
     """Extracts data from the rich site summary of the mosdac website"""
@@ -287,7 +305,6 @@ async def feed(sat):
             response.append([item.find('title').text, item.find('link').text, item.find('description').text,
                              item.find('pubDate').text])
     return response
-
 
 BASE_URL = 'http://ergast.com/api/f1'
 DRIVERS = utils.load_drivers()
