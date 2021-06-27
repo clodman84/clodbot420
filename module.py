@@ -70,7 +70,7 @@ async def translate(txt, author):
                ['I im su tured ouff truonsleting yuou, zeet talkateev ', 'European_CUNT'],
                ["I be so tired o' translatin' ye, that talkative ", 'Pirates_of_the_CUNT']]
     links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'valspeak.json']
-    response = requests.get('https://api.funtranslations.com/translate/' + links[random.randint(0, len(links) - 1)],
+    response = httpx.get('https://api.funtranslations.com/translate/' + links[random.randint(0, len(links) - 1)],
                             params={"text": txt})
     if response.status_code == 200:
         output = response.json()['contents']['translated']
@@ -87,9 +87,19 @@ async def translate(txt, author):
 async def globe():
     """OPEN SKY API. Global airplane data"""
     url = 'https://opensky-network.org/api/states/all'
-    response = requests.get(url=url)
+    response = httpx.get(url=url)
     return response.json()['states']
 
+def main():
+    import cProfile
+    import pstats
+    pr = cProfile.Profile()
+    pr.enable()
+    asyncio.run(airport('arrival', 'kjfk'))
+    pr.disable()
+    stats = pstats.Stats(pr)
+    stats.sort_stats(pstats.SortKey.TIME)
+    stats.print_stats()
 
 async def bbox(bbox):
     """OPEN SKY API. Returns data within a specofic bounding box, not implemented yet"""
@@ -97,7 +107,7 @@ async def bbox(bbox):
     url = 'https://opensky-network.org/api/states/all'
     b = bbox
     param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
-    response = requests.get(url=url, params=param)
+    response = httpx.get(url=url, params=param)
     return response.json()
 
 
@@ -114,7 +124,7 @@ async def iso(iso):
         b = box[i]
         n = name[i]
         param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
-        response = requests.get(url=url, params=param)
+        response = httpx.get(url=url, params=param)
         try:
             data = response.json()['states']
             number = len(data)
@@ -132,7 +142,7 @@ async def ind(icao):
 
     url = 'https://opensky-network.org/api/states/all'
     param = {"icao24": icao}
-    response = requests.get(url=url, params=param)
+    response = httpx.get(url=url, params=param)
     try:
         return response.json()['states'][0]
     except TypeError:
@@ -145,7 +155,7 @@ async def history(icao):
     url = 'https://opensky-network.org/api/flights/aircraft'
     param = {'icao24': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
              'end': int(datetime.utcnow().timestamp())}
-    response = requests.get(url=url, params=param)
+    response = httpx.get(url=url, params=param)
     return response.json()
 
 
@@ -156,13 +166,13 @@ async def airport(type, icao):
         url = 'https://opensky-network.org/api/flights/arrival'
         param = {'airport': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
                  'end': int(datetime.utcnow().timestamp())}
-        response = requests.get(url=url, params=param)
+        response = httpx.get(url=url, params=param)
         return response.json()
     if type == 'departure' and icao != 1:
         url = 'https://opensky-network.org/api/flights/departure'
         param = {'airport': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
                  'end': int(datetime.utcnow().timestamp())}
-        response = requests.get(url=url, params=param)
+        response = httpx.get(url=url, params=param)
         return response.json()
 
 
@@ -176,14 +186,14 @@ async def joke():
             'x-rapidapi-key': "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
             'x-rapidapi-host': "jokeapi-v2.p.rapidapi.com"
         }
-        response = requests.request("GET", url, headers=headers, params=querystring)
+        response = httpx.get(url=url, headers=headers, params=querystring)
         if response.json()['type'] == 'single' and response.json()['error'] == False:
             return response.json()['joke']
         elif response.json()['type'] == 'twopart' and response.json()['error'] == False:
             return f"{response.json()['setup']}\n||{response.json()['delivery']}||"
     else:
         url = 'https://official-joke-api.appspot.com/random_joke'
-        response = requests.request('GET', url)
+        response = httpx.get(url=url)
         return f"{response.json()['setup']}\n||{response.json()['punchline']}||"
 
 
@@ -194,7 +204,7 @@ async def Nasa(type):
     if type == 'APoD':
         url = "https://api.nasa.gov/planetary/apod"
         querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ', 'thumbs': True}
-        response = requests.request("GET", url, params=querystring)
+        response = httpx.get(url=url, params=querystring)
         if response.json()['media_type'] == "video":
             img_url = response.json()['thumbnail_url']
             description = response.json()['explanation'] + '\n Video Link : ' + response.json()['url']
@@ -208,7 +218,7 @@ async def Nasa(type):
     # How many people in space right now
     if type == 'people':
         url = "http://api.open-notify.org/astros.json"
-        response = requests.request("GET", url)
+        response = httpx.get(url=url)
         A = response.json()
         people = A['people']
         text = ""
@@ -219,7 +229,7 @@ async def Nasa(type):
     # iss location
     if type == 'iss':
         url = "http://api.open-notify.org/iss-now.json"
-        response = requests.request("GET", url)
+        response = httpx.get(url=url)
         pos = response.json()['iss_position']
         return pos
 
@@ -280,16 +290,6 @@ async def isro_BIMG(date, year, time):
     else:
         return 404, 'Alas Moment'
 
-def main():
-    import cProfile
-    import pstats
-    pr = cProfile.Profile()
-    pr.enable()
-    asyncio.run(isro_BIMG('27JUN', 2021, '0600'))
-    pr.disable()
-    stats = pstats.Stats(pr)
-    stats.sort_stats(pstats.SortKey.TIME)
-    stats.print_stats()
 
 if __name__ == '__main__':
     main()
