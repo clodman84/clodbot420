@@ -15,7 +15,6 @@ from operator import itemgetter
 
 mycon = sql.connect('data.db')
 cursor = mycon.cursor()
-
 """Only for cosmetic purposes."""
 
 
@@ -70,9 +69,10 @@ async def translate(txt, author):
                ['I im su tured ouff truonsleting yuou, zeet talkateev ', 'European_CUNT'],
                ["I be so tired o' translatin' ye, that talkative ", 'Pirates_of_the_CUNT']]
     links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'valspeak.json']
-    response = httpx.get('https://api.funtranslations.com/translate/' + links[random.randint(0, len(links) - 1)],
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await client.get('https://api.funtranslations.com/translate/' + links[random.randint(0, len(links) - 1)],
                             params={"text": txt})
-    if response.status_code == 200:
+    if response.status == 200:
         output = response.json()['contents']['translated']
         auth = author.split('#')[0]
         code = 200
@@ -87,7 +87,8 @@ async def translate(txt, author):
 async def globe():
     """OPEN SKY API. Global airplane data"""
     url = 'https://opensky-network.org/api/states/all'
-    response = httpx.get(url=url)
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await client.get(url=url)
     return response.json()['states']
 
 def main():
@@ -95,7 +96,7 @@ def main():
     import pstats
     pr = cProfile.Profile()
     pr.enable()
-    asyncio.run(airport('arrival', 'kjfk'))
+    asyncio.run(feed('3drimager'))
     pr.disable()
     stats = pstats.Stats(pr)
     stats.sort_stats(pstats.SortKey.TIME)
@@ -124,7 +125,8 @@ async def iso(iso):
         b = box[i]
         n = name[i]
         param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
-        response = httpx.get(url=url, params=param)
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await client.get(url=url, params=param)
         try:
             data = response.json()['states']
             number = len(data)
@@ -142,7 +144,8 @@ async def ind(icao):
 
     url = 'https://opensky-network.org/api/states/all'
     param = {"icao24": icao}
-    response = httpx.get(url=url, params=param)
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await client.get(url=url, params=param)
     try:
         return response.json()['states'][0]
     except TypeError:
@@ -155,7 +158,8 @@ async def history(icao):
     url = 'https://opensky-network.org/api/flights/aircraft'
     param = {'icao24': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
              'end': int(datetime.utcnow().timestamp())}
-    response = httpx.get(url=url, params=param)
+    async with httpx.AsyncClient(timeout=None) as client:
+        response = await client.get(url=url, params=param)
     return response.json()
 
 
@@ -166,13 +170,15 @@ async def airport(type, icao):
         url = 'https://opensky-network.org/api/flights/arrival'
         param = {'airport': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
                  'end': int(datetime.utcnow().timestamp())}
-        response = httpx.get(url=url, params=param)
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await client.get(url=url, params=param)
         return response.json()
     if type == 'departure' and icao != 1:
         url = 'https://opensky-network.org/api/flights/departure'
         param = {'airport': icao, 'begin': int(datetime.utcnow().timestamp()) - 604800,
                  'end': int(datetime.utcnow().timestamp())}
-        response = httpx.get(url=url, params=param)
+        async with httpx.AsyncClient(timeout=None) as client:
+            response = await client.get(url=url, params=param)
         return response.json()
 
 
@@ -280,10 +286,11 @@ async def isro_BIMG(date, year, time):
             NEWtime = '0' + NEWtime
             url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{NEWtime}_L1C_ASIA_MER_BIMG.jpg"
             urls.append(url)
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=None) as client:
         tasks = (client.get(url) for url in urls)
         reqs = await asyncio.gather(*tasks)
     statusCodes = [req.status_code for req in reqs]
+
     for i in range(len(statusCodes)):
         if statusCodes[i] == 200:
             return 200, urls[i]
@@ -291,14 +298,14 @@ async def isro_BIMG(date, year, time):
         return 404, 'Alas Moment'
 
 
-if __name__ == '__main__':
-    main()
+
 
 async def feed(sat):
     """Extracts data from the rich site summary of the mosdac website"""
 
     response = []
-    request = requests.get(f'https://mosdac.gov.in/{sat}.xml')
+    async with httpx.AsyncClient(timeout=None) as client:
+        request = await client.get(f'https://mosdac.gov.in/{sat}.xml')
     root = ET.fromstring(request.text)[0]
     for item in root.findall('item'):
         if item.find('guid').attrib['isPermaLink'] == 'true':
@@ -1351,3 +1358,5 @@ for i in data[0].keys():
 else:
     print(data[1])
 '''
+if __name__ == '__main__':
+    main()

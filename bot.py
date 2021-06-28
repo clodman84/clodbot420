@@ -107,8 +107,7 @@ async def on_message(message):
         return
     # commands
     global cooldown
-    global puppeteer
-    global Update_messages  # these variables are going to be used again
+    global puppeteer  # these variables are going to be used again
     global numberRelations
     global colours
     if str(message.author) in banned:
@@ -863,6 +862,17 @@ async def on_message(message):
     else:
         cursor.execute(f'update users set daily = {data[0][1] + 1} where userID = "{author}"')
         mycon.commit()
+
+    if message.channel.id == 858700343113416704:
+        if any(ele in content.lower() for ele in ['sus', 'sussy', 's u s', 's u s s y', 'omegasus']):
+            None
+        else:
+            embed = discord.Embed(
+                description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your sentence:**\n\n{content}",
+                colour=0x1ed9c0)
+            embed.set_footer(text=module.generator('sites'))
+            await message.channel.send(embed=embed)
+            await message.delete()
 
     if message.attachments or any(
             ele in content for ele in ['/', '%', 'https', ':', 'http', '--']) or message.reference:
