@@ -1,10 +1,14 @@
 import json
+from httpx import AsyncClient
 from operator import itemgetter
 from tabulate import tabulate
 from datetime import date, datetime
 from errors import MessageTooLongError, DriverNotFoundError
 
-
+async def get(url, params=None, headers=None):
+    async with AsyncClient(timeout=None) as client:
+        response = await client.get(url=url, params=params, headers=headers)
+    return response
 
 
 def contains(first, second):
@@ -48,7 +52,7 @@ def age(yob):
 
 
 def date_parser(date_str, type='r'):
-    """Takes the datetime value that ERGAST gives and then converts it into a betterlooking value, if r it give the season"""
+    """Takes the datetime value that ERGAST gives and then converts it into a betterlooking value, if r it gives the season"""
     if type =='r':
         return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %b')
     else:
