@@ -119,6 +119,17 @@ async def on_message(message):
             await message.reply(explosion)
             await asyncio.sleep(5)
             await message.delete()
+    if any(ele in message.content.lower() for ele in ['lewd']):
+        explosion = explosions[random.randint(0, len(explosions) - 1)]
+        launch = nukeLaunch[random.randint(0, len(nukeLaunch) - 1)]
+        await message.channel.send(f'Go to horny jail.')
+        await message.channel.send('https://tenor.com/view/doomslayer-doomguy-doom-eternal-seraphimsaber-gif-21010574')
+        await message.reply(launch)
+        await asyncio.sleep(5)
+        await message.reply(explosion)
+        await asyncio.sleep(5)
+        await message.delete()
+        return
     if message.channel.id == 842796682114498570 and puppeteer[0] and message.content[0:2] != '--':
         channel = client.get_channel(int(puppeteer[1]))
         await channel.send(str(message.content))
@@ -864,11 +875,11 @@ async def on_message(message):
         mycon.commit()
 
     if message.channel.id == 858700343113416704:
-        if any(ele in content.lower() for ele in ['sus', 'sussy', 's u s', 's u s s y', 'omegasus']):
+        if any(ele in content.lower() for ele in ['sus','s u s']):
             None
         else:
             embed = discord.Embed(
-                description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your sentence:**\n\n{content}",
+                description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your sentence:**\n{content}",
                 colour=0x1ed9c0)
             embed.set_footer(text=module.generator('sites'))
             await message.channel.send(embed=embed)
