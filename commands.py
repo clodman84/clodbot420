@@ -12,6 +12,9 @@ from pygicord import Paginator
 import airplanes
 import texttable as T
 
+
+LOUD = False
+
 help = commands.DefaultHelpCommand(
     no_category=''
 )
@@ -22,15 +25,9 @@ bot = commands.Bot(
     case_insensitive=True
 )
 
-path = asyncio.run(liveFormula.get_session_info())['path']
-live = asyncio.run(liveFormula.get_live(path))
+live = asyncio.run(liveFormula.get_live('2021/2021-06-20_French_Grand_Prix/2021-06-20_Race/'))
 numberRelations = liveFormula.numberRelations(live)
 colours = liveFormula.get_colours(live)
-
-
-@bot.event
-async def on_ready():
-    print('ready to rumble')
 
 
 async def check_season(ctx, season):
@@ -571,9 +568,6 @@ async def departure(ctx, icao):
         if len(data) > 1:
             table.add_rows(data)
             await ctx.send(
-                f"``` {table.draw()}```\nI have tracked {len(zebra)} aircraft departing from this airport in the last 7 days")
+                f"```{table.draw()}```\nI have tracked {len(zebra)} aircraft departing from this airport in the last 7 days")
         else:
             await ctx.send('Airport not found')
-
-
-bot.run('Nzk1OTYwMjQ0MzUzMzY4MTA0.X_Q9vg.jXalYoWmE-JrquPA84NbL1dVowU')
