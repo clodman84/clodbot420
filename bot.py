@@ -68,7 +68,7 @@ async def on_message(message):
     global COOLDOWN
     global PUPPET  # these variables are going to be used again
     await bot.process_commands(message)
-    if str(message.author) in banned:
+    if message.author.id in banned:
         explosion = explosions[random.randint(0, len(explosions) - 1)]
         launch = nukeLaunch[random.randint(0, len(nukeLaunch) - 1)]
         if message.attachments or 'tenor' in message.content:
@@ -233,6 +233,12 @@ async def target(ctx, target):
 @bot.command()
 async def show_target(ctx):
     await ctx.send(banned)
+
+
+@bot.command()
+async def drop(ctx, target):
+    banned.remove(target)
+    await ctx.send(f'<@{target}> was removed')
 
 
 @tasks.loop(seconds=5.0)
