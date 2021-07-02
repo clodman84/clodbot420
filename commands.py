@@ -3,28 +3,17 @@ from discord.embeds import Embed
 from discord.ext import commands
 from datetime import datetime
 import utils
+import asyncio
 import formula1
 import liveFormula
-import asyncio
 import space
 from errors import DriverNotFoundError
 from pygicord import Paginator
 import airplanes
 import texttable as T
 
-
-LOUD = False
-
-help = commands.DefaultHelpCommand(
-    no_category=''
-)
-
-bot = commands.Bot(
-    command_prefix='--',
-    help_command=help,
-    case_insensitive=True
-)
-
+help_command = commands.DefaultHelpCommand(no_category='Commands')
+bot = commands.Bot(command_prefix='--', help_command=help_command, case_insensitive=True)
 live = asyncio.run(liveFormula.get_live('2021/2021-06-20_French_Grand_Prix/2021-06-20_Race/'))
 numberRelations = liveFormula.numberRelations(live)
 colours = liveFormula.get_colours(live)
@@ -64,7 +53,7 @@ async def wdc(ctx, season='current'):
 
 @bot.command(aliases=['teams', 'constructors'])
 async def wcc(ctx, season='current'):
-    """Display Constructor Championship standings
+    """Displays constructor standings
     Usage:
     ------
     --wcc       -> Current WCC standings as of the last race.
@@ -389,6 +378,7 @@ async def feed(ctx, sat='3drimager'):
     paginator = Paginator(pages=pages)
     await paginator.start(ctx)
 
+
 @bot.command()
 async def satlist(ctx):
     satList = ['isrocast', '3dimager', '3drimager']
@@ -431,7 +421,6 @@ async def icao24(ctx, icao):
 
 @bot.command()
 async def iso(ctx, iso):
-
     await ctx.send('Searching ...')
     result = await airplanes.iso(iso)
     if result == None:
@@ -495,6 +484,7 @@ async def world(ctx):
         if a > 1:
             table.add_rows(data)
             await ctx.send(f"**World**``` {table.draw()} ```\nI can sense {len(zebra)} aircrafts in this area")
+
 
 @bot.command()
 async def history(ctx, icao):

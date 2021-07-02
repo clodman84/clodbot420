@@ -6,7 +6,6 @@ from discord import Embed
 from discord.ext import tasks
 import module
 import commands
-import space
 
 # Words and phrases update _____________________________________________________________________________________________
 
@@ -15,29 +14,8 @@ cursor = mycon.cursor()
 
 # ______________________________________________________________________________________________________________________
 
-cooldown = 0
 LOUD = True
-bot = commands.bot
-
-
-# ______________________________________________________________________________________________________________________
-@bot.event
-async def on_ready():
-        now = datetime.utcnow()
-        current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
-        channel = bot.get_channel(799957897017688065)
-        print(channel)
-        print('The bot is logged in as {0.user}'.format(bot))  # these variables are going to be used again
-        if LOUD:
-            de = "Guess who's back."
-            embed = Embed(title=module.generator('phrases'), description=de, colour=0x1ed9c0)
-
-            embed.set_footer(text="That's it nothing more " + current_time)
-            await channel.send(embed=embed)
-        print('All tasks complete!')
-        serverStatus.start()
-
-
+COOLDOWN = 3600
 nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',
               'https://c.tenor.com/Bupb0hg8c-EAAAAM/cat-launch.gif',
               'https://c.tenor.com/xW6YocQ1DokAAAAM/nasa-rocket-launch.gif',
@@ -60,9 +38,26 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif',
               'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif',
               'https://c.tenor.com/jkRrt2SrlMkAAAAM/pepe-nuke.gif',
               'https://c.tenor.com/24gGug50GqQAAAAM/nuke-nuclear.gif']
+PUPPET = [False, None]
+bot = commands.bot
 
-puppeteer = [False, None]
-live = False
+
+# ______________________________________________________________________________________________________________________
+@bot.event
+async def on_ready():
+    now = datetime.utcnow()
+    current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
+    channel = bot.get_channel(799957897017688065)
+    print(channel)
+    print('The bot is logged in as {0.user}'.format(bot))  # these variables are going to be used again
+    if LOUD:
+        de = "Guess who's back."
+        embed = Embed(title=module.generator('phrases'), description=de, colour=0x1ed9c0)
+
+        embed.set_footer(text="That's it nothing more " + current_time)
+        await channel.send(embed=embed)
+    print('All tasks complete!')
+    serverStatus.start()
 
 
 @bot.event
@@ -70,9 +65,9 @@ async def on_message(message):
     if message.author == bot.user or message.author.bot:
         return
     # commands
-    global cooldown
-    global puppeteer  # these variables are going to be used again
-
+    global COOLDOWN
+    global PUPPET  # these variables are going to be used again
+    await bot.process_commands(message)
     if str(message.author) in banned:
         explosion = explosions[random.randint(0, len(explosions) - 1)]
         launch = nukeLaunch[random.randint(0, len(nukeLaunch) - 1)]
@@ -83,12 +78,12 @@ async def on_message(message):
             await asyncio.sleep(5)
             await message.delete()
 
-    if message.channel.id == 842796682114498570 and puppeteer[0] and message.content[0:2] != '--':
-        channel = bot.get_channel(int(puppeteer[1]))
+    if message.channel.id == 842796682114498570 and PUPPET[0] and message.content[0:2] != '--':
+        channel = bot.get_channel(int(PUPPET[1]))
         await channel.send(str(message.content))
-
+    '''
     if message.content.startswith('--'):
-
+        print('entered here')
         # formula1 commands --------------------------------------------------------------------------------------------
         if message.content.lower() == '--show targets' and str(message.author) == 'clodman84#1215':
             await message.channel.send(banned)
@@ -159,19 +154,19 @@ async def on_message(message):
         elif message.content.lower() == '--porn':
             await message.channel.send(module.generator('phrases'))
         elif message.content.lower() == '--people':
-            await message.channel.send(await space('people'))
+            await message.channel.send(await space.people('people'))
         elif message.content.lower() == '--iss':
-            await message.channel.send(await space('iss'))
+            await message.channel.send(await space.iss('iss'))
         elif message.content.lower() == '--monke':
             await message.channel.send(module.generator('sentences'))
         elif message.content.lower() == '--cooldown':
-            await message.channel.send(cooldown)
+            await message.channel.send(COOLDOWN)
         elif message.content.lower() == '--minecraft':
             await message.channel.send(module.generator('minecraft'))
         elif message.content.lower() == '--website':
             await message.channel.send(module.generator('sites'))
         # ______________________________________________________________________________________________________________
-
+    '''
     author = str(message.author)
     content = str(message.content)
     cursor.execute(f'select * from users where userID = "{author}"')
@@ -197,7 +192,7 @@ async def on_message(message):
     if message.attachments or any(
             ele in content for ele in ['/', '%', 'https', ':', 'http', '--']) or message.reference:
         return
-    elif (data[0][1] + 1) % 50 == 0 and cooldown == 0 and len(content) <= 2048:
+    elif (data[0][1] + 1) % 50 == 0 and COOLDOWN == 0 and len(content) <= 2048:
         Text = await module.translate(message.content, str(author))
         embed = Embed(description="*" + Text[0] + "*", colour=0x1ed9c0)
         embed.set_footer(text="-" + Text[1])
@@ -205,19 +200,28 @@ async def on_message(message):
             await message.channel.send(embed=embed)
             await message.delete()
         if Text[1][-4:] == 'CUNT':
-            cooldown = 3600
+            COOLDOWN = 3600
 
 
 @bot.command()
-async def puppet(ctx, target):
-    global puppeteer
+async def ping(ctx):
+    latency = bot.latency
+    print(latency)
+    await ctx.send(f'Pong! {round(latency*1000, 3)} ms')
+
+
+@bot.command()
+async def obama(ctx, target):
+    global PUPPET
     if ctx.author.id == 793451663339290644:
-        if puppeteer[0]:
-            puppeteer[0] = False
+        if PUPPET[0]:
+            PUPPET[0] = False
             await ctx.send("I am now free")
         else:
-            puppeteer = [True, target]
+            PUPPET = [True, target]
             await ctx.send(f"I am now being controlled in channel, {bot.get_channel(int(target))}")
+    else:
+        await ctx.send(module.joke())
 
 
 @bot.command()
@@ -225,11 +229,18 @@ async def target(ctx, target):
     banned.append(target)
     await ctx.send(f'<@{target}> successfully targeted chief')
 
+
+@bot.command()
+async def show_target(ctx):
+    await ctx.send(banned)
+
+
 @tasks.loop(seconds=5.0)
 async def serverStatus():
-    global cooldown
-    if cooldown > 0:
-        cooldown = cooldown - 5.0
+    global COOLDOWN
+    if COOLDOWN > 0:
+        COOLDOWN -= 5.0
     return
+
 
 bot.run('Nzk1OTYwMjQ0MzUzMzY4MTA0.X_Q9vg.jXalYoWmE-JrquPA84NbL1dVowU')
