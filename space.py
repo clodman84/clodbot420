@@ -14,7 +14,7 @@ async def apod():
     else:
         try:
             img_url = response.json()['hdurl']
-        except:
+        except KeyError:
             img_url = response.json()['url']
         description = response.json()['explanation']
     return description, img_url, response.json()['title']
@@ -24,9 +24,9 @@ async def people():
     url = "http://api.open-notify.org/astros.json"
     response = await get(url=url)
     A = response.json()
-    people = A['people']
+    people_in_space = A['people']
     text = ""
-    for i in people:
+    for i in people_in_space:
         text += str(i) + '\n'
     number = A['number']
     return 'There are currently ' + str(number) + ' people in space\n' + text
@@ -78,7 +78,8 @@ async def isro_BIMG(date, year, time):
             NEWtime = time[:-2] + "29"
         if len(NEWtime) == 3:
             NEWtime = '0' + NEWtime
-            url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{NEWtime}_L1C_ASIA_MER_BIMG.jpg"
+            url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{NEWtime}_" \
+                  f"L1C_ASIA_MER_BIMG.jpg "
             urls.append(url)
     async with AsyncClient(timeout=None) as client:
         tasks = (client.get(url) for url in urls)

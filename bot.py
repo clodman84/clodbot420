@@ -6,6 +6,7 @@ from discord.ext import tasks
 import module
 import commands
 from space import apod
+
 # ______________________________________________________________________________________________________________________
 
 LOUD = True
@@ -35,6 +36,7 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif',
 PUPPET = [False, None]
 bot = commands.bot
 COUNTER = {}
+
 
 # ______________________________________________________________________________________________________________________
 @bot.event
@@ -188,7 +190,7 @@ async def counter(ctx):
 async def ping(ctx):
     latency = bot.latency
     print(latency)
-    await ctx.send(f'Pong! {round(latency*1000, 3)} ms')
+    await ctx.send(f'Pong! {round(latency * 1000, 3)} ms')
 
 
 @bot.command()

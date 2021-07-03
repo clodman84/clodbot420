@@ -78,10 +78,10 @@ async def schedule(ctx, season='current'):
         --schedule 2008 -> Schedule from 2008.
         """
     await check_season(ctx, season)
-    schedule = await formula1.schedule(season)
-    if schedule[0] == 200:
+    sched = await formula1.schedule(season)
+    if sched[0] == 200:
         data = {'Country': [], 'Search ID': [], 'Date': []}
-        for i in schedule[1]:
+        for i in sched[1]:
             data['Country'].append(i["Circuit"]['Location']['country'])
             data['Search ID'].append(i["Circuit"]['circuitId'])
             data['Date'].append(i["date"])
@@ -90,7 +90,7 @@ async def schedule(ctx, season='current'):
                 f"```{utils.make_table(data)}```")
 
     else:
-        await ctx.send(f"Error {schedule[0]}")
+        await ctx.send(f"Error {sched[0]}")
 
 
 @bot.command()
@@ -203,9 +203,9 @@ async def wins(ctx, driver_id):
     """Displays every win
         Usage:
         -----
-        --driverData VET
-        --driverData 33
-        --driverData michael_schumacher
+        --wins VET
+        --wins 33
+        --wins michael_schumacher
         """
     driver = formula1.get_driver_info(driver_id)
     await ctx.send(f"**{driver['firstname']} {driver['surname']}** Age:{driver['age']}")
@@ -226,9 +226,9 @@ async def poles(ctx, driver_id):
     """Displays every pole
         Usage:
         -----
-        --driverData VET
-        --driverData 33
-        --driverData michael_schumacher
+        --poles VET
+        --poles 33
+        --poles michael_schumacher
         """
     driver = formula1.get_driver_info(driver_id)
     await ctx.send(f"**{driver['firstname']} {driver['surname']} ** Age:{driver['age']}")
@@ -503,6 +503,7 @@ async def people(ctx):
         """
     await ctx.send(await space.people())
 
+
 @bot.command()
 async def icao24(ctx, icao):
     await ctx.send('Searching ...')
@@ -624,7 +625,7 @@ async def history(ctx, icao):
 @bot.command()
 async def arrival(ctx, icao):
     await ctx.send('Searching ...')
-    zebra = await airplanes.airport(type='arrival', icao=icao)
+    zebra = await airplanes.airport(travel_type='arrival', icao=icao)
     table = T.Texttable()
     table.set_cols_width([3, 6, 8, 20, 6, 20])
     table.set_cols_align(['l', 'c', 'l', 'c', 'c', 'c'])
@@ -642,7 +643,8 @@ async def arrival(ctx, icao):
         if len(data) > 1:
             table.add_rows(data)
             await ctx.send(
-                f"``` {table.draw()}```\nI have tracked {len(zebra)} aircraft arriving at this airport in the last 7 days")
+                f"``` {table.draw()}```\nI have tracked {len(zebra)} aircraft arriving at this airport in the last 7 "
+                f"days")
         else:
             await ctx.send('Airport not found')
 
@@ -650,7 +652,7 @@ async def arrival(ctx, icao):
 @bot.command()
 async def departure(ctx, icao):
     await ctx.send('Searching ...')
-    zebra = await airplanes.airport(type='departure', icao=icao)
+    zebra = await airplanes.airport(travel_type='departure', icao=icao)
     table = T.Texttable()
     table.set_cols_width([3, 6, 8, 20, 6, 20])
     table.set_cols_align(['l', 'c', 'l', 'c', 'c', 'c'])
@@ -668,6 +670,7 @@ async def departure(ctx, icao):
         if len(data) > 1:
             table.add_rows(data)
             await ctx.send(
-                f"```{table.draw()}```\nI have tracked {len(zebra)} aircraft departing from this airport in the last 7 days")
+                f"```{table.draw()}```\nI have tracked {len(zebra)} aircraft departing from this airport in the last "
+                f"7 days")
         else:
             await ctx.send('Airport not found')

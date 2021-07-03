@@ -4,17 +4,36 @@ from matplotlib.ticker import MultipleLocator
 from operator import itemgetter
 
 TeamImage = {
-'Red Bull Racing':['https://www.formula1.com/content/dam/fom-website/teams/2021/red-bull-racing.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/red-bull-racing-logo.png.transform/2col/image.png'],
-'Mercedes':['https://www.formula1.com/content/dam/fom-website/teams/2021/mercedes.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/mercedes-logo.png.transform/2col/image.png'],
-'McLaren':['https://www.formula1.com/content/dam/fom-website/teams/2021/mclaren.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/mclaren-logo.png.transform/2col/image.png'],
-'AlphaTauri':['https://www.formula1.com/content/dam/fom-website/teams/2021/alphatauri.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/alphatauri-logo.png.transform/2col/image.png'],
-'Alpine':['https://www.formula1.com/content/dam/fom-website/teams/2021/alpine.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/alpine-logo.png.transform/2col/image.png'],
-'Aston Martin':['https://www.formula1.com/content/dam/fom-website/teams/2021/aston-martin.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/aston-martin-logo.png.transform/2col/image.png'],
-'Ferrari':['https://www.formula1.com/content/dam/fom-website/teams/2021/ferrari.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/ferrari-logo.png.transform/2col/image.png'],
-'Alfa Romeo Racing':['https://www.formula1.com/content/dam/fom-website/teams/2021/alfa-romeo-racing.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/alfa-romeo-racing-logo.png.transform/2col/image.png'],
-'Williams': ['https://www.formula1.com/content/dam/fom-website/teams/2021/williams.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/williams-logo.png.transform/2col/image.png'],
-'Haas F1 Team':['https://www.formula1.com/content/dam/fom-website/teams/2021/haas-f1-team.png.transform/4col/image.png', 'https://www.formula1.com/content/dam/fom-website/teams/2021/haas-f1-team-logo.png.transform/2col/image.png']
+    'Red Bull Racing': [
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/red-bull-racing.png.transform/4col/image.png',
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/red-bull-racing-logo.png.transform/2col/image.png'],
+    'Mercedes': ['https://www.formula1.com/content/dam/fom-website/teams/2021/mercedes.png.transform/4col/image.png',
+                 'https://www.formula1.com/content/dam/fom-website/teams/2021/mercedes-logo.png.transform/2col/image'
+                 '.png'],
+    'McLaren': ['https://www.formula1.com/content/dam/fom-website/teams/2021/mclaren.png.transform/4col/image.png',
+                'https://www.formula1.com/content/dam/fom-website/teams/2021/mclaren-logo.png.transform/2col/image.png'],
+    'AlphaTauri': [
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/alphatauri.png.transform/4col/image.png',
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/alphatauri-logo.png.transform/2col/image.png'],
+    'Alpine': ['https://www.formula1.com/content/dam/fom-website/teams/2021/alpine.png.transform/4col/image.png',
+               'https://www.formula1.com/content/dam/fom-website/teams/2021/alpine-logo.png.transform/2col/image.png'],
+    'Aston Martin': [
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/aston-martin.png.transform/4col/image.png',
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/aston-martin-logo.png.transform/2col/image.png'],
+    'Ferrari': ['https://www.formula1.com/content/dam/fom-website/teams/2021/ferrari.png.transform/4col/image.png',
+                'https://www.formula1.com/content/dam/fom-website/teams/2021/ferrari-logo.png.transform/2col/image.png'],
+    'Alfa Romeo Racing': [
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/alfa-romeo-racing.png.transform/4col/image.png',
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/alfa-romeo-racing-logo.png.transform/2col/image'
+        '.png'],
+    'Williams': ['https://www.formula1.com/content/dam/fom-website/teams/2021/williams.png.transform/4col/image.png',
+                 'https://www.formula1.com/content/dam/fom-website/teams/2021/williams-logo.png.transform/2col/image'
+                 '.png'],
+    'Haas F1 Team': [
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/haas-f1-team.png.transform/4col/image.png',
+        'https://www.formula1.com/content/dam/fom-website/teams/2021/haas-f1-team-logo.png.transform/2col/image.png']
 }
+
 
 async def get_status():
     status = await get('https://livetiming.formula1.com/static/StreamingStatus.json')
@@ -139,7 +158,7 @@ async def plotPos(live, colours):
 
 
 def numberRelations(live):
-    '''Tells what the driver's name and team is from its number'''
+    """Tells what the driver's name and team is from its number"""
     res = {}
     for i in live['init']['data']['Drivers']:
         res.setdefault(i['Num'], [i['Initials'], i['Team']])
@@ -154,15 +173,15 @@ async def extracTimeData(path):
     for i in timeData['Lines'].keys():
         data = timeData['Lines'][i]
         data['Position'] = int(data['Position'])
-        for i in data['Sectors']:
-            del i['Segments']
+        for j in data['Sectors']:
+            del j['Segments']
         res.append(data)
     sorted_Position = sorted(res, key=itemgetter('Position'))
     return sorted_Position
 
 
 async def plotScores(colours, score):
-    filenames = []
+    filename = []
     for i in score.keys():
         sorted_metric = sorted(score[i], key=itemgetter('Value'))
         drivers = []
@@ -178,5 +197,5 @@ async def plotScores(colours, score):
         plt.grid(axis='y')
         plt.bar(drivers, values, color=colour)
         save_figure(fig, name=f'{i}.png')
-        filenames.append(f"{i}.png")
-    return filenames
+        filename.append(f"{i}.png")
+    return filename
