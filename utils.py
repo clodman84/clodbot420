@@ -5,6 +5,7 @@ from tabulate import tabulate
 from datetime import date, datetime
 from errors import MessageTooLongError, DriverNotFoundError
 
+
 async def get(url, params=None, headers=None):
     async with AsyncClient(timeout=None) as client:
         response = await client.get(url=url, params=params, headers=headers)
@@ -52,18 +53,20 @@ def age(yob):
 
 
 def date_parser(date_str, type='r'):
-    """Takes the datetime value that ERGAST gives and then converts it into a betterlooking value, if r it gives the season"""
-    if type =='r':
+    """Takes the datetime value that ERGAST gives and then converts it into a betterlooking value, if r it gives the
+    season """
+    if type == 'r':
         return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d %b')
     else:
         return datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y')
+
 
 def time_parser(time_str):
     """Has the ability to arse ERGAST's inconsistent adta"""
     try:
         return datetime.strptime(time_str, '%H:%M:%SZ').strftime('%H:%M UTC')
     except ValueError:
-        return datetime.strptime(time_str,'%H:%M:%S.%f').strftime('%H:%M UTC')
+        return datetime.strptime(time_str, '%H:%M:%S.%f').strftime('%H:%M UTC')
 
 
 def countdown(target: datetime):
@@ -141,10 +144,13 @@ def rank_pitstops(times):
     """Sort pitstop times based on the duration. `times` is the response from `api.get_pitstops()`."""
     sorted_times = sorted(times['data'], key=itemgetter('Duration'))
     return sorted_times
+
+
 def rank_values(data):
     """Sorts, but idk why I made this is."""
     sorted_values = sorted(data, key=itemgetter('Value'), reverse=True)
     return sorted_values
+
 
 def filter_laps_by_driver(laps, drivers):
     """Filter lap time data to get only laps driven by the driver in `drivers`.

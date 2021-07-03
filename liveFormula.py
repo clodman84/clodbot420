@@ -43,12 +43,8 @@ async def get_session_info():
 
 
 async def get_live(path):
-    code = 404
-    counter = 0
-    while code != 200 and counter <= 3:
-        live = await get(f'https://livetiming.formula1.com/static/{path}SPFeed.json')
-        code = live.status_code
-        counter += 1
+    live = await get(f'https://livetiming.formula1.com/static/{path}SPFeed.json')
+    code = live.status_code
     if code == 200:
         live.encoding = 'utf-8-sig'
         live = live.json()
@@ -77,7 +73,6 @@ def scores(live):
         data = live['Scores']['graph'][metric]
 
         if metric == 'TrackStatus':
-            status = {'lap': data[-2], 'status': data[-1]}
             break
 
         res.setdefault(str(metric), [])
@@ -88,7 +83,7 @@ def scores(live):
         for i in data.keys():
             dic = {'Driver': i[1:], 'Value': data[i][searchIndex]}
             res[str(metric)].append(dic)
-    return res, status
+    return res
 
 
 def save_figure(fig, name='plot.png'):
@@ -185,18 +180,3 @@ async def plotScores(colours, score):
         save_figure(fig, name=f'{i}.png')
         filenames.append(f"{i}.png")
     return filenames
-
-if __name__ == '__main__':
-    import asyncio
-    import cProfile
-    import pstats
-
-    path = asyncio.run(get_session_info())['path']
-    live = asyncio.run(get_live(path))
-    pr = cProfile.Profile()
-    pr.enable()
-    print(get_colours(live))
-    pr.disable()
-    stats = pstats.Stats(pr)
-    stats.sort_stats(pstats.SortKey.TIME)
-    stats.print_stats()

@@ -15,12 +15,13 @@ async def bbox(bbox):
     url = 'https://opensky-network.org/api/states/all'
     b = bbox
     param = {'lomin': b[0], 'lamin': b[1], 'lomax': b[2], 'lamax': b[3]}
-    response = get(url=url, params=param)
+    response = await get(url=url, params=param)
     return response.json()
 
 
 async def iso(iso):
-    """OPEN SKY API. Uses the same bounding box parameters as before but instead the data comes from a database of bounding boxes of various areas by iso code"""
+    """OPEN SKY API. Uses the same bounding box parameters as before but instead the data comes from a database of
+    bounding boxes of various areas by iso code """
 
     url = 'https://opensky-network.org/api/states/all'
     box = [c.bbox for c in country_subunits_by_iso_code(iso)]  # the bounding box coords

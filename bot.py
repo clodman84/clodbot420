@@ -1,17 +1,11 @@
 import random
 from datetime import datetime
-import sqlite3 as sql
 import asyncio
 from discord import Embed
 from discord.ext import tasks
 import module
 import commands
-
-# Words and phrases update _____________________________________________________________________________________________
-
-mycon = sql.connect('data.db')
-cursor = mycon.cursor()
-
+from space import apod
 # ______________________________________________________________________________________________________________________
 
 LOUD = True
@@ -40,7 +34,7 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif',
               'https://c.tenor.com/24gGug50GqQAAAAM/nuke-nuclear.gif']
 PUPPET = [False, None]
 bot = commands.bot
-
+COUNTER = {}
 
 # ______________________________________________________________________________________________________________________
 @bot.event
@@ -51,12 +45,11 @@ async def on_ready():
     print(channel)
     print('The bot is logged in as {0.user}'.format(bot))  # these variables are going to be used again
     if LOUD:
-        de = "Guess who's back."
-        embed = Embed(title=module.generator('phrases'), description=de, colour=0x1ed9c0)
-
+        APoD = await apod()
+        embed = Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
+        embed.set_image(url=APoD[1])
         embed.set_footer(text="That's it nothing more " + current_time)
         await channel.send(embed=embed)
-    print('All tasks complete!')
     serverStatus.start()
 
 
@@ -66,7 +59,8 @@ async def on_message(message):
         return
     # commands
     global COOLDOWN
-    global PUPPET  # these variables are going to be used again
+    global PUPPET
+    global COUNTER
     await bot.process_commands(message)
     if str(message.author.id) in banned:
         explosion = explosions[random.randint(0, len(explosions) - 1)]
@@ -141,22 +135,8 @@ async def on_message(message):
 
         elif message.content.lower() == '--ammo':
             await message.channel.send(module.ammo())
-        elif message.content.lower() == '--joke':
-            await message.channel.send(await module.joke())
-        elif message.content.lower() == '--ping':
-            await message.channel.send(
-                "pong! " + str(bot.latency) + " seconds\n" + module.generator('minecraft'))
-        elif message.content.lower() == '--counter':
-            cursor.execute(f'select * from users where userID = "{str(message.author)}"')
-            data = cursor.fetchall()[0]
-            await message.channel.send(
-                message.author.mention + f" you have spoken {data[1]} times today.")
         elif message.content.lower() == '--porn':
             await message.channel.send(module.generator('phrases'))
-        elif message.content.lower() == '--people':
-            await message.channel.send(await space.people('people'))
-        elif message.content.lower() == '--iss':
-            await message.channel.send(await space.iss('iss'))
         elif message.content.lower() == '--monke':
             await message.channel.send(module.generator('sentences'))
         elif message.content.lower() == '--cooldown':
@@ -167,32 +147,27 @@ async def on_message(message):
             await message.channel.send(module.generator('sites'))
         # ______________________________________________________________________________________________________________
     '''
-    author = str(message.author)
+    author = message.author
     content = str(message.content)
-    cursor.execute(f'select * from users where userID = "{author}"')
-    data = cursor.fetchall()
-    if data == []:
-        cursor.execute(f'insert into users values ("{author}", {1}, 0)')
-        mycon.commit()
+    if author.id not in COUNTER:
+        COUNTER.setdefault(author.id, 0)
     else:
-        cursor.execute(f'update users set daily = {data[0][1] + 1} where userID = "{author}"')
-        mycon.commit()
+        COUNTER[author.id] += 1
 
     if message.channel.id == 858700343113416704:
-        if any(ele in content.lower() for ele in ['sus', 's u s']):
-            None
-        else:
+        if not any(ele in content.lower() for ele in ['sus', 's u s']):
             embed = Embed(
-                description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your sentence:**\n\n{content}",
+                description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your "
+                            f"sentence:**\n\n{content}",
                 colour=0x1ed9c0)
             embed.set_footer(text=module.generator('sites'))
             await message.channel.send(embed=embed)
             await message.delete()
 
     if message.attachments or any(
-            ele in content for ele in ['/', '%', 'https', ':', 'http', '--']) or message.reference:
+            ele in content for ele in ['/', '%', ':', 'http', '--']) or message.reference:
         return
-    elif (data[0][1] + 1) % 50 == 0 and COOLDOWN == 0 and len(content) <= 2048:
+    elif (COUNTER[author.id]) % 50 == 0 and COOLDOWN == 0 and len(content) <= 2048:
         Text = await module.translate(message.content, str(author))
         embed = Embed(description="*" + Text[0] + "*", colour=0x1ed9c0)
         embed.set_footer(text="-" + Text[1])
@@ -204,6 +179,12 @@ async def on_message(message):
 
 
 @bot.command()
+async def counter(ctx):
+    user_id = ctx.author.id
+    await ctx.send(f"<@{user_id}> you have spoken {COUNTER[user_id]} times since my last reboot.")
+
+
+@bot.command()
 async def ping(ctx):
     latency = bot.latency
     print(latency)
@@ -211,23 +192,28 @@ async def ping(ctx):
 
 
 @bot.command()
-async def obama(ctx, target):
+async def joke(ctx):
+    await ctx.send(await module.joke())
+
+
+@bot.command()
+async def obama(ctx, channel):
     global PUPPET
     if ctx.author.id == 793451663339290644:
         if PUPPET[0]:
             PUPPET[0] = False
             await ctx.send("I am now free")
         else:
-            PUPPET = [True, target]
-            await ctx.send(f"I am now being controlled in channel, {bot.get_channel(int(target))}")
+            PUPPET = [True, channel]
+            await ctx.send(f"I am now being controlled in channel, {bot.get_channel(int(channel))}")
     else:
-        await ctx.send(module.joke())
+        await ctx.send(await module.joke())
 
 
 @bot.command()
-async def target(ctx, target):
-    banned.append(target)
-    await ctx.send(f'<@{target}> successfully targeted chief')
+async def target(ctx, targeted):
+    banned.append(targeted)
+    await ctx.send(f'<@{targeted}> successfully targeted chief')
 
 
 @bot.command()
@@ -236,9 +222,9 @@ async def show_target(ctx):
 
 
 @bot.command()
-async def drop(ctx, target):
-    banned.remove(target)
-    await ctx.send(f'<@{target}> was removed')
+async def drop(ctx, targeted):
+    banned.remove(targeted)
+    await ctx.send(f'<@{targeted}> was removed')
 
 
 @tasks.loop(seconds=5.0)

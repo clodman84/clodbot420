@@ -7,7 +7,7 @@ import asyncio
 import formula1
 import liveFormula
 import space
-from errors import DriverNotFoundError
+from errors import DriverNotFoundError, MessageTooLongError
 from pygicord import Paginator
 import airplanes
 import texttable as T
@@ -71,6 +71,12 @@ async def wcc(ctx, season='current'):
 
 @bot.command()
 async def schedule(ctx, season='current'):
+    """Displays the F1 schedule
+        Usage:
+        -----
+        --schedule      -> Current season
+        --schedule 2008 -> Schedule from 2008.
+        """
     await check_season(ctx, season)
     schedule = await formula1.schedule(season)
     if schedule[0] == 200:
@@ -89,11 +95,18 @@ async def schedule(ctx, season='current'):
 
 @bot.command()
 async def results(ctx, season='current', rnd='last'):
+    """Displays race results
+        Usage:
+        -----
+        --results        -> Last race
+        --results 2008   -> Last race of 2008
+        --results 2008 3 -> 3rd of 2008
+        """
     await check_season(ctx, season)
     result = await formula1.get_race_results(rnd, season)
     try:
         table = [utils.make_table(result['data'], fmt='simple')]
-    except:
+    except MessageTooLongError:
         data = result['data']
         middle = int(len(data) / 2)
         table = (utils.make_table(data[0:middle]), utils.make_table(data[middle:]))
@@ -104,6 +117,14 @@ async def results(ctx, season='current', rnd='last'):
 
 @bot.command()
 async def quali(ctx, season='current', rnd='last'):
+    """Displays Quali results
+        Usage:
+        -----
+        --quali        -> Last complete race
+        --quali 2008   -> Last quali of 2008
+        --quali 2008 3 -> 3rd of 2008
+        """
+
     await check_season(ctx, season)
     if int(season) < 2003:
         await ctx.send("Qualifying data is available only from 2003 onwards")
@@ -111,7 +132,7 @@ async def quali(ctx, season='current', rnd='last'):
     result = await formula1.get_qualifying_results(rnd, season)
     try:
         table = [utils.make_table(result['data'])]
-    except:
+    except MessageTooLongError:
         data = result['data']
         middle = int(len(data) / 2)
         table = (utils.make_table(data[0:middle]), utils.make_table(data[middle:]))
@@ -122,11 +143,19 @@ async def quali(ctx, season='current', rnd='last'):
 
 @bot.command()
 async def driverData(ctx, driver_id):
+    """Displays information for a driver
+        Usage:
+        -----
+        --driverData VET
+        --driverData 33
+        --driverData michael_schumacher
+        """
     await ctx.send("*Gathering driver data, this may take a few moments...*")
     try:
-        driver = await formula1.get_driver_info(driver_id)
+        driver = formula1.get_driver_info(driver_id)
     except DriverNotFoundError:
         await ctx.send('Driver not found')
+        return
     result = await formula1.get_driver_career(driver)
     thumb_url_task = asyncio.create_task(formula1.get_wiki_thumbnail(driver['url']))
     season_list = result['data']['Seasons']['years']
@@ -171,13 +200,20 @@ async def driverData(ctx, driver_id):
 
 @bot.command()
 async def wins(ctx, driver_id):
+    """Displays every win
+        Usage:
+        -----
+        --driverData VET
+        --driverData 33
+        --driverData michael_schumacher
+        """
     driver = formula1.get_driver_info(driver_id)
     await ctx.send(f"**{driver['firstname']} {driver['surname']}** Age:{driver['age']}")
-    wins = await formula1.get_driver_wins(driver['id'])
+    driver_wins = await formula1.get_driver_wins(driver['id'])
     try:
-        table = [utils.make_table(wins['data'], fmt='simple')]
-    except:
-        data = wins['data']
+        table = [utils.make_table(driver_wins['data'], fmt='simple')]
+    except MessageTooLongError:
+        data = driver_wins['data']
         middle = int(len(data) / 4)
         table = (utils.make_table(data[0:middle]), utils.make_table(data[middle:2 * middle]),
                  utils.make_table(data[2 * middle:3 * middle]), utils.make_table(data[3 * middle:]))
@@ -187,13 +223,20 @@ async def wins(ctx, driver_id):
 
 @bot.command()
 async def poles(ctx, driver_id):
+    """Displays every pole
+        Usage:
+        -----
+        --driverData VET
+        --driverData 33
+        --driverData michael_schumacher
+        """
     driver = formula1.get_driver_info(driver_id)
     await ctx.send(f"**{driver['firstname']} {driver['surname']} ** Age:{driver['age']}")
-    poles = await ctx.get_driver_poles(driver['id'])
+    driver_poles = await ctx.get_driver_poles(driver['id'])
     try:
         table = [utils.make_table(poles['data'], fmt='simple')]
-    except:
-        data = poles['data']
+    except MessageTooLongError:
+        data = driver_poles['data']
         middle = int(len(data) / 4)
         table = (utils.make_table(data[0:middle]), utils.make_table(data[middle:2 * middle]),
                  utils.make_table(data[2 * middle:3 * middle]), utils.make_table(data[3 * middle:]))
@@ -203,6 +246,11 @@ async def poles(ctx, driver_id):
 
 @bot.command()
 async def lastSession(ctx):
+    """Displays the last race results
+        Usage:
+        -----
+        --lastSession
+        """
     session = await liveFormula.get_session_info()
     path = session['path']
     live = await liveFormula.get_live(path)
@@ -291,6 +339,11 @@ async def lastSession(ctx):
 
 @bot.command()
 async def plotpos(ctx):
+    """Lap vs position plot for last race
+        Usage:
+        -----
+        --plotpos
+        """
     sessionInfo = await liveFormula.get_session_info()
     path = sessionInfo['path']
     live = await liveFormula.get_live(path)
@@ -301,12 +354,19 @@ async def plotpos(ctx):
 
 @bot.command()
 async def best(ctx, season='current', rnd='last'):
-    best = await formula1.get_best_laps(rnd, season)
-    await ctx.send(f"**{best['race']} {best['season']}** ")
+    """Displays best lap times
+        Usage:
+        -----
+        --best        -> Last complete race
+        --best 2008   -> Last quali of 2008
+        --best 2008 3 -> 3rd of 2008
+        """
+    data = await formula1.get_best_laps(rnd, season)
+    await ctx.send(f"**{data['race']} {data['season']}** ")
     try:
-        table = [utils.make_table(utils.rank_best_lap_times(best), fmt='simple')]
-    except:
-        data = utils.rank_best_lap_times(best)
+        table = [utils.make_table(utils.rank_best_lap_times(data), fmt='simple')]
+    except MessageTooLongError:
+        data = utils.rank_best_lap_times(data)
         middle = int(len(data) / 2)
         table = (utils.make_table(data[0:middle]), utils.make_table(data[middle:]))
     for i in table:
@@ -315,6 +375,11 @@ async def best(ctx, season='current', rnd='last'):
 
 @bot.command()
 async def nextRace(ctx):
+    """Countdown to next race
+        Usage:
+        -----
+        --nextRace
+        """
     result = await formula1.nextRace()
     track_url = result['url'].replace(f"{result['season']}_", '')
     track_url_img = asyncio.create_task(formula1.get_wiki_thumbnail(track_url))
@@ -338,6 +403,11 @@ async def nextRace(ctx):
 
 @bot.command()
 async def bimgNow(ctx):
+    """Latest satellite image from ISRO
+        Usage:
+        -----
+        --bimgNow
+        """
     await ctx.send("Getting ISRO satellite images")
     embed = Embed(title='INSAT-3D Blended Image', colour=0x1ed9c0)
     now = datetime.now()
@@ -354,6 +424,12 @@ async def bimgNow(ctx):
 
 @bot.command()
 async def bimg(ctx, date, year, time):
+    """Satellite image closest to specified time
+        Usage:
+        -----
+        --bimg 01jun 2018 0530
+        --bimg 28feb 2021 2330
+        """
     if len(date) == 5 and len(year) == 4 and len(time) == 4 and int(time) <= 2400:
         embed = Embed(title='INSAT-3D Blended Image', colour=0x1ed9c0)
         a = await space.isro_BIMG(date.upper(), year, time)
@@ -368,9 +444,14 @@ async def bimg(ctx, date, year, time):
 
 @bot.command()
 async def feed(ctx, sat='3drimager'):
-    feed = await space.feed(sat)
+    """ Satellite feed from specified satellite
+        Usage:
+        -----
+        --feed 3drimager  -> Shows images from insat-3dr, list of available satellites can be obtained from --satlist
+        """
+    sat_feed = await space.feed(sat)
     pages = []
-    for i in feed:
+    for i in sat_feed:
         embed = Embed(title=i[0], description=i[2], color=0x1ed9c0)
         embed.set_image(url=i[1])
         pages.append(embed)
@@ -381,12 +462,22 @@ async def feed(ctx, sat='3drimager'):
 
 @bot.command()
 async def satlist(ctx):
-    satList = ['isrocast', '3dimager', '3drimager']
-    await ctx.send(satList)
+    """Displays list of satellites to use in --feed command
+        Usage:
+        -----
+        --satlist
+        """
+    await ctx.send(['isrocast', '3dimager', '3drimager'])
 
 
 @bot.command()
 async def apod(ctx):
+    """Astronomy Photo of the Day
+        Usage:
+        -----
+        --apod
+        """
+
     APoD = await space.apod()
     embed = Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
     embed.set_image(url=APoD[1])
@@ -394,11 +485,30 @@ async def apod(ctx):
 
 
 @bot.command()
+async def iss(ctx):
+    """Current coordinates of the ISS
+     Usage:
+        -----
+        --iss
+        """
+    await ctx.send(await space.iss())
+
+
+@bot.command()
+async def people(ctx):
+    """Every human currently in space
+    Usage:
+        -----
+        --satlist
+        """
+    await ctx.send(await space.people())
+
+@bot.command()
 async def icao24(ctx, icao):
     await ctx.send('Searching ...')
     aircraft = await airplanes.ind(icao)
 
-    if aircraft != None:
+    if aircraft is not None:
         embed = Embed(title=aircraft[1])
         embed.add_field(name="icao24", value=aircraft[0])
         embed.add_field(name='Origin', value=aircraft[2])
@@ -420,10 +530,10 @@ async def icao24(ctx, icao):
 
 
 @bot.command()
-async def iso(ctx, iso):
+async def iso(ctx, iso_code):
     await ctx.send('Searching ...')
-    result = await airplanes.iso(iso)
-    if result == None:
+    result = await airplanes.iso(iso_code)
+    if result is None:
         await ctx.send('The ISO code you sent does not exist')
         return
     for area in result:
