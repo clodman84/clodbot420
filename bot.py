@@ -173,9 +173,9 @@ async def on_message(message):
             embed.set_footer(text=module.generator('sites'))
             await message.channel.send(embed=embed)
             await message.delete()
-    if message.channel.category.id != 860176783755313182 and (any(ele in content.lower() for ele in ['lewd', 'hentai', 'ecchi', 'l e w d']) or message.author.id in [310039170792030211, 571027211407196161]):
+    if message.channel.category.id != 860176783755313182 and (any(ele in content.lower() for ele in ['lewd', 'hentai', 'ecchi', 'l e w d']) or message.author.id in [337481187419226113, 571027211407196161]):
         dom = doom[random.randint(0, len(doom) - 1)]
-        await message.reply(dom)
+        await message.channel.send(dom)
         await message.delete()
     if message.attachments or any(
             ele in content for ele in ['/', '%', ':', 'http', '--']) or message.reference:
