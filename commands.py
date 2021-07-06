@@ -126,9 +126,10 @@ async def quali(ctx, season='current', rnd='last'):
         """
 
     await check_season(ctx, season)
-    if int(season) < 2003:
-        await ctx.send("Qualifying data is available only from 2003 onwards")
-        return
+    if season != 'current':
+        if int(season) < 2003:
+            await ctx.send("Qualifying data is available only from 2003 onwards")
+            return
     result = await formula1.get_qualifying_results(rnd, season)
     try:
         table = [utils.make_table(result['data'])]
