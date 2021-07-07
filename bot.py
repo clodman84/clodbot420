@@ -33,14 +33,13 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif',
               'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif',
               'https://c.tenor.com/jkRrt2SrlMkAAAAM/pepe-nuke.gif',
               'https://c.tenor.com/24gGug50GqQAAAAM/nuke-nuclear.gif']
+
 doom = ['https://tenor.com/view/crucible-doom-eternal-slayer-video-game-gif-16830152',
         'https://tenor.com/view/doom-logo-doom-video-game-logo-gif-14624225',
         'https://tenor.com/view/doom-eternal-gif-18822003',
         'https://tenor.com/view/doomslayer-doomguy-doom-eternal-seraphimsaber-gif-21010574',
         'https://tenor.com/view/sword-doom-doom-sword-gif-21163712',
-        'https://tenor.com/view/destory-eexplode-nuke-gif-6073338'
-
-]
+        'https://tenor.com/view/destory-eexplode-nuke-gif-6073338']
 PUPPET = [False, None]
 bot = commands.bot
 COUNTER = {}
@@ -173,7 +172,7 @@ async def on_message(message):
             embed.set_footer(text=module.generator('sites'))
             await message.channel.send(embed=embed)
             await message.delete()
-    if message.channel.category.id != 860176783755313182 and (any(ele in content.lower() for ele in ['lewd', 'hentai', 'ecchi', 'l e w d']) or message.author.id in [337481187419226113, 571027211407196161]):
+    if message.channel.category.id != 860176783755313182 and (any(ele in content.lower() for ele in [':lewd', 'hentai', 'ecchi', 'l e w d']) or message.author.id in [337481187419226113, 571027211407196161]):
         dom = doom[random.randint(0, len(doom) - 1)]
         await message.channel.send(dom)
         await message.delete()
