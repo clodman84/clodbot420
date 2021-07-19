@@ -86,7 +86,7 @@ async def on_message(message):
         await channel.send(str(message.content))
 
     if STUDY[1] and message.channel.id != 866030261341650953:
-        await bot.send_message(message.author, f'Don\' stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
+        await bot.send_message(message.author, f'Don\'t stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
                                    'you have a break.')
         return
     '''
