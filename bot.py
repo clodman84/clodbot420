@@ -85,10 +85,16 @@ async def on_message(message):
         channel = bot.get_channel(int(PUPPET[1]))
         await channel.send(str(message.content))
 
-    if STUDY[1] and message.channel.id != 866030261341650953 and message.author.id in [i.id for i in STUDY[2].keys()]:
-        await message.author.send(f'Don\'t stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
+    if STUDY[1] and message.author.id in [i.id for i in STUDY[2].keys()]:
+        if message.channel.id != 866030261341650953:
+            await message.author.send(f'Don\'t stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
                                    'you have a break.')
-        return
+        else:
+            if STUDY[3] == 13:
+                STUDY[3] = 0
+                await message.channel.send('Focus now, don\'t chit-chat, **Forever Monke** is calling.')
+            else:
+                STUDY[3] += 1
     '''
     if message.content.startswith('--'):
         print('entered here')
@@ -195,9 +201,9 @@ async def on_message(message):
             await message.delete()
         if Text[1][-4:] == 'CUNT':
             COOLDOWN = 3600
+    return
 
-
-STUDY = [0, False, {}]
+STUDY = [0, False, {}, 0]
 
 
 @bot.command()
