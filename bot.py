@@ -85,7 +85,7 @@ async def on_message(message):
         channel = bot.get_channel(int(PUPPET[1]))
         await channel.send(str(message.content))
 
-    if STUDY[1] and message.channel.id != 866030261341650953:
+    if STUDY[1] and message.channel.id != 866030261341650953 and message.author.id in [i.id for i in STUDY[2].keys()]:
         await bot.send_message(message.author, f'Don\'t stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
                                    'you have a break.')
         return
