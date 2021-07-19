@@ -249,7 +249,7 @@ async def start(ctx, study, relax):
     newNick = f"[STUDY] {nick}"
     await ctx.author.edit(nick=newNick)
 
-    STUDY[2].setdefault(ctx.author, goal)
+    STUDY[2].setdefault(ctx.author, [goal, ctx.author.nick])
     STUDY[1] = True
     await asyncio.sleep(5)
 
@@ -302,6 +302,8 @@ async def start(ctx, study, relax):
         await asyncio.sleep(5)
     else:
         STUDY[1] = False
+        STUDY[0] = 0
+        STUDY[3] = 0
         await ctx.send(
             f'{STUDY[0]} sessions which is {STUDY[0] * int(study)} minutes of work. Come back again, __**FOREVER MONKE!!**__')
         return
@@ -315,7 +317,7 @@ async def leave(ctx):
         return
     for i in STUDY[2].keys():
         if ctx.author.id == i.id:
-            embed = Embed(title='Did you achieve your goal?', description=STUDY[2][i], colour=0x1ed9c0)
+            embed = Embed(title='Did you achieve your goal?', description=STUDY[2][i][0], colour=0x1ed9c0)
             message = await ctx.send(ctx.author.mention, embed=embed)
             await message.add_reaction('✅')
             await message.add_reaction('❌')
@@ -326,15 +328,12 @@ async def leave(ctx):
                 if reaction.emoji == '❌':
                     await ctx.send('The path to Forever Monke is a hard one to navigate, come again at a later time.')
                 if reaction.emoji == '✅':
-                    await ctx.send('Well done! You are on the path to Forver Monke')
+                    await ctx.send(f'Well done! {ctx.author.mention} You are on the path to Forver Monke')
             except asyncio.TimeoutError:
                 await ctx.send("Couldn't decide if you succeeded? Nevermind.")
 
-            nick = i.nick
-            if nick == None:
-                await i.edit(nick=None)
-            else:
-                await i.edit(nick=nick)
+            nick = STUDY[2][i][1]
+            await i.edit(nick=nick)
             if STUDY[1]:
                 role = ctx.guild.get_role(866357915308785684)
                 await i.remove_roles(role)
@@ -355,7 +354,7 @@ async def join(ctx):
         await ctx.send('You are already a part of the study session')
         return
     else:
-        await ctx.send(ctx.author.mention + 'what\'s your goal for this session?')
+        await ctx.send(ctx.author.mention + ' what\'s your goal for this session?')
 
         def check(m):
             return m.channel == ctx.message.channel and m.author == ctx.author
@@ -373,7 +372,7 @@ async def join(ctx):
         await ctx.send(embed=embed)
 
         goal = msg.content
-        STUDY[2].setdefault(ctx.author, goal)
+        STUDY[2].setdefault(ctx.author, [goal, ctx.author.nick])
         nick = ctx.author.name
 
         if STUDY[1]:
