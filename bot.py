@@ -86,7 +86,7 @@ async def on_message(message):
         await channel.send(str(message.content))
 
     if STUDY[1] and message.channel.id != 866030261341650953:
-        await message.channel.send('Don\' stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
+        await bot.send_message(message.author, f'Don\' stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
                                    'you have a break.')
         return
     '''
@@ -212,7 +212,7 @@ async def start(ctx, study, relax):
         await ctx.send('A study session is already going on!')
         return
     # asks the setter to enter his goal, complete this part later
-    await ctx.send('The path of the Monke begins with a goal. Mine is total world domination, whats yours?')
+    await ctx.send('The Journey of the Forever Monke begins with a goal. Mine is total world domination, whats yours?')
 
     def check(m):
         return m.channel == ctx.message.channel and m.author == ctx.author
@@ -262,7 +262,7 @@ async def start(ctx, study, relax):
                 countdown = int(relax) * 60
                 STUDY[1] = False
                 description = "```fix\n" \
-                              "Its break time, you can chill now, jerk off or something\n\nTime left (break) - {}\n```"
+                              "Its break time, you can chill now, hug a cactus or something\n\nTime left (break) - {}\n```"
 
                 embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
                 role = ctx.guild.get_role(866357915308785684)
@@ -295,6 +295,7 @@ async def start(ctx, study, relax):
 
         await asyncio.sleep(5)
     else:
+        STUDY[1] = False
         await ctx.send(
             f'{STUDY[0]} sessions which is {STUDY[0] * int(study)} minutes of work. Come back again, __**FOREVER MONKE!!**__')
         return
