@@ -247,8 +247,10 @@ async def start(ctx, study, relax):
     await ctx.author.add_roles(role)
     nick = ctx.author.name
     newNick = f"[STUDY] {nick}"
-    await ctx.author.edit(nick=newNick)
-
+    try:
+        await ctx.author.edit(nick=newNick)
+    except:
+        None
     STUDY[2].setdefault(ctx.author, [goal, ctx.author.nick])
     STUDY[1] = True
     await asyncio.sleep(5)
@@ -277,7 +279,10 @@ async def start(ctx, study, relax):
                     mentions += i.mention
                     nick = i.name
                     newNick = f"[BREAK] {nick}"
-                    await i.edit(nick=newNick)
+                    try:
+                        await i.edit(nick=newNick)
+                    except:
+                        None
                     await i.remove_roles(role)
                 await clock.delete()
                 clock = await ctx.send(mentions, embed=embed)
@@ -294,7 +299,10 @@ async def start(ctx, study, relax):
                 for i in STUDY[2].keys():
                     nick = i.name
                     newNick = f"[STUDY] {nick}"
-                    await i.edit(nick=newNick)
+                    try:
+                        await i.edit(nick=newNick)
+                    except:
+                        None
                     await i.add_roles(role)
                 await clock.delete()
                 clock = await ctx.send(role.mention, embed=embed)
@@ -333,7 +341,10 @@ async def leave(ctx):
                 await ctx.send("Couldn't decide if you succeeded? Nevermind.")
 
             nick = STUDY[2][i][1]
-            await i.edit(nick=nick)
+            try:
+                await i.edit(nick=nick)
+            except:
+                None
             if STUDY[1]:
                 role = ctx.guild.get_role(866357915308785684)
                 await i.remove_roles(role)
@@ -381,8 +392,10 @@ async def join(ctx):
             newNick = f"[STUDY] {nick}"
         else:
             newNick = f"[BREAK] {nick}"
-
-        await ctx.author.edit(nick=newNick)
+        try:
+            await ctx.author.edit(nick=newNick)
+        except:
+            None
         return
 
 
