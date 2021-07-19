@@ -242,7 +242,7 @@ async def start(ctx, study, relax):
     description.format(timedelta(seconds=countdown))
     embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
     clock = await ctx.send(embed=embed)
-
+    await clock.pin()
     role = ctx.guild.get_role(866357915308785684)
     await ctx.author.add_roles(role)
     nick = ctx.author.name
@@ -286,6 +286,7 @@ async def start(ctx, study, relax):
                     await i.remove_roles(role)
                 await clock.delete()
                 clock = await ctx.send(mentions, embed=embed)
+                await clock.pin()
                 STUDY[0] += 1
 
             else:
@@ -306,14 +307,15 @@ async def start(ctx, study, relax):
                     await i.add_roles(role)
                 await clock.delete()
                 clock = await ctx.send(role.mention, embed=embed)
-
+                await clock.pin()
         await asyncio.sleep(5)
     else:
         STUDY[1] = False
+        await ctx.send(
+            f'{STUDY[0]} sessions which is {STUDY[0] * int(study)} minutes of work and {STUDY[0]*int(relax)} minutes '
+            f'of break. Come back again, __**FOREVER MONKE!!**__')
         STUDY[0] = 0
         STUDY[3] = 0
-        await ctx.send(
-            f'{STUDY[0]} sessions which is {STUDY[0] * int(study)} minutes of work. Come back again, __**FOREVER MONKE!!**__')
         return
 
 
@@ -396,6 +398,18 @@ async def join(ctx):
             await ctx.author.edit(nick=newNick)
         except:
             None
+        return
+
+
+@bot.command()
+async def goal(ctx):
+    global STUDY
+    for i in STUDY[2].keys():
+        if i.id == ctx.author.id:
+            ctx.send(STUDY[2][i])
+            return
+    else:
+        ctx.send('You haven\'t set a goal yung wan')
         return
 
 
