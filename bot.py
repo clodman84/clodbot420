@@ -1,5 +1,5 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 import asyncio
 from discord import Embed
 from discord.ext import tasks
@@ -84,6 +84,11 @@ async def on_message(message):
     if message.channel.id == 842796682114498570 and PUPPET[0] and message.content[0:2] != '--':
         channel = bot.get_channel(int(PUPPET[1]))
         await channel.send(str(message.content))
+
+    if STUDY[1] and message.channel.id != 866030261341650953:
+        await message.channel.send('Don\' stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
+                                   'you have a break.')
+        return
     '''
     if message.content.startswith('--'):
         print('entered here')
@@ -172,7 +177,9 @@ async def on_message(message):
             embed.set_footer(text=module.generator('sites'))
             await message.channel.send(embed=embed)
             await message.delete()
-    if message.channel.category.id != 860176783755313182 and (any(ele in content.lower() for ele in [':lewd', 'hentai', 'ecchi', 'l e w d']) or message.author.id in [337481187419226113, 571027211407196161]):
+    if message.channel.category.id != 860176783755313182 and (
+            any(ele in content.lower() for ele in [':lewd', 'hentai', 'ecchi', 'l e w d']) or message.author.id in
+            [337481187419226113, 571027211407196161]):
         dom = doom[random.randint(0, len(doom) - 1)]
         await message.channel.send(dom)
         await message.delete()
@@ -188,6 +195,189 @@ async def on_message(message):
             await message.delete()
         if Text[1][-4:] == 'CUNT':
             COOLDOWN = 3600
+
+
+STUDY = [0, False, {}]
+
+
+@bot.command()
+async def start(ctx, study, relax):
+    global STUDY
+
+    if ctx.message.channel.id != 866030261341650953:
+        await ctx.send('Please use STUDY commands in <#866030261341650953>')
+        return
+
+    if STUDY[1]:
+        await ctx.send('A study session is already going on!')
+        return
+    # asks the setter to enter his goal, complete this part later
+    await ctx.send('The path of the Monke begins with a goal. Mine is total world domination, whats yours?')
+
+    def check(m):
+        return m.channel == ctx.message.channel and m.author == ctx.author
+
+    try:
+        msg = await bot.wait_for('message', timeout=120, check=check)
+    except asyncio.TimeoutError:
+        await ctx.send('You took longer than 2 minutes to describe your goal for this session, come back when you are '
+                       'ready to walk the path of the **FOREVER MONKE!!**')
+        return
+    embed = Embed(
+        description=f'```Your goal:\n\n{msg.content}\n\nA timer of {study} minutes of work and {relax} minutes of break has been set```',
+        colour=0x1ed9c0)
+    await ctx.send(embed=embed)
+
+    goal = msg.content
+    # send the message and stores it as a clock variable
+    countdown = int(study) * 60
+    description = "```fix\n" \
+                  "Time to get started. MONKE MODE!!\n\nTime left (work) - {}\n```"
+    description.format(timedelta(seconds=countdown))
+    embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
+    clock = await ctx.send(embed=embed)
+
+    role = ctx.guild.get_role(866357915308785684)
+    await ctx.author.add_roles(role)
+    nick = ctx.author.name
+    newNick = f"[STUDY] {nick}"
+    await ctx.author.edit(nick=newNick)
+
+    STUDY[2].setdefault(ctx.author, goal)
+    STUDY[1] = True
+    await asyncio.sleep(5)
+
+    # timer
+    while len(STUDY[2].keys()) > 0:
+        # this is the part that changes the time
+        if countdown > 0:
+            countdown -= 5
+            description.format(timedelta(seconds=countdown))
+            embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
+            await clock.edit(embed=embed)
+
+        # this is the part that switches between break countdown and work countdown
+        if countdown == 0:
+            if STUDY[1]:
+                countdown = int(relax) * 60
+                STUDY[1] = False
+                description = "```fix\n" \
+                              "Its break time, you can chill now, jerk off or something\n\nTime left (break) - {}\n```"
+
+                embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
+                role = ctx.guild.get_role(866357915308785684)
+                mentions = ''
+                for i in STUDY[2].keys():
+                    mentions += i.mention
+                    nick = i.name
+                    newNick = f"[BREAK] {nick}"
+                    await i.edit(nick=newNick)
+                    await i.remove_roles(role)
+                await clock.delete()
+                clock = await ctx.send(mentions, embed=embed)
+                STUDY[0] += 1
+
+            else:
+                countdown = int(study) * 60
+                STUDY[1] = True
+                description = "```fix\n" \
+                              "Play time is over fellow MONKE, now get back to work.\n\nTime left (work) - {}\n```"
+                description.format(timedelta(seconds=countdown))
+                embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
+                role = ctx.guild.get_role(866357915308785684)
+                for i in STUDY[2].keys():
+                    nick = i.name
+                    newNick = f"[STUDY] {nick}"
+                    await i.edit(nick=newNick)
+                    await i.add_roles(role)
+                await clock.delete()
+                clock = await ctx.send(role.mention, embed=embed)
+
+        await asyncio.sleep(5)
+    else:
+        await ctx.send(
+            f'{STUDY[0]} sessions which is {STUDY[0] * int(study)} minutes of work. Come back again, __**FOREVER MONKE!!**__')
+        return
+
+
+@bot.command()
+async def leave(ctx):
+    global STUDY
+    if ctx.message.channel.id != 866030261341650953:
+        await ctx.send('Please use STUDY commands in <#866030261341650953>')
+        return
+    for i in STUDY[2].keys():
+        if ctx.author.id == i.id:
+            embed = Embed(title='Did you achieve your goal?', description=STUDY[2][i], colour=0x1ed9c0)
+            message = await ctx.send(ctx.author.mention, embed=embed)
+            await message.add_reaction('✅')
+            await message.add_reaction('❌')
+
+            try:
+                reaction, user = await bot.wait_for('reaction_add', timeout=15,
+                                                    check=lambda react, use: use == ctx.author)
+                if reaction.emoji == '❌':
+                    await ctx.send('The path to Forever Monke is a hard one to navigate, come again at a later time.')
+                if reaction.emoji == '✅':
+                    await ctx.send('Well done! You are on the path to Forver Monke')
+            except asyncio.TimeoutError:
+                await ctx.send("Couldn't decide if you succeeded? Nevermind.")
+
+            nick = i.nick
+            if nick == None:
+                await i.edit(nick=None)
+            else:
+                await i.edit(nick=nick)
+            if STUDY[1]:
+                role = ctx.guild.get_role(866357915308785684)
+                await i.remove_roles(role)
+            del STUDY[2][i]
+            break
+    else:
+        return
+
+
+@bot.command()
+async def join(ctx):
+    global STUDY
+    if ctx.message.channel.id != 866030261341650953:
+        await ctx.send('Please use STUDY commands in <#866030261341650953>')
+        return
+
+    if ctx.author.id in [i.id for i in STUDY[2].keys()]:
+        await ctx.send('You are already a part of the study session')
+        return
+    else:
+        await ctx.send(ctx.author.mention + 'what\'s your goal for this session?')
+
+        def check(m):
+            return m.channel == ctx.message.channel and m.author == ctx.author
+
+        try:
+            msg = await bot.wait_for('message', timeout=120, check=check)
+        except asyncio.TimeoutError:
+            await ctx.send(
+                'You took longer than 2 minutes to describe your goal for this session, come back when you are '
+                'ready to walk the path of the **FOREVER MONKE!!**')
+            return
+        embed = Embed(
+            description=f'```Your goal:\n\n{msg.content}\n\nhas been set```',
+            colour=0x1ed9c0)
+        await ctx.send(embed=embed)
+
+        goal = msg.content
+        STUDY[2].setdefault(ctx.author, goal)
+        nick = ctx.author.name
+
+        if STUDY[1]:
+            role = ctx.guild.get_role(866357915308785684)
+            await ctx.author.add_roles(role)
+            newNick = f"[STUDY] {nick}"
+        else:
+            newNick = f"[BREAK] {nick}"
+
+        await ctx.author.edit(nick=newNick)
+        return
 
 
 @bot.command()
