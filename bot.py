@@ -204,7 +204,12 @@ async def on_message(message):
     return
 
 STUDY = [0, False, {}, 0]
-
+@bot.command()
+async def diagnose(ctx):
+    variables = f'STUDY : {STUDY}\n\n' \
+                f'COOLDOWN: {COOLDOWN}\n\n' \
+                f'COUNTER: {COUNTER}\n\n'
+    await ctx.send(variables)
 
 @bot.command()
 async def start(ctx, study, relax):
@@ -221,7 +226,7 @@ async def start(ctx, study, relax):
     await ctx.send('The Journey of the Forever Monke begins with a goal. Mine is total world domination, whats yours?')
 
     def check(m):
-        return m.channel == ctx.message.channel and m.author == ctx.author
+        return m.channel == ctx.message.channel and m.author == ctx.author and m.content != '--join'
 
     try:
         msg = await bot.wait_for('message', timeout=120, check=check)
@@ -370,7 +375,7 @@ async def join(ctx):
         await ctx.send(ctx.author.mention + ' what\'s your goal for this session?')
 
         def check(m):
-            return m.channel == ctx.message.channel and m.author == ctx.author
+            return m.channel == ctx.message.channel and m.author == ctx.author and m.content != '--join'
 
         try:
             msg = await bot.wait_for('message', timeout=120, check=check)
@@ -379,6 +384,7 @@ async def join(ctx):
                 'You took longer than 2 minutes to describe your goal for this session, come back when you are '
                 'ready to walk the path of the **FOREVER MONKE!!**')
             return
+
         embed = Embed(
             description=f'```Your goal:\n\n{msg.content}\n\nhas been set```',
             colour=0x1ed9c0)
@@ -387,7 +393,6 @@ async def join(ctx):
         goal = msg.content
         STUDY[2].setdefault(ctx.author, [goal, ctx.author.nick])
         nick = ctx.author.name
-
         if STUDY[1]:
             role = ctx.guild.get_role(866357915308785684)
             await ctx.author.add_roles(role)
