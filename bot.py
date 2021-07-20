@@ -371,6 +371,9 @@ async def join(ctx):
     if ctx.author.id in [i.id for i in STUDY[2].keys()]:
         await ctx.send('You are already a part of the study session')
         return
+    if STUDY[1] == False:
+        await ctx.send('You need to start a study session first')
+        return
     else:
         await ctx.send(ctx.author.mention + ' what\'s your goal for this session?')
 

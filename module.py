@@ -61,7 +61,7 @@ async def translate(txt, author):
                ["I be so tired o' translatin' ye, that talkative ", 'Pirates_of_the_CUNT']]
     links = ['shakespeare.json', 'pirate.json', 'yoda.json', 'valspeak.json']
     response = await get('https://api.funtranslations.com/translate/' + links[random.randint(0, len(links) - 1)], params={"text": txt})
-    if response.status == 200:
+    if response.status_code == 200:
         output = response.json()['contents']['translated']
         auth = author.split('#')[0]
         code = 200
