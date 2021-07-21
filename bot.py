@@ -295,17 +295,23 @@ async def start(ctx, study, relax):
                 STUDY[0] += 1
 
                 # asks if they want to change your goal
-                embed = Embed(title='Do you want to change your goal?', description='React with a ✅ if you do.', colour=0x1ed9c0)
+                d = '```'
+                for monke in STUDY[2].keys():
+                    d += f'{monke.name} : {STUDY[2][monke][0]}\n\n'
+                else:
+                    d += '```'
+                embed = Embed(title='Do you want to change your goal?', description=d, colour=0x1ed9c0)
+                embed.set_footer(text='React with a ✅ if you do.')
                 message = await ctx.send(embed=embed)
                 await message.add_reaction('✅')
                 await asyncio.sleep(5)
-                message = ctx.fetch_message(message.id)
+                message = await ctx.fetch_message(message.id)
                 for reaction in message.reactions:
                     if str(reaction) == '✅':
-                        user_id = [user.id for user in reaction.users()]
+                        user_id = [user.id for user in await reaction.users().flatten()]
                         for monke in STUDY[2].keys():
                             if monke.id in user_id:
-                                embed = Embed(description=f'Your goal is:\n\n{STUDY[2][monke]}\n\nWhat do you want to '
+                                embed = Embed(description=f'Your goal is:\n\n{STUDY[2][monke][0]}\n\nWhat do you want to '
                                                           f'change it to?', colour=0x1ed9c0)
                                 await ctx.send(monke.mention, embed=embed)
                                 def check(m):
@@ -317,12 +323,16 @@ async def start(ctx, study, relax):
                                         f'{monke.mention} you took too long to describe your new goal for this '
                                         f'session, you can change it next session **FOREVER MONKE!!**')
                                     return
-                                STUDY[2][monke] = msg.content
-
-                                embed = Embed(
-                                    description=f'```Your goal:\n\n{msg.content}\n\nhas been set```',
-                                    colour=0x1ed9c0)
-                                await ctx.send(monke.mention, embed=embed)
+                                STUDY[2][monke][0] = msg.content
+                        else:
+                            d = '```'
+                            for monke in STUDY[2].keys():
+                                d += f'{monke.name} : {STUDY[2][monke][0]}\n\n'
+                            else:
+                                d += '```'
+                            embed = Embed(title='Goals for next round', description=d,
+                                          colour=0x1ed9c0)
+                            await ctx.send(embed=embed)
                         break
             else:
                 countdown = int(study) * 60
