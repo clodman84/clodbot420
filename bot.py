@@ -294,6 +294,36 @@ async def start(ctx, study, relax):
                 await clock.pin()
                 STUDY[0] += 1
 
+                # asks if they want to change your goal
+                embed = Embed(title='Do you want to change your goal?', description='React with a ✅ if you do.', colour=0x1ed9c0)
+                message = await ctx.send(embed=embed)
+                await message.add_reaction('✅')
+                await asyncio.sleep(5)
+                message = ctx.fetch_message(message.id)
+                for reaction in message.reactions:
+                    if str(reaction) == '✅':
+                        user_id = [user.id for user in reaction.users()]
+                        for monke in STUDY[2].keys():
+                            if monke.id in user_id:
+                                embed = Embed(description=f'Your goal is:\n\n{STUDY[2][monke]}\n\nWhat do you want to '
+                                                          f'change it to?', colour=0x1ed9c0)
+                                await ctx.send(monke.mention, embed=embed)
+                                def check(m):
+                                    return m.channel == ctx.message.channel and m.author == ctx.author and m.content != '--join'
+                                try:
+                                    msg = await bot.wait_for('message', timeout=30, check=check)
+                                except asyncio.TimeoutError:
+                                    await ctx.send(
+                                        f'{monke.mention} you took too long to describe your new goal for this '
+                                        f'session, you can change it next session **FOREVER MONKE!!**')
+                                    return
+                                STUDY[2][monke] = msg.content
+
+                                embed = Embed(
+                                    description=f'```Your goal:\n\n{msg.content}\n\nhas been set```',
+                                    colour=0x1ed9c0)
+                                await ctx.send(monke.mention, embed=embed)
+                        break
             else:
                 countdown = int(study) * 60
                 STUDY[1] = True
@@ -316,9 +346,11 @@ async def start(ctx, study, relax):
         await asyncio.sleep(5)
     else:
         STUDY[1] = False
-        await ctx.send(
-            f'{STUDY[0]} sessions which is {STUDY[0] * int(study)} minutes of work and {STUDY[0]*int(relax)} minutes '
-            f'of break. Come back again, __**FOREVER MONKE!!**__')
+        description = f'{STUDY[0]} complete sessions and a total of {STUDY[0] * int(study) + int(study) - int(countdown/60)} minutes of work and {STUDY[0]*int(relax)} ' \
+                      f'minutes of break. Come back again, __**FOREVER MONKE!!**__ '
+        embed = Embed(description=description, colour=0x1ed9c0)
+        embed.set_image(url='https://media.discordapp.net/attachments/800004618972037120/867313741293158450/OhMyGodILoveMonkey.png')
+        await ctx.send(embed=embed)
         STUDY[0] = 0
         STUDY[3] = 0
         return
