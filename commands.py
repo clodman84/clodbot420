@@ -70,7 +70,6 @@ async def on_command_error(ctx, error):
         await ctx.send(trace)
 
 
-
 @bot.event
 async def on_command(ctx):
     channel = ctx.message.channel

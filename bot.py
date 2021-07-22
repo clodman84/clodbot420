@@ -12,6 +12,7 @@ from space import apod
 
 LOUD = True
 COOLDOWN = 3600
+
 nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',
               'https://c.tenor.com/Bupb0hg8c-EAAAAM/cat-launch.gif',
               'https://c.tenor.com/xW6YocQ1DokAAAAM/nasa-rocket-launch.gif',
@@ -34,13 +35,13 @@ explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif',
               'https://c.tenor.com/f0zEg6sf1bsAAAAM/destory-eexplode.gif',
               'https://c.tenor.com/jkRrt2SrlMkAAAAM/pepe-nuke.gif',
               'https://c.tenor.com/24gGug50GqQAAAAM/nuke-nuclear.gif']
-
 doom = ['https://tenor.com/view/crucible-doom-eternal-slayer-video-game-gif-16830152',
         'https://tenor.com/view/doom-logo-doom-video-game-logo-gif-14624225',
         'https://tenor.com/view/doom-eternal-gif-18822003',
         'https://tenor.com/view/doomslayer-doomguy-doom-eternal-seraphimsaber-gif-21010574',
         'https://tenor.com/view/sword-doom-doom-sword-gif-21163712',
         'https://tenor.com/view/destory-eexplode-nuke-gif-6073338']
+
 PUPPET = [False, None]
 bot = commands.bot
 COUNTER = {}
@@ -474,7 +475,7 @@ async def goal(ctx):
     global STUDY
     for i in STUDY[2].keys():
         if i.id == ctx.author.id:
-            await ctx.send(STUDY[2][i])
+            await ctx.send(f"{ctx.author.mention} your goal is ```{STUDY[2][i][0]}```")
             return
     else:
         await ctx.send('You haven\'t set a goal yung wan')

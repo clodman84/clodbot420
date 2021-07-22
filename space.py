@@ -1,6 +1,7 @@
 from utils import get
 from httpx import AsyncClient
 from bs4 import BeautifulSoup
+import asyncio
 
 
 async def apod():
@@ -114,7 +115,7 @@ def MARS():
 
 
 if __name__ == '__main__':
-    import asyncio
+
     import cProfile
     import pstats
 
