@@ -326,17 +326,17 @@ async def start(ctx, study, relax):
                                 await ctx.send(monke.mention, embed=embed)
 
                                 def check(m):
-                                    return m.channel == ctx.message.channel and m.author == ctx.author \
+                                    return m.channel == ctx.message.channel and m.author.id == monke.author.id \
                                            and m.content != '--join '
 
                                 try:
                                     msg = await bot.wait_for('message', timeout=30, check=check)
+                                    STUDY[2][monke][0] = msg.content
                                 except asyncio.TimeoutError:
                                     await ctx.send(
                                         f'{monke.mention} you took too long to describe your new task for this '
                                         f'session, you can change it next session **FOREVER MONKE!!**')
-                                    return
-                                STUDY[2][monke][0] = msg.content
+
                         else:
                             d = '```'
                             for monke in STUDY[2].keys():

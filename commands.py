@@ -60,8 +60,15 @@ async def on_command_error(ctx, error):
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
         exception = traceback.format_exception(type(error), error, error.__traceback__)
+
+        trace = '```py\n'
         for i in exception:
-            await ctx.send(i)
+            trace += i
+        else:
+            trace += '```'
+        await ctx.send('I dun fucked up. I am sending what happened <@793451663339290644>')
+        await ctx.send(trace)
+
 
 
 @bot.event
