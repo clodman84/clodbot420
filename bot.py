@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import asyncio
 from discord import Embed
 from discord.ext import tasks
-from discord.ext.commands import MissingPermissions
+from discord.ext.commands import CommandInvokeError
 import module
 import commands
 from space import apod
@@ -262,7 +262,7 @@ async def start(ctx, study, relax):
     newNick = f"[STUDY] {nick}"
     try:
         await ctx.author.edit(nick=newNick)
-    except MissingPermissions:
+    except CommandInvokeError:
         None
     STUDY[2].setdefault(ctx.author, [task, ctx.author.nick])
     STUDY[1] = True
@@ -295,7 +295,7 @@ async def start(ctx, study, relax):
                     newNick = f"[BREAK] {nick}"
                     try:
                         await i.edit(nick=newNick)
-                    except MissingPermissions:
+                    except CommandInvokeError:
                         None
                     await i.remove_roles(role)
                 await clock.delete()
@@ -360,7 +360,7 @@ async def start(ctx, study, relax):
                     newNick = f"[STUDY] {nick}"
                     try:
                         await i.edit(nick=newNick)
-                    except MissingPermissions:
+                    except CommandInvokeError:
                         None
                     await i.add_roles(role)
                 await clock.delete()
@@ -410,7 +410,7 @@ async def leave(ctx):
             nick = STUDY[2][i][1]
             try:
                 await i.edit(nick=nick)
-            except MissingPermissions:
+            except CommandInvokeError:
                 None
             if STUDY[1]:
                 role = ctx.guild.get_role(866357915308785684)
@@ -464,7 +464,7 @@ async def join(ctx):
             newNick = f"[BREAK] {nick}"
         try:
             await ctx.author.edit(nick=newNick)
-        except MissingPermissions:
+        except CommandInvokeError:
             None
         return
 
