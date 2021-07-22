@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import asyncio
 from discord import Embed
 from discord.ext import tasks
-from discord.ext.commands import CommandInvokeError
+from discord.ext.commands.errors import CommandInvokeError
 import module
 import commands
 from space import apod

@@ -7,6 +7,9 @@ import asyncio
 import formula1
 import liveFormula
 import space
+import traceback
+import sys
+from discord import HTTPException
 from errors import DriverNotFoundError, MessageTooLongError
 from pygicord import Paginator
 import airplanes
@@ -24,6 +27,39 @@ async def check_season(ctx, season):
     if utils.is_future(season):
         await ctx.send(f"Can't predict future :thinking:")
         raise commands.BadArgument('Given season is in the future.')
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    ignored = (commands.CommandNotFound,)
+
+    # Allows us to check for original exceptions raised and sent to CommandInvokeError.
+    # If nothing is found. We keep the exception passed to on_command_error.
+    error = getattr(error, 'original', error)
+
+    # Anything in ignored will return and prevent anything happening.
+    if isinstance(error, ignored):
+        return
+
+    if isinstance(error, commands.DisabledCommand):
+        await ctx.send(f'{ctx.command} has been disabled.')
+
+    elif isinstance(error, commands.NoPrivateMessage):
+        try:
+            await ctx.author.send(f'{ctx.command} can not be used in Private Messages.')
+        except HTTPException:
+            pass
+
+    # For this error example we check to see where it came from...
+    elif isinstance(error, commands.BadArgument):
+        if ctx.command.qualified_name == 'start':
+            await ctx.send('Please try again. Make sure you entered both *numbers* for break __and__ study')
+
+    else:
+        # All other Errors not returned come here. And we can just print the default TraceBack.
+        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+        await ctx.send(traceback.format_exc())
 
 
 @bot.event
