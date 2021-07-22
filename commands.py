@@ -66,8 +66,9 @@ async def on_command_error(ctx, error):
             trace += i
         else:
             trace += '```'
-        await ctx.send('I dun fucked up. I am sending what happened <@793451663339290644>')
-        await ctx.send(trace)
+        await ctx.send('I dun fucked up. I am sending what happened to the retard who made me <@793451663339290644>')
+        channel = bot.get_channel(842796682114498570)
+        await channel.send(trace)
 
 
 @bot.event
