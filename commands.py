@@ -59,7 +59,9 @@ async def on_command_error(ctx, error):
         # All other Errors not returned come here. And we can just print the default TraceBack.
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-        await ctx.send(traceback.format_exc())
+        exception = traceback.format_exception(type(error), error, error.__traceback__)
+        for i in exception:
+            await ctx.send(i)
 
 
 @bot.event
