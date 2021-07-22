@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import asyncio
 from discord import Embed
 from discord.ext import tasks
+from discord.ext.commands import MissingPermissions
 import module
 import commands
 from space import apod
@@ -87,8 +88,9 @@ async def on_message(message):
 
     if STUDY[1] and message.author.id in [i.id for i in STUDY[2].keys()]:
         if message.channel.id != 866030261341650953:
-            await message.author.send(f'Don\'t stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
-                                   'you have a break.')
+            await message.author.send(
+                f'Don\'t stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
+                'you have a break.')
         else:
             if STUDY[3] == 13:
                 STUDY[3] = 0
@@ -127,7 +129,8 @@ async def on_message(message):
                                            f" PussyBitch has been detected \n" + module.generator('sentences'))
                 await message.channel.send("Ah I miss the good old days, alas I am no longer capable of providing "
                                            "that info. All of you have aternos accounts, check it on your own from "
-                                           "your phone. But I will give you a cool porn site I found " + module.generator(
+                                           "your phone. But I will give you a cool porn site I found " + 
+                                           module.generator(
                     'site'))
             else:
                 await message.channel.send(
@@ -203,13 +206,17 @@ async def on_message(message):
             COOLDOWN = 3600
     return
 
+
 STUDY = [0, False, {}, 0]
+
+
 @bot.command()
 async def diagnose(ctx):
     variables = f'STUDY : {STUDY}\n\n' \
                 f'COOLDOWN: {COOLDOWN}\n\n' \
                 f'COUNTER: {COUNTER}\n\n'
     await ctx.send(variables)
+
 
 @bot.command()
 async def start(ctx, study, relax):
@@ -222,8 +229,8 @@ async def start(ctx, study, relax):
     if STUDY[1]:
         await ctx.send('A study session is already going on!')
         return
-    # asks the setter to enter his goal, complete this part later
-    await ctx.send('The Journey of the Forever Monke begins with a goal. Mine is total world domination, whats yours?')
+    # asks the setter to enter his task, complete this part later
+    await ctx.send('The Journey of the Forever Monke begins with a task. Mine is total world domination, whats yours?')
 
     def check(m):
         return m.channel == ctx.message.channel and m.author == ctx.author and m.content != '--join'
@@ -231,15 +238,16 @@ async def start(ctx, study, relax):
     try:
         msg = await bot.wait_for('message', timeout=120, check=check)
     except asyncio.TimeoutError:
-        await ctx.send('You took longer than 2 minutes to describe your goal for this session, come back when you are '
+        await ctx.send('You took longer than 2 minutes to describe your task for this session, come back when you are '
                        'ready to walk the path of the **FOREVER MONKE!!**')
         return
     embed = Embed(
-        description=f'```Your goal:\n\n{msg.content}\n\nA timer of {study} minutes of work and {relax} minutes of break has been set```',
+        description=f'```Your goal:\n\n{msg.content}\n\nA timer of {study} minutes of work and {relax} minutes of '
+                    f'break has been set```',
         colour=0x1ed9c0)
     await ctx.send(embed=embed)
 
-    goal = msg.content
+    task = msg.content
     # send the message and stores it as a clock variable
     countdown = int(study) * 60
     description = "```fix\n" \
@@ -254,9 +262,9 @@ async def start(ctx, study, relax):
     newNick = f"[STUDY] {nick}"
     try:
         await ctx.author.edit(nick=newNick)
-    except:
+    except MissingPermissions:
         None
-    STUDY[2].setdefault(ctx.author, [goal, ctx.author.nick])
+    STUDY[2].setdefault(ctx.author, [task, ctx.author.nick])
     STUDY[1] = True
     await asyncio.sleep(5)
 
@@ -275,7 +283,8 @@ async def start(ctx, study, relax):
                 countdown = int(relax) * 60
                 STUDY[1] = False
                 description = "```fix\n" \
-                              "Its break time, you can chill now, hug a cactus or something\n\nTime left (break) - {}\n```"
+                              "Its break time, you can chill now, hug a cactus or something\n\nTime left (break) - {" \
+                              "}\n``` "
 
                 embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
                 role = ctx.guild.get_role(866357915308785684)
@@ -286,7 +295,7 @@ async def start(ctx, study, relax):
                     newNick = f"[BREAK] {nick}"
                     try:
                         await i.edit(nick=newNick)
-                    except:
+                    except MissingPermissions:
                         None
                     await i.remove_roles(role)
                 await clock.delete()
@@ -294,13 +303,13 @@ async def start(ctx, study, relax):
                 await clock.pin()
                 STUDY[0] += 1
 
-                # asks if they want to change your goal
+                # asks if they want to change your task
                 d = '```'
                 for monke in STUDY[2].keys():
                     d += f'{monke.name} : {STUDY[2][monke][0]}\n\n'
                 else:
                     d += '```'
-                embed = Embed(title='Do you want to change your goal?', description=d, colour=0x1ed9c0)
+                embed = Embed(title='Do you want to change your task?', description=d, colour=0x1ed9c0)
                 embed.set_footer(text='React with a ✅ if you do.')
                 message = await ctx.send(embed=embed)
                 await message.add_reaction('✅')
@@ -311,16 +320,20 @@ async def start(ctx, study, relax):
                         user_id = [user.id for user in await reaction.users().flatten()]
                         for monke in STUDY[2].keys():
                             if monke.id in user_id:
-                                embed = Embed(description=f'Your goal is:\n\n{STUDY[2][monke][0]}\n\nWhat do you want to '
-                                                          f'change it to?', colour=0x1ed9c0)
+                                embed = Embed(
+                                    description=f'Your goal is:\n\n{STUDY[2][monke][0]}\n\nWhat do you want to '
+                                                f'change it to?', colour=0x1ed9c0)
                                 await ctx.send(monke.mention, embed=embed)
+
                                 def check(m):
-                                    return m.channel == ctx.message.channel and m.author == ctx.author and m.content != '--join'
+                                    return m.channel == ctx.message.channel and m.author == ctx.author \
+                                           and m.content != '--join '
+
                                 try:
                                     msg = await bot.wait_for('message', timeout=30, check=check)
                                 except asyncio.TimeoutError:
                                     await ctx.send(
-                                        f'{monke.mention} you took too long to describe your new goal for this '
+                                        f'{monke.mention} you took too long to describe your new task for this '
                                         f'session, you can change it next session **FOREVER MONKE!!**')
                                     return
                                 STUDY[2][monke][0] = msg.content
@@ -347,7 +360,7 @@ async def start(ctx, study, relax):
                     newNick = f"[STUDY] {nick}"
                     try:
                         await i.edit(nick=newNick)
-                    except:
+                    except MissingPermissions:
                         None
                     await i.add_roles(role)
                 await clock.delete()
@@ -355,14 +368,19 @@ async def start(ctx, study, relax):
                 await clock.pin()
         await asyncio.sleep(5)
     else:
-        STUDY[1] = False
-        description = f'{STUDY[0]} complete sessions and a total of {STUDY[0] * int(study) + int(study) - int(countdown/60)} minutes of work and {STUDY[0]*int(relax)} ' \
-                      f'minutes of break. Come back again, __**FOREVER MONKE!!**__ '
+        if STUDY[1]:
+            minutes = STUDY[0] * int(study) + int(study) - int(countdown / 60)
+        else:
+            minutes = STUDY[0] * int(study)
+        description = f'{STUDY[0]} complete sessions and a total of {minutes} minutes of work ' \
+                      f'and {STUDY[0] * int(relax)} minutes of break. Come back again, __**FOREVER MONKE!!**__ '
         embed = Embed(description=description, colour=0x1ed9c0)
-        embed.set_image(url='https://media.discordapp.net/attachments/800004618972037120/867313741293158450/OhMyGodILoveMonkey.png')
+        embed.set_image(
+            url='https://media.discordapp.net/attachments/800004618972037120/867313741293158450/OhMyGodILoveMonkey.png')
         await ctx.send(embed=embed)
         STUDY[0] = 0
         STUDY[3] = 0
+        STUDY[1] = False
         return
 
 
@@ -392,7 +410,7 @@ async def leave(ctx):
             nick = STUDY[2][i][1]
             try:
                 await i.edit(nick=nick)
-            except:
+            except MissingPermissions:
                 None
             if STUDY[1]:
                 role = ctx.guild.get_role(866357915308785684)
@@ -413,7 +431,7 @@ async def join(ctx):
     if ctx.author.id in [i.id for i in STUDY[2].keys()]:
         await ctx.send('You are already a part of the study session')
         return
-    if STUDY[1] == False:
+    if not STUDY[1]:
         await ctx.send('You need to start a study session first')
         return
     else:
@@ -446,7 +464,7 @@ async def join(ctx):
             newNick = f"[BREAK] {nick}"
         try:
             await ctx.author.edit(nick=newNick)
-        except:
+        except MissingPermissions:
             None
         return
 
@@ -456,10 +474,10 @@ async def goal(ctx):
     global STUDY
     for i in STUDY[2].keys():
         if i.id == ctx.author.id:
-            ctx.send(STUDY[2][i])
+            await ctx.send(STUDY[2][i])
             return
     else:
-        ctx.send('You haven\'t set a goal yung wan')
+        await ctx.send('You haven\'t set a goal yung wan')
         return
 
 
