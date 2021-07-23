@@ -235,7 +235,7 @@ async def start(ctx, study, relax):
     try:
         int(study)
         int(relax)
-    except TypeError:
+    except ValueError:
         raise BadArgument(f"Can't convert {study} or {relax} to an integer")
 
     # asks the setter to enter his task, complete this part later
