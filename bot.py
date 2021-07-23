@@ -4,6 +4,7 @@ import asyncio
 from discord import Embed
 from discord.ext import tasks
 from discord.errors import Forbidden
+from discord.ext.commands.errors import BadArgument
 import module
 import commands
 from space import apod
@@ -230,6 +231,13 @@ async def start(ctx, study, relax):
     if STUDY[1]:
         await ctx.send('A study session is already going on!')
         return
+
+    try:
+        int(study)
+        int(relax)
+    except TypeError:
+        raise BadArgument(f"Can't convert {study} or {relax} to an integer")
+
     # asks the setter to enter his task, complete this part later
     await ctx.send('The Journey of the Forever Monke begins with a task. Mine is total world domination, whats yours?')
 
@@ -264,7 +272,7 @@ async def start(ctx, study, relax):
     try:
         await ctx.author.edit(nick=newNick)
     except Forbidden:
-        None
+        pass
     STUDY[2].setdefault(ctx.author, [task, ctx.author.nick])
     STUDY[1] = True
     await asyncio.sleep(5)
@@ -297,7 +305,7 @@ async def start(ctx, study, relax):
                     try:
                         await i.edit(nick=newNick)
                     except Forbidden:
-                        None
+                        pass
                     await i.remove_roles(role)
                 await clock.delete()
                 clock = await ctx.send(mentions, embed=embed)
@@ -362,7 +370,7 @@ async def start(ctx, study, relax):
                     try:
                         await i.edit(nick=newNick)
                     except Forbidden:
-                        None
+                        pass
                     await i.add_roles(role)
                 await clock.delete()
                 clock = await ctx.send(role.mention, embed=embed)
@@ -412,7 +420,7 @@ async def leave(ctx):
             try:
                 await i.edit(nick=nick)
             except Forbidden:
-                None
+                pass
             if STUDY[1]:
                 role = ctx.guild.get_role(866357915308785684)
                 await i.remove_roles(role)
@@ -466,7 +474,7 @@ async def join(ctx):
         try:
             await ctx.author.edit(nick=newNick)
         except Forbidden:
-            None
+            pass
         return
 
 

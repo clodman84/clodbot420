@@ -54,19 +54,23 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.BadArgument):
         if ctx.command.qualified_name == 'start':
             await ctx.send('Please try again. Make sure you entered both *numbers* for break __and__ study')
-
+        else:
+            pass
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.author.send(f'Your command {ctx.command} was incomplete, please use --help '
+                              f'to see how to use this command')
     else:
         # All other Errors not returned come here. And we can just print the default TraceBack.
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
         exception = traceback.format_exception(type(error), error, error.__traceback__)
 
-        trace = '```py\n'
+        trace = '```py\nIgnoring exception in command {}:'.format(ctx.command)
         for i in exception:
             trace += i
         else:
             trace += '```'
-        await ctx.send('I dun fucked up. I am sending what happened to the retard who made me <@793451663339290644>')
+        await ctx.send('Error reported <@793451663339290644> probably something stupid.')
         channel = bot.get_channel(842796682114498570)
         await channel.send(trace)
 
@@ -493,8 +497,12 @@ async def feed(ctx, sat='3drimager'):
     """ Satellite feed from specified satellite
         Usage:
         -----
-        --feed 3drimager  -> Shows images from insat-3dr, list of available satellites can be obtained from --satlist
+        --feed 3drimager  -> Shows images from insat-3dr
+        --feed 3dimager   -> Shows images from insat-3d
+        --feed isrocast
         """
+    if sat not in ['isrocast', '3dimager', '3drimager']:
+        await ctx.send(f'{sat} is not a valid satellite name. Use --satlist to check the list of valid satellite names')
     sat_feed = await space.feed(sat)
     pages = []
     for i in sat_feed:
