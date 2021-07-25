@@ -335,7 +335,7 @@ async def start(ctx, study, relax):
                                 await ctx.send(monke.mention, embed=embed)
 
                                 def check(m):
-                                    return m.channel == ctx.message.channel and m.author.id == monke.author.id \
+                                    return m.channel == ctx.message.channel and m.author.id == monke.id \
                                            and m.content != '--join '
 
                                 try:
