@@ -275,7 +275,7 @@ async def start(ctx, study, relax):
         pass
     STUDY[2].setdefault(ctx.author, [task, ctx.author.nick])
     STUDY[1] = True
-    await asyncio.sleep(5)
+    await asyncio.sleep(15)
 
     # timer
     while len(STUDY[2].keys()) > 0:
@@ -322,7 +322,7 @@ async def start(ctx, study, relax):
                 embed.set_footer(text='React with a ✅ if you do.')
                 message = await ctx.send(embed=embed)
                 await message.add_reaction('✅')
-                await asyncio.sleep(5)
+                await asyncio.sleep(15)
                 message = await ctx.fetch_message(message.id)
                 for reaction in message.reactions:
                     if str(reaction) == '✅':
@@ -440,7 +440,7 @@ async def join(ctx):
     if ctx.author.id in [i.id for i in STUDY[2].keys()]:
         await ctx.send('You are already a part of the study session')
         return
-    if not STUDY[1]:
+    if len(STUDY[2].keys()) == 0:
         await ctx.send('You need to start a study session first')
         return
     else:
