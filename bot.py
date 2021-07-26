@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timedelta
 import asyncio
-from discord import Embed
+from discord import Embed, FFmpegPCMAudio
 from discord.ext import tasks
 from discord.errors import Forbidden
 from discord.ext.commands.errors import BadArgument
@@ -288,6 +288,17 @@ async def start(ctx, study, relax):
 
         # this is the part that switches between break countdown and work countdown
         if countdown == 0:
+
+            # Under the wator alarm
+            voice_channel = bot.get_channel(866030210007826453)
+            await ctx.send('aight')
+            vc = await voice_channel.connect()
+            source = FFmpegPCMAudio(source='wator.mp3')
+            vc.play(source)
+            while vc.is_playing():
+                await asyncio.sleep(.1)
+            await vc.disconnect()
+
             if STUDY[1]:
                 countdown = int(relax) * 60
                 STUDY[1] = False
