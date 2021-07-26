@@ -291,7 +291,6 @@ async def start(ctx, study, relax):
 
             # Under the wator alarm
             voice_channel = bot.get_channel(866030210007826453)
-            await ctx.send('aight')
             vc = await voice_channel.connect()
             source = FFmpegPCMAudio(source='wator.mp3')
             vc.play(source)
