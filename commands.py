@@ -70,7 +70,7 @@ async def on_command_error(ctx, error):
             trace += i
         else:
             trace += '```'
-        await ctx.send('Error reported <@793451663339290644> probably something stupid.')
+        await ctx.send('Error has been reported to <@793451663339290644> probably something stupid.')
         channel = bot.get_channel(842796682114498570)
         await channel.send(trace)
 
@@ -352,7 +352,10 @@ async def lastSession(ctx):
         elif i['LastLapTime']['PersonalFastest']:
             descrption += f"**Personal Fastest Lap**\n"
         else:
-            descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
+            try:
+                descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
+            except KeyError:
+                descrption += "No laps completed bruh moment"
         try:
             if i['IntervalToPositionAhead']['Catching']:
                 descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
@@ -627,9 +630,9 @@ async def world(ctx):
     zebra = await airplanes.globe()
     table = T.Texttable()
     table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
-    table.set_cols_width([3, 8, 6, 11, 8, 8, 13, 10])
+    table.set_cols_width([3, 8, 6, 11, 8, 8, 13, 5])
     table.set_cols_align(['l', 'l', 'l', 'c', 'r', 'r', 'c', 'c'])
-    data = [['No.', 'CallSign', 'Icao24', 'Coords', 'Altitude', 'Vertical', 'Origin', 'True Track']]
+    data = [['No.', 'CallSign', 'Icao24', 'Coords', 'Altitude', 'Vertical', 'Origin', 'Track']]
     a = 1
     for aircraft in zebra:
         try:
@@ -643,7 +646,7 @@ async def world(ctx):
             alt = 'Unknown'
         if len(aircraft) == 17 and a < 11:
             data.append(
-                [a, aircraft[1], aircraft[0], coords, alt, aircraft[11], aircraft[2], aircraft[10]])
+                [a, aircraft[1], aircraft[0], coords, alt, aircraft[11], aircraft[2], round(aircraft[10], 1)])
             a += 1
     else:
         if a > 1:
@@ -658,7 +661,7 @@ async def history(ctx, icao):
     table.set_cols_width([3, 8, 6, 20, 6])
     table.set_cols_align(['l', 'l', 'c', 'c', 'c'])
     table.set_deco(T.Texttable.VLINES | T.Texttable.HEADER | T.Texttable.BORDER)
-    data = [['No.', 'Callsign', 'Depart', 'LastSeen', 'Arive']]
+    data = [['No.', 'CallSign', 'Depart', 'LastSeen', 'Arrive']]
     a = 1
     for plan in await airplanes.history(icao=icao):
         if a < 16:

@@ -552,8 +552,11 @@ async def drop(ctx, targeted):
 @tasks.loop(seconds=5.0)
 async def serverStatus():
     global COOLDOWN
+    global STUDY
     if COOLDOWN > 0:
         COOLDOWN -= 5.0
+    if len(STUDY[2].keys()) == 0:
+        STUDY[1] = False
     return
 
 
