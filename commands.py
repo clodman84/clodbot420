@@ -336,47 +336,47 @@ async def lastSession(ctx):
         i = timeData[index]
         driver = numberRelations[i["RacingNumber"]][0]
         colour = int(colours[driver], 16)
-        descrption = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
+        description: str = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
         if i['LastLapTime']['Value'] == '':
-            descrption += 'F moment happened'
+            description += '***__F__ moment happened***'
             embed = Embed(
                 title=f'**{driver}**',
                 colour=colour,
-                description=descrption
+                description=description
             )
             embed.set_image(url=liveFormula.TeamImage[numberRelations[i["RacingNumber"]][1]][0])
             await ctx.send(embed=embed)
             continue
         if i['LastLapTime']['OverallFastest']:
-            descrption += f'**FASTEST LAP SET**\n'
+            description += f'**FASTEST LAP SET**\n'
         elif i['LastLapTime']['PersonalFastest']:
-            descrption += f"**Personal Fastest Lap**\n"
+            description += f"**Personal Fastest Lap**\n"
         else:
             try:
-                descrption += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
+                description += f"Best : **{i['BestLapTime']['Value']}** Lap *{i['BestLapTime']['Lap']}*\n"
             except KeyError:
-                descrption += "No laps completed bruh moment"
+                description += "***No laps completed __bruh__ moment***\n"
         try:
             if i['IntervalToPositionAhead']['Catching']:
-                descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
+                description += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead *Closing in* \n"
             else:
-                descrption += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead\n"
+                description += f"**{i['IntervalToPositionAhead']['Value']}** to driver ahead\n"
         except KeyError:
-            descrption += f"**{i['TimeDiffToPositionAhead']}** to driver ahead\n"
+            description += f"**{i['TimeDiffToPositionAhead']}** to driver ahead\n"
         if i['InPit']:
-            descrption += f'**In Pit** {i["NumberOfPitStops"]} stops\n'
+            description += f'**In Pit** {i["NumberOfPitStops"]} stops\n'
         if i['PitOut']:
-            descrption += f'**PitOut** {i["NumberOfPitStops"]} stops\n'
+            description += f'**PitOut** {i["NumberOfPitStops"]} stops\n'
         if i['Retired']:
-            descrption += f'**RETIRED**\n'
+            description += f'**RETIRED**\n'
         if i['Stopped']:
-            descrption += '**STOPPED**\n'
+            description += '**STOPPED**\n'
         for j in range(len(i['Sectors'])):
             sectorData = i['Sectors'][j]
             if sectorData['OverallFastest']:
-                descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Overall Fastest** \n'
+                description += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Overall Fastest** \n'
             elif sectorData['PersonalFastest']:
-                descrption += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Personal Fastest**\n'
+                description += f'*Sector {j + 1} Time : {sectorData["Value"]}* **Personal Fastest**\n'
         try:
             gap = i['GapToLeader']
         except KeyError:
@@ -384,7 +384,7 @@ async def lastSession(ctx):
         embed = Embed(
             title=f'**{driver}** {gap}',
             colour=colour,
-            description=descrption
+            description=description
         )
         embed.set_image(url=liveFormula.TeamImage[numberRelations[i["RacingNumber"]][1]][0])
         await ctx.send(embed=embed)
@@ -651,7 +651,7 @@ async def world(ctx):
     else:
         if a > 1:
             table.add_rows(data)
-            await ctx.send(f"**World**``` {table.draw()} ```\nI can sense {len(zebra)} aircrafts in this area")
+            await ctx.send(f"**World**``` {table.draw()} ```\nI can sense {len(zebra)} aircraft across the world")
 
 
 @bot.command()
