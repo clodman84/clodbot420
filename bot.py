@@ -83,6 +83,10 @@ async def on_message(message):
             await message.reply(explosion)
             await asyncio.sleep(5)
             await message.delete()
+    if any(ele in message.content.lower() for ele in ['who-asked', 'who asked']):
+        await message.channel.send('**IT WAS ME! I WAS THE ONE WHO ASKED**')
+        dom = doom[random.randint(0, len(doom) - 1)]
+        await message.channel.send(dom)
 
     if message.channel.id == 842796682114498570 and PUPPET[0] and message.content[0:2] != '--':
         channel = bot.get_channel(int(PUPPET[1]))
@@ -391,6 +395,7 @@ async def start(ctx, study, relax):
             minutes = STUDY[0] * int(study) + int(study) - int(countdown / 60)
         else:
             minutes = STUDY[0] * int(study)
+        await clock.delete()
         description = f'{STUDY[0]} complete sessions and a total of {minutes} minutes of work ' \
                       f'and {STUDY[0] * int(relax)} minutes of break. Come back again, __**FOREVER MONKE!!**__ '
         embed = Embed(description=description, colour=0x1ed9c0)
