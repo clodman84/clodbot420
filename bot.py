@@ -93,16 +93,21 @@ async def on_message(message):
         await channel.send(str(message.content))
 
     if STUDY[1] and message.author.id in [i.id for i in STUDY[2].keys()]:
+        STUDY[3] += 1
         if message.channel.id != 866030261341650953:
             await message.author.send(
                 f'Don\'t stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when '
                 'you have a break.')
         else:
-            if STUDY[3] == 13:
-                STUDY[3] = 0
+            if STUDY[3] % 12 == 0:
                 await message.channel.send('Focus now, don\'t chit-chat, **Forever Monke** is calling.')
-            else:
-                STUDY[3] += 1
+        if STUDY[3] > 50:
+            await message.channel.send(module.generator('minecraft'))
+            await message.channel.send(explosions[random.randint(0, len(doom) - 1)])
+            await message.delete()
+        elif STUDY[3] == 48:
+            await message.channel.send('2 more messages from those who are supposed to be studying, and I enter doom '
+                                       'mode')
     '''
     if message.content.startswith('--'):
         print('entered here')

@@ -14,6 +14,7 @@ from errors import DriverNotFoundError, MessageTooLongError
 from pygicord import Paginator
 import airplanes
 import texttable as T
+import spotify
 
 help_command = commands.DefaultHelpCommand(no_category='Commands')
 bot = commands.Bot(command_prefix='--', help_command=help_command, case_insensitive=True)
@@ -80,6 +81,18 @@ async def on_command(ctx):
     channel = ctx.message.channel
     user = ctx.message.author
     print(f'Command: {ctx.prefix}{ctx.command} in {channel} by {user}')
+
+
+@bot.command()
+async def mixtape(ctx, song):
+    """Spotify playlist based on one song.
+    Usage:
+    -----
+    --mixtape Gangnam Style
+    """
+    tracks = await spotify.search(song)
+    await spotify.playlist(tracks)
+    await ctx.send('https://open.spotify.com/playlist/3uHFXfzb2LeHMMbSCZIShT')
 
 
 @bot.command(aliases=['drivers', 'championship'])

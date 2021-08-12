@@ -10,6 +10,7 @@ idna==2.10
 iso3166==1.0.1
 multidict==5.1.0
 beautifulsoup4==4.9.3
+tekore==3.7.1
 lxml
 matplotlib
 httpx
