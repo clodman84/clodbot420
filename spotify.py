@@ -34,19 +34,19 @@ async def search(query):
             top_tracks.extend(await spotify.artist_top_tracks(artist.id, 'IN'))
         else:
             mixtape = bubbleSort(top_tracks, t.popularity)[0:10]  # 10 songs with the closest popularity
-            # now we select the remaining thirty songs with the some randomness and other metrics
+            # now we select the remaining thirty songs wit
             ids = [song.id for song in mixtape]
             recomendations = await spotify.recommendations(track_ids=[t.id], limit=15)
             for track in recomendations.tracks:
                 if track.id not in ids:
                     mixtape.append(track)
             ids = [song.id for song in mixtape]
-            for track in bubbleSort(top_tracks, None, 'd')[0:5]:  # 10 most popular songs with from related artists
+            artists_top = await spotify.artist_top_tracks(t.artists[0].id, 'IN')
+            artists_top = artists_top[0:5]
+            for track in artists_top:
                 if track.id not in ids:
                     mixtape.append(track)
-            bubbleSort(mixtape, None, 'd')
     await spotify.close()
-
     return [track.uri for track in mixtape]
 
 
