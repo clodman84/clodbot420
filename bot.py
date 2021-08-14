@@ -11,7 +11,7 @@ from space import apod
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = True
+LOUD = False
 COOLDOWN = 3600
 
 nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',
@@ -290,6 +290,7 @@ async def start(ctx, study, relax):
     while len(STUDY[2].keys()) > 0:
         # this is the part that changes the time
         if countdown > 0:
+            print(STUDY[1], 'countdown')
             countdown -= 5
             description.format(timedelta(seconds=countdown))
             embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
@@ -397,9 +398,9 @@ async def start(ctx, study, relax):
                 await clock.pin()
         await asyncio.sleep(5)
     else:
-        print(countdown)
         if STUDY[1]:
             minutes = STUDY[0] * int(study) + int(study) - int(countdown / 60)
+            STUDY[1] = False
         else:
             minutes = STUDY[0] * int(study)
         await clock.delete()
@@ -409,15 +410,16 @@ async def start(ctx, study, relax):
         embed.set_image(
             url='https://media.discordapp.net/attachments/800004618972037120/867313741293158450/OhMyGodILoveMonkey.png')
         await ctx.send(embed=embed)
+        return
         STUDY[0] = 0
         STUDY[3] = 0
-        STUDY[1] = False
         return
 
 
 @bot.command()
 async def leave(ctx):
     global STUDY
+    print(STUDY[1], 'leave command')
     if ctx.message.channel.id != 866030261341650953:
         await ctx.send('Please use STUDY commands in <#866030261341650953>')
         return
@@ -567,7 +569,8 @@ async def serverStatus():
     global STUDY
     if COOLDOWN > 0:
         COOLDOWN -= 5.0
-    if len(STUDY[2].keys()) == 0:
+    if len(STUDY[2].keys()) == 0 and STUDY[1]:
+        await asyncio.sleep(120)
         STUDY[1] = False
     return
 
