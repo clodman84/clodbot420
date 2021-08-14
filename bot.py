@@ -378,6 +378,7 @@ async def start(ctx, study, relax):
             else:
                 countdown = int(study) * 60
                 STUDY[1] = True
+                STUDY[3] = 0
                 description = "```fix\n" \
                               "Play time is over fellow MONKE, now get back to work.\n\nTime left (work) - {}\n```"
                 description.format(timedelta(seconds=countdown))
@@ -396,6 +397,7 @@ async def start(ctx, study, relax):
                 await clock.pin()
         await asyncio.sleep(5)
     else:
+        print(countdown)
         if STUDY[1]:
             minutes = STUDY[0] * int(study) + int(study) - int(countdown / 60)
         else:
