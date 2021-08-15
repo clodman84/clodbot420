@@ -64,7 +64,7 @@ async def on_ready():
         embed.set_footer(text="That's it nothing more " + current_time)
         await channel.send(embed=embed)
         cd = utils.countdown(datetime.strptime(f'2022-01-01 05:30:00', '%Y-%m-%d %H:%M:%S'))
-        description = f'__January 1st 2022__ is **{cd[0]}** or **{cd[2]}** seconds or **{cd[1][0] / 30}** months or **{cd[1][0] / 7}** weeks away'
+        description = f'**__January 1st 2022__ is __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ or __{cd[1][0] / 7}__ weeks away**'
         embed = Embed(description=description, colour=0x1ed9c0)
         embed.set_image(url='https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png')
         await channel.send(embed=embed)
@@ -416,7 +416,6 @@ async def start(ctx, study, relax):
         embed.set_image(
             url='https://media.discordapp.net/attachments/800004618972037120/867313741293158450/OhMyGodILoveMonkey.png')
         await ctx.send(embed=embed)
-        return
         STUDY[0] = 0
         STUDY[3] = 0
         return
@@ -463,7 +462,7 @@ async def leave(ctx):
 @bot.command()
 async def remindMe(ctx):
     cd = utils.countdown(datetime.strptime(f'2022-01-01 05:30:00', '%Y-%m-%d %H:%M:%S'))
-    description = f'__January 1st 2022__ is **{cd[0]}** or **{cd[2]}** seconds or **{cd[1][0]/30}** months or **{cd[1][0]/7}** weeks away'
+    description = f'**__January 1st 2022__ is __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ or __{cd[1][0] / 7}__ weeks away**'
     embed = Embed(description=description, colour=0x1ed9c0)
     embed.set_image(url='https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png')
     await ctx.send(embed=embed)
