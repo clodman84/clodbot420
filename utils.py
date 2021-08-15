@@ -19,7 +19,7 @@ def contains(first, second):
 
 def is_future(year):
     """Return True if `year` is greater than current year."""
-    if year is 'current':
+    if year == 'current':
         return False
     return datetime.now().year < int(year)
 
@@ -77,16 +77,17 @@ def countdown(target: datetime):
     delta = target - datetime.utcnow()
     d = delta.days if delta.days > 0 else 0
     # timedelta only stores seconds so calculate mins and hours by dividing remainder
+    seconds = delta.seconds + delta.days*86400
     h, rem = divmod(delta.seconds, 3600)
     m, s = divmod(rem, 60)
     # text representation
     stringify = (
-        f"{int(d)} {'days' if d is not 1 else 'day'}, "
-        f"{int(h)} {'hours' if h is not 1 else 'hour'}, "
-        f"{int(m)} {'minutes' if m is not 1 else 'minute'}, "
-        f"{int(s)} {'seconds' if s is not 1 else 'second'} "
+        f"{int(d)} {'days' if d != 1 else 'day'}, "
+        f"{int(h)} {'hours' if h != 1 else 'hour'}, "
+        f"{int(m)} {'minutes' if m != 1 else 'minute'}, "
+        f"{int(s)} {'seconds' if s != 1 else 'second'} "
     )
-    return [stringify, (d, h, m, s)]
+    return [stringify, (d, h, m, s), seconds]
 
 
 def lap_time_to_seconds(time_str):

@@ -7,11 +7,12 @@ from discord.errors import Forbidden
 from discord.ext.commands.errors import BadArgument
 import module
 import commands
+import utils
 from space import apod
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = False
+LOUD = True
 COOLDOWN = 3600
 
 nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',
@@ -61,6 +62,11 @@ async def on_ready():
         embed = Embed(title=APoD[2], description=APoD[0], colour=0x1ed9c0)
         embed.set_image(url=APoD[1])
         embed.set_footer(text="That's it nothing more " + current_time)
+        await channel.send(embed=embed)
+        cd = utils.countdown(datetime.strptime(f'2022-01-01 05:30:00', '%Y-%m-%d %H:%M:%S'))
+        description = f'__January 1st 2022__ is **{cd[0]}** or **{cd[2]}** seconds or **{cd[1][0] / 30}** months or **{cd[1][0] / 7}** weeks away'
+        embed = Embed(description=description, colour=0x1ed9c0)
+        embed.set_image(url='https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png')
         await channel.send(embed=embed)
     serverStatus.start()
 
@@ -452,6 +458,16 @@ async def leave(ctx):
             break
     else:
         return
+
+
+@bot.command()
+async def remindMe(ctx):
+    cd = utils.countdown(datetime.strptime(f'2022-01-01 05:30:00', '%Y-%m-%d %H:%M:%S'))
+    description = f'__January 1st 2022__ is **{cd[0]}** or **{cd[2]}** seconds or **{cd[1][0]/30}** months or **{cd[1][0]/7}** weeks away'
+    embed = Embed(description=description, colour=0x1ed9c0)
+    embed.set_image(url='https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png')
+    await ctx.send(embed=embed)
+    return
 
 
 @bot.command()
