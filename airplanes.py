@@ -53,9 +53,11 @@ async def ind(icao):
     url = 'https://opensky-network.org/api/states/all'
     param = {"icao24": icao}
     response = await get(url=url, params=param)
-    print(response.status_code, response)
     try:
-        return response.json()['states'][0]
+        if response.status_code == 200:
+            return response.json()['states'][0]
+        else:
+            return None
     except TypeError:
         return None
 
