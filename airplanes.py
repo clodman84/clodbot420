@@ -53,6 +53,7 @@ async def ind(icao):
     url = 'https://opensky-network.org/api/states/all'
     param = {"icao24": icao}
     response = await get(url=url, params=param)
+    print(response.status_code, response)
     try:
         return response.json()['states'][0]
     except TypeError:
@@ -93,7 +94,8 @@ if __name__ == '__main__':
 
     pr = cProfile.Profile()
     pr.enable()
-    asyncio.run(airport('arrival', 'kjfk'))
+    a = asyncio.run(ind('800c0c'))
+    print(a)
     pr.disable()
     stats = pstats.Stats(pr)
     stats.sort_stats(pstats.SortKey.TIME)
