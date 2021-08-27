@@ -12,7 +12,7 @@ from space import apod
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = False
+LOUD = True
 COOLDOWN = 3600
 
 nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',
