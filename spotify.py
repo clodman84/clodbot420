@@ -1,5 +1,5 @@
 from tekore import Spotify, refresh_user_token
-import asyncio
+
 
 client_id = '6612697d6d7a4df2aef70111f85cb552'
 client_secret = 'b49c76721f8b42edaf42fbf9035fb62d'
@@ -26,7 +26,7 @@ def bubbleSort(list, pop, sorter='g'):  # soapy
 
 async def search(query):
     spotify = Spotify(app_token, asynchronous=True)
-    search, = await spotify.search(query=query, limit=8)
+    search, = await spotify.search(query, limit=8)
     await spotify.close()
     return search.items, [[track.name, track.artists[0].name] for track in search.items]
 
@@ -64,6 +64,8 @@ async def playlist(tracks):
 
 
 def listSongs(songs):
+    if len(songs) == 0:
+        return None
     string = '```css\n'
     for song in range(len(songs)):
         if song >= 9:

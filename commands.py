@@ -84,12 +84,13 @@ async def on_command(ctx):
 
 
 @bot.command()
-async def mixtape(ctx, song):
+async def mixtape(ctx, *args):
     """Spotify playlist based on one song.
     Usage:
     -----
     --mixtape Gangnam Style
     """
+    song = " ".join(args[:])
     search = await spotify.search(song)
     # sends list of searched songs and then the user has to select which one
     embed = Embed(title='Enter Song Number', description=spotify.listSongs(search[1]), colour=0x1ed9c0)
