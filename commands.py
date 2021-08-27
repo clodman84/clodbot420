@@ -90,9 +90,28 @@ async def mixtape(ctx, song):
     -----
     --mixtape Gangnam Style
     """
-    tracks = await spotify.search(song)
-    await spotify.playlist(tracks)
-    await ctx.send('https://open.spotify.com/playlist/3uHFXfzb2LeHMMbSCZIShT')
+    search = await spotify.search(song)
+    # sends list of searched songs and then the user has to select which one
+    embed = Embed(title='Enter Song Number', description=spotify.listSongs(search[1]), colour=0x1ed9c0)
+    embed.set_footer(text='Enter n to cancel')
+    await ctx.send(embed=embed)
+    def check(m):
+        return m.channel == ctx.message.channel and m.author == ctx.author and m.content in '12345678n' and len(m.content) == 1
+    try:
+        msg = await bot.wait_for('message', timeout=120, check=check)
+    except asyncio.TimeoutError:
+        await ctx.send('You took too long to respond')
+        return
+    if msg.content == 'n':
+        await ctx.send('K')
+        return
+    track = search[0][int(msg.content) - 1]
+    tracks = await spotify.generate(track)
+    await spotify.playlist(tracks[0])
+    embed = Embed(description=spotify.listSongs(tracks[1]))
+    embed.set_footer(text='https://open.spotify.com/playlist/3uHFXfzb2LeHMMbSCZIShT')
+    await ctx.send(embed=embed)
+
 
 
 @bot.command(aliases=['drivers', 'championship'])
