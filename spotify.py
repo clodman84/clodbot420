@@ -1,6 +1,5 @@
 from tekore import Spotify, refresh_user_token
 
-
 client_id = '6612697d6d7a4df2aef70111f85cb552'
 client_secret = 'b49c76721f8b42edaf42fbf9035fb62d'
 refresh_token = 'AQCwE9baWQCICNuY2-bbHwwjrP0HA84MTWtoQPjV33a0c630zQK_akyepWttZbsH2nAJvcvt0' \
@@ -39,19 +38,24 @@ async def generate(t):
     for artist in related_artists:
         top_tracks.extend(await spotify.artist_top_tracks(artist.id, 'IN'))
     else:
-        mixtape = bubbleSort(top_tracks, t.popularity)[0:10]  # 10 songs with the closest popularity
-        # now we select the remaining thirty songs wit
+        artists_top = await spotify.artist_top_tracks(t.artists[0].id, 'IN')
+        # starts with the top 5 from that artist
+        mixtape = artists_top[0:5]
+        # Checking the ids to make sure the same song does not enter twice
+
         ids = [song.id for song in mixtape]
+        # 15 songs spotify thinks we will like
         recomendations = await spotify.recommendations(track_ids=[t.id], limit=15)
         for track in recomendations.tracks:
             if track.id not in ids:
                 mixtape.append(track)
+
         ids = [song.id for song in mixtape]
-        artists_top = await spotify.artist_top_tracks(t.artists[0].id, 'IN')
-        artists_top = artists_top[0:5]
-        for track in artists_top:
+        # 10 songs with the closest popularity
+        for track in bubbleSort(top_tracks, t.popularity)[0:10]:
             if track.id not in ids:
                 mixtape.append(track)
+
     await spotify.close()
     return [track.uri for track in mixtape], [[track.name, track.artists[0].name] for track in mixtape]
 
