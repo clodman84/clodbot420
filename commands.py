@@ -107,11 +107,18 @@ async def mixtape(ctx, *args):
         await ctx.send('K')
         return
     track = search[0][int(msg.content) - 1]
+
+    embed = Embed(colour=0x1ed9c0)
+    embed.set_image(url=track.album.images[0].url)
+    embed.set_footer(text='Creating Album...')
+    await ctx.send(embed=embed)
+
     tracks = await spotify.generate(track)
     await spotify.playlist(tracks[0])
-    embed = Embed(description=spotify.listSongs(tracks[1]))
+    embed = Embed(description=spotify.listSongs(tracks[1]), colour=0x1ed9c0)
     embed.set_footer(text='https://open.spotify.com/playlist/3uHFXfzb2LeHMMbSCZIShT')
     await ctx.send(embed=embed)
+
 
 
 
