@@ -91,11 +91,15 @@ async def on_message(message):
             await message.delete()
 
     if len(message.content.split()) == 1 and 'https://www.reddit.com/r/' in message.content:
-        image = await reddit.get_image(message.content)
-        if image is not None:
-            embed = Embed(colour=0x1ed9c0)
-            embed.set_image(url=image)
-            await message.reply(embed=embed)
+        data = await reddit.get_image(message.content)
+        if data is not None:
+            embed = Embed(title=data['title'], url=data['permalink'], colour=0x1ed9c0)
+            embed.set_image(url=data['url'])
+            embed.set_author(name=message.author.name)
+            embed.set_footer(text=f'{data["upvotes"]} upvotes in {data["subreddit"]}. {data["ratio"]}% upvote rate.')
+            await message.channel.send(embed=embed)
+            await message.delete()
+
 
     if any(ele in message.content.lower() for ele in ['who-asked', 'who asked']):
         await message.channel.send('**IT WAS ME! I WAS THE ONE WHO ASKED**')
