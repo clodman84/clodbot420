@@ -9,7 +9,7 @@ import module
 import commands
 import utils
 from space import apod
-
+import reddit
 # ______________________________________________________________________________________________________________________
 
 LOUD = True
@@ -89,6 +89,14 @@ async def on_message(message):
             await message.reply(explosion)
             await asyncio.sleep(5)
             await message.delete()
+
+    if len(message.content.split()) == 1 and 'https://www.reddit.com/r/' in message.content:
+        image = await reddit.get_image(message.content)
+        if image is not None:
+            embed = Embed(colour=0x1ed9c0)
+            embed.set_image(url=image)
+            await message.reply(embed=embed)
+
     if any(ele in message.content.lower() for ele in ['who-asked', 'who asked']):
         await message.channel.send('**IT WAS ME! I WAS THE ONE WHO ASKED**')
         dom = doom[random.randint(0, len(doom) - 1)]
