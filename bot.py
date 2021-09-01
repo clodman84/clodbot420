@@ -10,6 +10,7 @@ import commands
 import utils
 from space import apod
 import reddit
+
 # ______________________________________________________________________________________________________________________
 
 LOUD = True
@@ -99,7 +100,6 @@ async def on_message(message):
             embed.set_footer(text=f'{data["upvotes"]} upvotes in {data["subreddit"]}. {data["ratio"]}% upvote rate.')
             await message.channel.send(embed=embed)
             await message.delete()
-
 
     if any(ele in message.content.lower() for ele in ['who-asked', 'who asked']):
         await message.channel.send('**IT WAS ME! I WAS THE ONE WHO ASKED**')
@@ -308,7 +308,6 @@ async def start(ctx, study, relax):
     while len(STUDY[2].keys()) > 0:
         # this is the part that changes the time
         if countdown > 0:
-
             countdown -= 5
             description.format(timedelta(seconds=countdown))
             embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
