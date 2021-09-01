@@ -12,7 +12,11 @@ async def get_image(link):
     json = json.json()
     if not json[0]['data']['children'][0]['data']['is_video']:
         json = json[0]['data']['children'][0]['data']
-        if not json['is_gallery']:
+        try:
+            gallery = json['is_gallery']
+        except KeyError:
+            gallery = False
+        if not gallery:
             return {'url': json['url'], 'title': json['title'], 'subreddit': json['subreddit_name_prefixed'],
                     'ratio': json['upvote_ratio'] * 100, 'upvotes': json['ups'],
                     'permalink': 'https://www.reddit.com' + json['permalink']}
