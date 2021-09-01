@@ -308,7 +308,7 @@ async def start(ctx, study, relax):
     while len(STUDY[2].keys()) > 0:
         # this is the part that changes the time
         if countdown > 0:
-            print(STUDY[1], 'countdown')
+
             countdown -= 5
             description.format(timedelta(seconds=countdown))
             embed = Embed(description=description.format(timedelta(seconds=countdown)), colour=0x1ed9c0)
@@ -436,7 +436,7 @@ async def start(ctx, study, relax):
 @bot.command()
 async def leave(ctx):
     global STUDY
-    print(STUDY[1], 'leave command')
+
     if ctx.message.channel.id != 866030261341650953:
         await ctx.send('Please use STUDY commands in <#866030261341650953>')
         return
@@ -550,7 +550,6 @@ async def counter(ctx):
 @bot.command()
 async def ping(ctx):
     latency = bot.latency
-    print(latency)
     await ctx.send(f'Pong! {round(latency * 1000, 3)} ms')
 
 
