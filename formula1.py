@@ -123,7 +123,7 @@ async def get_driver_standings(season):
                 {
                     'Pos': int(standing['position']),
                     'Driver': f"{standing.driver.givenname.string[0]} {standing.driver.familyname.string}",
-                    'Points': int(standing['points']),
+                    'Points': standing['points'],
                     'Wins': int(standing['wins']),
                 }
             )
@@ -167,7 +167,7 @@ async def get_team_standings(season):
                 {
                     'Pos': int(standing['position']),
                     'Team': standing.constructor.find('name').string,
-                    'Points': int(standing['points']),
+                    'Points': standing['points'],
                     'Wins': int(standing['wins']),
                 }
             )
@@ -247,7 +247,7 @@ async def get_race_results(rnd, season, winner_only=False):
                     'Start': int(result.grid.string),
                     'Laps': int(result.laps.string),
                     'Status': result.status.string,
-                    'Points': int(result['points']),
+                    'Points': result['points'],
                 }
             )
             # Fastest lap data if available

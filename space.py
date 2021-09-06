@@ -34,12 +34,10 @@ async def people():
 
 
 async def iss():
-    if type == 'iss':
-        url = "http://api.open-notify.org/iss-now.json"
-        response = await get(url=url)
-        pos = response.json()['iss_position']
-        return pos
-    return
+    url = "http://api.open-notify.org/iss-now.json"
+    response = await get(url=url)
+    pos = response.json()['iss_position']
+    return pos
 
 
 def EPIC():

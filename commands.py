@@ -58,8 +58,8 @@ async def on_command_error(ctx, error):
         else:
             pass
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.author.send(f'Your command {ctx.command} was incomplete, please use --help '
-                              f'to see how to use this command')
+        await ctx.author.send(f'Your command __**{ctx.command}**__ was incomplete, please use "--help {ctx.command}"'
+                              f' to see how to use this command')
     else:
         # All other Errors not returned come here. And we can just print the default TraceBack.
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
@@ -169,7 +169,7 @@ async def schedule(ctx, season='current'):
     await check_season(ctx, season)
     sched = await formula1.schedule(season)
     if sched[0] == 200:
-        data = {'Country': [], 'Search ID': [], 'Date': []}
+        data = {'No.':[a+1 for a in range(len(sched[1]))],'Country': [], 'Search ID': [], 'Date': []}
         for i in sched[1]:
             data['Country'].append(i["Circuit"]['Location']['country'])
             data['Search ID'].append(i["Circuit"]['circuitId'])
@@ -374,8 +374,14 @@ async def lastSession(ctx):
     timeData = await liveFormula.extracTimeData(path)
     for index in range(len(timeData)):
         i = timeData[index]
-        driver = numberRelations[i["RacingNumber"]][0]
-        colour = int(colours[driver], 16)
+        try:
+            driver = numberRelations[i["RacingNumber"]][0]
+            colour = int(colours[driver], 16)
+            image = liveFormula.TeamImage[numberRelations[i["RacingNumber"]][1]][0]
+        except KeyError:
+            driver = i["RacingNumber"]
+            colour = 0x19f723
+            image = 'https://www.formula1.com/content/dam/fom-website/teams/2021/williams.png.transform/4col/image.png'
         description: str = f'Last Lap : {i["LastLapTime"]["Value"]}\n'
         if i['LastLapTime']['Value'] == '':
             description += '***__F__ moment happened***'
@@ -384,7 +390,7 @@ async def lastSession(ctx):
                 colour=colour,
                 description=description
             )
-            embed.set_image(url=liveFormula.TeamImage[numberRelations[i["RacingNumber"]][1]][0])
+            embed.set_image(url=image)
             await ctx.send(embed=embed)
             continue
         if i['LastLapTime']['OverallFastest']:
@@ -426,7 +432,7 @@ async def lastSession(ctx):
             colour=colour,
             description=description
         )
-        embed.set_image(url=liveFormula.TeamImage[numberRelations[i["RacingNumber"]][1]][0])
+        embed.set_image(url=image)
         await ctx.send(embed=embed)
 
 
@@ -551,6 +557,7 @@ async def feed(ctx, sat='3drimager'):
     for i in sat_feed:
         embed = Embed(title=i[0], description=i[2], color=0x1ed9c0)
         embed.set_image(url=i[1])
+        embed.set_footer(text=i[1])
         pages.append(embed)
 
     paginator = Paginator(pages=pages)

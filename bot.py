@@ -13,7 +13,7 @@ import reddit
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = True
+LOUD = False
 COOLDOWN = 3600
 
 nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',

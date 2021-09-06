@@ -142,7 +142,11 @@ async def plotPos(live, colours):
     laps = 0
     for driver in data.keys():
         driverData = data[driver]
-        plt.plot(driverData['laps'], driverData['position'], figure=fig, color=f"#{colours[driver]}", label=driver)
+        try:
+            colour=f"#{colours[driver]}"
+        except KeyError:
+            colour='#19f723'
+        plt.plot(driverData['laps'], driverData['position'], figure=fig, color=colour, label=driver)
         lastpos.append(driverData['position'][-1])
         if driverData['laps'][-1] > laps:
             laps = driverData['laps'][-1]
