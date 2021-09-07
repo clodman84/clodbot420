@@ -14,7 +14,7 @@ import config
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = False
+LOUD = True
 COOLDOWN = 3600
 
 nukeLaunch  = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',
@@ -356,7 +356,7 @@ async def start(ctx, study, relax):
                     d += f'{monke.name} : {STUDY[2][monke][0]}\n\n'
                 else:
                     d += '```'
-                embed = Embed(title='Do you want to change your task?', description=d, colour=0x1ed9c0)
+                embed = Embed(title='Do you want to change your goal?', description=d, colour=0x1ed9c0)
                 embed.set_footer(text='React with a ✅ if you do.')
                 message = await ctx.send(embed=embed)
                 await message.add_reaction('✅')
@@ -381,7 +381,7 @@ async def start(ctx, study, relax):
                                     STUDY[2][monke][0] = msg.content
                                 except asyncio.TimeoutError:
                                     await ctx.send(
-                                        f'{monke.mention} you took too long to describe your new task for this '
+                                        f'{monke.mention} you took too long to describe your new goal for this '
                                         f'session, you can change it next session **FOREVER MONKE!!**')
 
                         else:
