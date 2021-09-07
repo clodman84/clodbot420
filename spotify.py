@@ -1,9 +1,9 @@
 from tekore import Spotify, refresh_user_token
+import config
 
-client_id = '6612697d6d7a4df2aef70111f85cb552'
-client_secret = 'b49c76721f8b42edaf42fbf9035fb62d'
-refresh_token = 'AQCwE9baWQCICNuY2-bbHwwjrP0HA84MTWtoQPjV33a0c630zQK_akyepWttZbsH2nAJvcvt0' \
-                '--eicFvxqaVZ-6C_05GQJSkxv_xZOcynx4vSGU8DFyZQjQ6c5zUN4S3PBo'
+client_id = config.SP_CLIENT_ID
+client_secret = config.SP_CLIENT_SECRET
+refresh_token = config.SP_REFRESH_TOKEN
 app_token = refresh_user_token(client_id, client_secret, refresh_token)
 
 

@@ -2,12 +2,12 @@ from utils import get
 from httpx import AsyncClient
 from bs4 import BeautifulSoup
 import asyncio
-
+import config
 
 async def apod():
     """For space related operations that have no paramteres"""
     url = "https://api.nasa.gov/planetary/apod"
-    querystring = {'api_key': 'YdNyGnuk3Mr5El8cBLCSSOrAJ7ymjtjuRE3OfBUJ', 'thumbs': True}
+    querystring = {'api_key': config.NASA_KEY, 'thumbs': True}
     response = await get(url=url, params=querystring)
     if response.json()['media_type'] == "video":
         img_url = response.json()['thumbnail_url']

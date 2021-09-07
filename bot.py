@@ -10,20 +10,21 @@ import commands
 import utils
 from space import apod
 import reddit
+import config
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = True
+LOUD = False
 COOLDOWN = 3600
 
-nukeLaunch = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',
+nukeLaunch  = ['https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif',
               'https://c.tenor.com/Bupb0hg8c-EAAAAM/cat-launch.gif',
               'https://c.tenor.com/xW6YocQ1DokAAAAM/nasa-rocket-launch.gif',
               'https://c.tenor.com/4O7uNcs8vHgAAAAM/rocket-launch.gif',
               'https://c.tenor.com/1s8cZTvNNMsAAAAM/sup-dog.gif',
               'https://c.tenor.com/uGwGAzGhP50AAAAM/shooting-missiles-zeo-zord-i.gif'
               'https://tenor.com/view/star-wars-death-star-laser-gif-9916316']
-banned = []
+banned     = []
 explosions = ['https://c.tenor.com/BESeHXAH14IAAAAM/little-bit.gif',
               'https://c.tenor.com/CWV41b03zPMAAAAM/jenmotzu.gif',
               'https://c.tenor.com/9n0weQuYRQ8AAAAM/explosion-dragon-ball.gif',
@@ -600,4 +601,4 @@ async def serverStatus():
     return
 
 
-bot.run('Nzk1OTYwMjQ0MzUzMzY4MTA0.X_Q9vg.jXalYoWmE-JrquPA84NbL1dVowU')
+bot.run(config.DISCORD_TOKEN)
