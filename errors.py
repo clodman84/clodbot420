@@ -4,7 +4,7 @@ from discord.ext.commands import errors
 class BotError(errors.CommandError):
     """Base error class for the bot."""
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         self.message = message
 
 
@@ -15,7 +15,9 @@ class MissingDataError(BotError):
     """
 
     def __init__(self):
-        self.message = "Returned data missing or invalid, results could not be processed."
+        self.message = (
+            "Returned data missing or invalid, results could not be processed."
+        )
 
 
 class MessageTooLongError(BotError):
