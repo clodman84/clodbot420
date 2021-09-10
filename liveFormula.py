@@ -1,4 +1,4 @@
-from utils import get
+from utils import get, save_figure
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 from operator import itemgetter
@@ -118,12 +118,6 @@ def scores(live):
             dic = {"Driver": i[1:], "Value": data[i][searchIndex]}
             res[str(metric)].append(dic)
     return res
-
-
-def save_figure(fig, name="plot.png"):
-    """Save the figure as a file."""
-    fig.savefig(name, bbox_inches="tight")
-    print(f"Figure saved as {name}")
 
 
 def get_colours(live):

@@ -6,6 +6,12 @@ from datetime import date, datetime
 from errors import MessageTooLongError, DriverNotFoundError
 
 
+def save_figure(fig, name="plot.png"):
+    """Save the figure as a file."""
+    fig.savefig(name, bbox_inches="tight")
+    print(f"Figure saved as {name}")
+
+
 async def get(url, params=None, headers=None):
     async with AsyncClient(timeout=None) as client:
         response = await client.get(url=url, params=params, headers=headers)
@@ -216,3 +222,4 @@ def filter_times(sorted_times, filter):
     # no filter given, return full sorted results
     else:
         return sorted_times
+

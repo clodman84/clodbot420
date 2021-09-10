@@ -119,7 +119,7 @@ async def on_message(message):
             await message.channel.send(embed=embed)
             await message.delete()
 
-    if any(ele in message.content.lower() for ele in ["who-asked", "who asked"]):
+    if utils.contains(message.content.lower, ["who-asked", "who asked"]):
         await message.channel.send("**IT WAS ME! I WAS THE ONE WHO ASKED**")
         dom = doom[random.randint(0, len(doom) - 1)]
         await message.channel.send(dom)
@@ -153,79 +153,7 @@ async def on_message(message):
                 "2 more messages from those who are supposed to be studying, and I enter doom "
                 "mode"
             )
-    """
-    if message.content.startswith('--'):
-        print('entered here')
-        # formula1 commands --------------------------------------------------------------------------------------------
-        if message.content.lower() == '--show targets' and str(message.author) == 'clodman84#1215':
-            await message.channel.send(banned)
-        elif message.content.lower()[0:6] == '--drop' and str(message.author) == 'clodman84#1215':
-            banned.remove(message.content[7:])
-            await message.channel.send(f'{message.content.lower()[7:]} was removed')
-        elif message.content.lower()[0:6] == '--nuke':
-            if len(banned) > 0 and int(message.content.lower()[7:]) > 0:
-                for i in nukeLaunch:
-                    await message.channel.send(i)
-                async for message in message.channel.history(limit=int(message.content.lower()[7:])):
-                    if str(message.author) in banned and ('tenor' in message.content or message.attachments):
-                        await message.reply(explosions[random.randint(0, len(explosions) - 1)])
-                        await message.delete()
 
-        # OLD COMMANDS R.I.P
-        elif message.content.lower() == '--start':
-            await message.channel.send("I don't do that anymore :-P\n" + module.generator('minecraft'))
-
-        elif message.content.lower() == '--status':
-            await message.channel.send("I have no idea bro. \nEnjoying porno : " + module.generator('phrases'))
-
-        elif message.content.lower() == '--athar1':
-            author = message.author
-            if str(author) == 'AbsolA1#4589':
-                await message.channel.send(f"{author.mention}, the "
-                                           f" PussyBitch has been detected \n" + module.generator('sentences'))
-                await message.channel.send("Ah I miss the good old days, alas I am no longer capable of providing "
-                                           "that info. All of you have aternos accounts, check it on your own from "
-                                           "your phone. But I will give you a cool porn site I found " + 
-                                           module.generator(
-                    'site'))
-            else:
-                await message.channel.send(
-                    "No idea bro, all of you have aternos account now check from phone, take this minecraft yellow "
-                    "text instead. " + module.generator("minecraft"))
-
-        elif message.content.lower() == '--stop':
-            await message.channel.send(module.generator('minecraft'))
-
-        elif message.content.lower() == '--wait':
-            await message.channel.send("Time is an infinite void, aren't we all waiting for something that never "
-                                       "comes closer yet feels like it is. Certified Billi Eyelash moment. " + module.generator(
-                'phrases') + ' moment')
-
-
-        # text based _____________________________________________________________________________________
-        elif message.content.lower() == '--clear porn':
-            await message.channel.send(module.clear('phrases'))
-        elif message.content.lower() == '--clear sites':
-            await message.channel.send(module.clear('sites'))
-        elif message.content.lower() == '--clear minecraft':
-            await message.channel.send(module.clear('minecraft'))
-        elif message.content.lower() == '--clear monke':
-            await message.channel.send(module.clear('sentences'))
-
-        elif message.content.lower() == '--ammo':
-            await message.channel.send(module.ammo())
-        elif message.content.lower() == '--porn':
-            await message.channel.send(module.generator('phrases'))
-        elif message.content.lower() == '--monke':
-            await message.channel.send(module.generator('sentences'))
-        elif message.content.lower() == '--cooldown':
-            await message.channel.send(COOLDOWN)
-        elif message.content.lower() == '--minecraft':
-            await message.channel.send(module.generator('minecraft'))
-        elif message.content.lower() == '--website':
-            await message.channel.send(module.generator('sites'))
-        # ______________________________________________________________________________________________________________
-    """
     author = message.author
     content = str(message.content)
     if author.id not in COUNTER:
@@ -234,7 +162,7 @@ async def on_message(message):
         COUNTER[author.id] += 1
 
     if message.channel.id == 858700343113416704:
-        if not any(ele in content.lower() for ele in ["sus", "s u s"]):
+        if not utils.contains(message.content.lower(), ["sus", "s u s"]):
             embed = Embed(
                 description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your "
                 f"sentence:**\n\n{content}",
@@ -244,7 +172,7 @@ async def on_message(message):
             await message.channel.send(embed=embed)
             await message.delete()
     if message.channel.category.id != 860176783755313182 and (
-        any(ele in content.lower() for ele in [":lewd", "hentai", "ecchi", "l e w d"])
+        utils.contains(message.content.lower(), [":lewd", "hentai", "ecchi", "l e w d"])
         or message.author.id in [337481187419226113, 571027211407196161]
     ):
         dom = doom[random.randint(0, len(doom) - 1)]
@@ -252,7 +180,7 @@ async def on_message(message):
         await message.delete()
     if (
         message.attachments
-        or any(ele in content for ele in ["/", "%", ":", "http", "--"])
+        or utils.contains(content, ["/", "%", ":", "http", "--"])
         or message.reference
     ):
         return
@@ -318,7 +246,7 @@ async def start(ctx, study, relax):
         msg = await bot.wait_for("message", timeout=120, check=check)
     except asyncio.TimeoutError:
         await ctx.send(
-            "You took longer than 2 minutes to describe your task for this session, come back when you are "
+            "You took longer than 2 minutes to describe your goal for this session, come back when you are "
             "ready to walk the path of the **FOREVER MONKE!!**"
         )
         return
@@ -630,9 +558,25 @@ async def join(ctx):
 @bot.command()
 async def goal(ctx):
     global STUDY
-    for i in STUDY[2].keys():
-        if i.id == ctx.author.id:
-            await ctx.send(f"{ctx.author.mention} your goal is ```{STUDY[2][i][0]}```")
+    for monke in STUDY[2].keys():
+        if monke.id == ctx.author.id:
+            embed = Embed(
+                description=f"Your goal is:\n\n{STUDY[2][monke.id][0]}\n\nWhat do you want to "
+                f"change it to?",
+                colour=0x1ED9C0,
+            )
+            await ctx.send(monke.mention, embed=embed)
+
+            def check(m):
+                return m.channel == ctx.message.channel and m.content != "--join "
+
+            try:
+                msg = await bot.wait_for("message", timeout=30, check=check)
+                STUDY[2][monke][0] = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send(
+                    f"{monke.mention} you took too long to describe your new goal"
+                )
             return
     else:
         await ctx.send("You haven't set a goal yung wan")
