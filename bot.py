@@ -573,6 +573,11 @@ async def goal(ctx):
             try:
                 msg = await bot.wait_for("message", timeout=30, check=check)
                 STUDY[2][monke][0] = msg.content
+                embed = Embed(
+                description=f"```Your goal:\n\n{msg.content}\n\nhas been set```",
+                colour=0x1ED9C0,
+                )
+                await ctx.send(embed=embed)
             except asyncio.TimeoutError:
                 await ctx.send(
                     f"{monke.mention} you took too long to describe your new goal"
