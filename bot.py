@@ -561,7 +561,7 @@ async def goal(ctx):
     for monke in STUDY[2].keys():
         if monke.id == ctx.author.id:
             embed = Embed(
-                description=f"Your goal is:\n\n{STUDY[2][monke.id][0]}\n\nWhat do you want to "
+                description=f"Your goal is:\n\n{STUDY[2][monke][0]}\n\nWhat do you want to "
                 f"change it to?",
                 colour=0x1ED9C0,
             )
