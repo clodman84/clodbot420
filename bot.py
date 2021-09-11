@@ -561,7 +561,7 @@ async def goal(ctx):
     for monke in STUDY[2].keys():
         if monke.id == ctx.author.id:
             embed = Embed(
-                description=f"Your goal is:\n\n{STUDY[2][monke.id][0]}\n\nWhat do you want to "
+                description=f"Your goal is:\n\n{STUDY[2][monke][0]}\n\nWhat do you want to "
                 f"change it to?",
                 colour=0x1ED9C0,
             )
@@ -573,6 +573,11 @@ async def goal(ctx):
             try:
                 msg = await bot.wait_for("message", timeout=30, check=check)
                 STUDY[2][monke][0] = msg.content
+                embed = Embed(
+                description=f"```Your goal:\n\n{msg.content}\n\nhas been set```",
+                colour=0x1ED9C0,
+                )
+                await ctx.send(embed=embed)
             except asyncio.TimeoutError:
                 await ctx.send(
                     f"{monke.mention} you took too long to describe your new goal"
