@@ -15,6 +15,8 @@ from pygicord import Paginator
 import airplanes
 import texttable as T
 import spotify
+import maps
+
 
 help_command = commands.DefaultHelpCommand(no_category="Commands")
 bot = commands.Bot(
@@ -483,6 +485,34 @@ async def plotpos(ctx):
     live = await liveFormula.get_live(path)
     await liveFormula.plotPos(live, colours)
     f = File("position-plot.png", filename="position-plot.png")
+    await ctx.send(file=f)
+
+
+@bot.command()
+async def mercator(ctx, lat, lon):
+    """Plots given coordinates onto a mercator projection.
+    North is positive and East is positive. Use signs for now. Notation involving cardinal directions will come when I
+    am in mood.
+    Usage:
+    -----
+    --mercator  77  28
+    --mercator -58 -67
+    """
+    try:
+        if abs(int(lat)) > 85:
+            await ctx.send(
+                "Ah you have stumbled across the downside of the mercator projection. Since tan(90) is infinite. I "
+                "can't plot anything above 85 degrees north or south. Imagine wrapping a cylinder around a sphere "
+                "touching every point on its equator. A ray of light passing through the poles will never intersect "
+                "the cylinder "
+            )
+            return
+        if abs(int(lon)) > 180:
+            await ctx.send("Use sensible coordinates vro")
+    except TypeError:
+        await ctx.send("Please recheck your query. Use --help mercator for more info")
+    maps.cylindrical(int(lat), int(lon))
+    f = File("mercator_plot.png", filename="mercator_plot.png")
     await ctx.send(file=f)
 
 

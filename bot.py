@@ -119,7 +119,7 @@ async def on_message(message):
             await message.channel.send(embed=embed)
             await message.delete()
 
-    if utils.contains(message.content.lower, ["who-asked", "who asked"]):
+    if utils.contains(message.content.lower(), ["who-asked", "who asked"]):
         await message.channel.send("**IT WAS ME! I WAS THE ONE WHO ASKED**")
         dom = doom[random.randint(0, len(doom) - 1)]
         await message.channel.send(dom)
