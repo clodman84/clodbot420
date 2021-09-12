@@ -499,7 +499,7 @@ async def mercator(ctx, lat, lon):
     --mercator -58 -67
     """
     try:
-        if abs(float(lat)) > 85:
+        if abs(float(lat)) > 75:
             await ctx.send(
                 "Ah you have stumbled across the downside of the mercator projection. Since tan(90) is infinite. I "
                 "can't plot anything above 85 degrees north or south. Imagine wrapping a cylinder around a sphere "
@@ -513,6 +513,46 @@ async def mercator(ctx, lat, lon):
         await ctx.send("Please recheck your query. Use --help mercator for more info")
     maps.cylindrical(float(lat), float(lon))
     f = File("mercator_plot.png", filename="mercator_plot.png")
+    await ctx.send(file=f)
+
+
+@bot.command()
+async def azimuthalN(ctx, lat, lon):
+    """Plots given coordinates onto an azimuthal equidistant projection with the north pole at the origin. All distances measured from the north pole to any point on this projection is the actual distance measured on earth
+    North is positive and East is positive. Use signs for now. Notation involving cardinal directions will come when I
+    am in mood.
+    Usage:
+    -----
+    --mercator  77  28
+    --mercator -58 -67
+    """
+    try:
+        if abs(float(lon)) > 180 or abs(float(lat)) > 90:
+            await ctx.send("Use sensible coordinates vro")
+    except ValueError:
+        await ctx.send("Please recheck your query. Use --help azimuthalN for more info")
+    maps.azimuthal_north(float(lat), float(lon))
+    f = File("azimuthal_north.png", filename="azimuthal_north.png")
+    await ctx.send(file=f)
+
+
+@bot.command()
+async def azimuthalS(ctx, lat, lon):
+    """Plots given coordinates onto an azimuthal equidistant projection with the south pole at the origin. All distances measured from the north pole to any point on this projection is the actual distance measured on earth
+    North is positive and East is positive. Use signs for now. Notation involving cardinal directions will come when I
+    am in mood.
+    Usage:
+    -----
+    --mercator  77  28
+    --mercator -58 -67
+    """
+    try:
+        if abs(float(lon)) > 180 or abs(float(lat)) > 90:
+            await ctx.send("Use sensible coordinates vro")
+    except ValueError:
+        await ctx.send("Please recheck your query. Use --help azimuthalS for more info")
+    maps.azimuthal_south(float(lat), float(lon))
+    f = File("azimuthal_south.png", filename="azimuthal_south.png")
     await ctx.send(file=f)
 
 
