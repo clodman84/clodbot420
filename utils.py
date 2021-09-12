@@ -35,6 +35,7 @@ def too_long(message):
     return len(message) >= 2000
 
 
+# TODO: Smarter table making with automatic detection of whether it will fit or not. Get rid of TT and all that.
 def make_table(data, headers="keys", fmt="fancy_grid"):
     """Tabulate data into an ASCII table. Return value is a str.
     The `fmt` param defaults to 'fancy_grid' which includes borders for cells. If the table exceeds
@@ -218,8 +219,7 @@ def filter_times(sorted_times, filter):
         return sorted_times[:5]
     # slowest 5
     elif filter == "bottom":
-        return sorted_times[len(sorted_times) - 5 :]
+        return sorted_times[len(sorted_times) - 5:]
     # no filter given, return full sorted results
     else:
         return sorted_times
-

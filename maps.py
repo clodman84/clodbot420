@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.image as image
-import math
+from math import pi, radians, tan
 from utils import save_figure
 
 
@@ -11,8 +11,8 @@ def cylindrical(lat, lon):
     data = image.imread("mercator.jpg")
     plt.style.use("dark_background")
     fig, ax = plt.subplots()
-    x = (2056 / (2 * math.pi)) * math.radians(lon) + 1029
-    y = 1028 - (2056 / (2 * math.pi)) * math.tan(math.radians(lat))
+    x = (2056 / (2 * pi)) * radians(lon) + 1029
+    y = 1028 - (2056 / (2 * pi)) * tan(radians(lat))
     plt.plot(x, y, figure=fig, marker="v", color="red")
     plt.xticks(ticks=[0], labels="")
     plt.yticks(ticks=[0], labels="")
@@ -21,3 +21,5 @@ def cylindrical(lat, lon):
     plt.imshow(data, figure=fig)
     fig.set_size_inches(6, 6)
     save_figure(fig=fig, name="mercator_plot.png")
+
+

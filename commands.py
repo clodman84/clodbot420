@@ -499,7 +499,7 @@ async def mercator(ctx, lat, lon):
     --mercator -58 -67
     """
     try:
-        if abs(int(lat)) > 85:
+        if abs(float(lat)) > 85:
             await ctx.send(
                 "Ah you have stumbled across the downside of the mercator projection. Since tan(90) is infinite. I "
                 "can't plot anything above 85 degrees north or south. Imagine wrapping a cylinder around a sphere "
@@ -507,11 +507,11 @@ async def mercator(ctx, lat, lon):
                 "the cylinder "
             )
             return
-        if abs(int(lon)) > 180:
+        if abs(float(lon)) > 180:
             await ctx.send("Use sensible coordinates vro")
-    except TypeError:
+    except ValueError:
         await ctx.send("Please recheck your query. Use --help mercator for more info")
-    maps.cylindrical(int(lat), int(lon))
+    maps.cylindrical(float(lat), float(lon))
     f = File("mercator_plot.png", filename="mercator_plot.png")
     await ctx.send(file=f)
 

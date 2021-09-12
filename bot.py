@@ -105,8 +105,8 @@ async def on_message(message):
             await message.delete()
 
     if (
-        len(message.content.split()) == 1
-        and "https://www.reddit.com/r/" in message.content
+            len(message.content.split()) == 1
+            and "https://www.reddit.com/r/" in message.content
     ):
         data = await reddit.get_image(message.content)
         if data is not None:
@@ -125,9 +125,9 @@ async def on_message(message):
         await message.channel.send(dom)
 
     if (
-        message.channel.id == 842796682114498570
-        and PUPPET[0]
-        and message.content[0:2] != "--"
+            message.channel.id == 842796682114498570
+            and PUPPET[0]
+            and message.content[0:2] != "--"
     ):
         channel = bot.get_channel(int(PUPPET[1]))
         await channel.send(str(message.content))
@@ -165,30 +165,30 @@ async def on_message(message):
         if not utils.contains(message.content.lower(), ["sus", "s u s"]):
             embed = Embed(
                 description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your "
-                f"sentence:**\n\n{content}",
+                            f"sentence:**\n\n{content}",
                 colour=0x1ED9C0,
             )
             embed.set_footer(text=module.generator("sites"))
             await message.channel.send(embed=embed)
             await message.delete()
     if message.channel.category.id != 860176783755313182 and (
-        utils.contains(message.content.lower(), [":lewd", "hentai", "ecchi", "l e w d"])
-        or message.author.id in [337481187419226113, 571027211407196161]
+            utils.contains(message.content.lower(), [":lewd", "hentai", "ecchi", "l e w d"])
+            or message.author.id in [337481187419226113, 571027211407196161]
     ):
         dom = doom[random.randint(0, len(doom) - 1)]
         await message.channel.send(dom)
         await message.delete()
     if (
-        message.attachments
-        or utils.contains(content, ["/", "%", ":", "http", "--"])
-        or message.reference
+            message.attachments
+            or utils.contains(content, ["/", "%", ":", "http", "--"])
+            or message.reference
     ):
         return
     elif (
-        (COUNTER[author.id]) % 50 == 0
-        and COOLDOWN == 0
-        and len(content) <= 2048
-        and not message.author.bot
+            (COUNTER[author.id]) % 50 == 0
+            and COOLDOWN == 0
+            and len(content) <= 2048
+            and not message.author.bot
     ):
         Text = await module.translate(message.content, str(author))
         embed = Embed(description="*" + Text[0] + "*", colour=0x1ED9C0)
@@ -237,9 +237,9 @@ async def start(ctx, study, relax):
 
     def check(m):
         return (
-            m.channel == ctx.message.channel
-            and m.author == ctx.author
-            and m.content != "--join"
+                m.channel == ctx.message.channel
+                and m.author == ctx.author
+                and m.content != "--join"
         )
 
     try:
@@ -252,7 +252,7 @@ async def start(ctx, study, relax):
         return
     embed = Embed(
         description=f"```Your goal:\n\n{msg.content}\n\nA timer of {study} minutes of work and {relax} minutes of "
-        f"break has been set```",
+                    f"break has been set```",
         colour=0x1ED9C0,
     )
     await ctx.send(embed=embed)
@@ -357,16 +357,16 @@ async def start(ctx, study, relax):
                             if monke.id in user_id:
                                 embed = Embed(
                                     description=f"Your goal is:\n\n{STUDY[2][monke][0]}\n\nWhat do you want to "
-                                    f"change it to?",
+                                                f"change it to?",
                                     colour=0x1ED9C0,
                                 )
                                 await ctx.send(monke.mention, embed=embed)
 
                                 def check(m):
                                     return (
-                                        m.channel == ctx.message.channel
-                                        and m.author.id == monke.id
-                                        and m.content != "--join "
+                                            m.channel == ctx.message.channel
+                                            and m.author.id == monke.id
+                                            and m.content != "--join "
                                     )
 
                                 try:
@@ -519,9 +519,9 @@ async def join(ctx):
 
         def check(m):
             return (
-                m.channel == ctx.message.channel
-                and m.author == ctx.author
-                and m.content != "--join"
+                    m.channel == ctx.message.channel
+                    and m.author == ctx.author
+                    and m.content != "--join"
             )
 
         try:
@@ -562,7 +562,7 @@ async def goal(ctx):
         if monke.id == ctx.author.id:
             embed = Embed(
                 description=f"Your goal is:\n\n{STUDY[2][monke][0]}\n\nWhat do you want to "
-                f"change it to?",
+                            f"change it to?",
                 colour=0x1ED9C0,
             )
             await ctx.send(monke.mention, embed=embed)
@@ -574,8 +574,8 @@ async def goal(ctx):
                 msg = await bot.wait_for("message", timeout=30, check=check)
                 STUDY[2][monke][0] = msg.content
                 embed = Embed(
-                description=f"```Your goal:\n\n{msg.content}\n\nhas been set```",
-                colour=0x1ED9C0,
+                    description=f"```Your goal:\n\n{msg.content}\n\nhas been set```",
+                    colour=0x1ED9C0,
                 )
                 await ctx.send(embed=embed)
             except asyncio.TimeoutError:
