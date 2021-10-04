@@ -166,8 +166,9 @@ async def wdc(ctx, season="current"):
 @bot.command()
 async def compute(ctx, *args):
     query = " ".join(args[:])
-    await ctx.send('Thinking...')
+    message = await ctx.send('Thinking...')
     answer = await wolfram.WolframSearch(query)
+    await message.delete()
     await ctx.send(answer)
 
 
