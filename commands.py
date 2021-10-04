@@ -518,13 +518,10 @@ async def mercator(ctx, lat, lon):
 
 @bot.command()
 async def azimuthalN(ctx, lat, lon):
-    """Plots given coordinates onto an azimuthal equidistant projection with the north pole at the origin. All distances measured from the north pole to any point on this projection is the actual distance measured on earth
-    North is positive and East is positive. Use signs for now. Notation involving cardinal directions will come when I
-    am in mood.
-    Usage:
-    -----
-    --mercator  77  28
-    --mercator -58 -67
+    """Plots given coordinates onto an azimuthal equidistant projection with the north pole at the origin. All
+    distances measured from the north pole to any point on this projection is the actual distance measured on earth
+    North is positive and East is positive. Use signs for now. Notation involving cardinal directions will come when
+    I am in mood. Usage: ----- --mercator  77  28 --mercator -58 -67
     """
     try:
         if abs(float(lon)) > 180 or abs(float(lat)) > 90:
@@ -538,13 +535,10 @@ async def azimuthalN(ctx, lat, lon):
 
 @bot.command()
 async def azimuthalS(ctx, lat, lon):
-    """Plots given coordinates onto an azimuthal equidistant projection with the south pole at the origin. All distances measured from the north pole to any point on this projection is the actual distance measured on earth
-    North is positive and East is positive. Use signs for now. Notation involving cardinal directions will come when I
-    am in mood.
-    Usage:
-    -----
-    --mercator  77  28
-    --mercator -58 -67
+    """Plots given coordinates onto an azimuthal equidistant projection with the south pole at the origin. All
+    distances measured from the north pole to any point on this projection is the actual distance measured on earth
+    North is positive and East is positive. Use signs for now. Notation involving cardinal directions will come when
+    I am in mood. Usage: ----- --mercator  77  28 --mercator -58 -67
     """
     try:
         if abs(float(lon)) > 180 or abs(float(lat)) > 90:

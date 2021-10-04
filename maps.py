@@ -28,14 +28,14 @@ def azimuthal_north(lat, lon):
     # 512 is the number of pixels from the pole to the equator
     # hacky conversion lmao moment
 
-    radius = 1024/pi
-    rho = radius*(pi/2 - radians(lat))
-    theta = radians(lon) - pi/2
+    radius = 1024 / pi
+    rho = radius * (pi / 2 - radians(lat))
+    theta = radians(lon) - pi / 2
 
     # convert to cartesian
 
-    x = rho*cos(theta)
-    y = rho*sin(theta)
+    x = rho * cos(theta)
+    y = rho * sin(theta)
 
     # adjust values to the coordinate system of images
 
@@ -57,18 +57,14 @@ def azimuthal_north(lat, lon):
 
 
 def azimuthal_south(lat, lon):
-    # get polar coordinates
-    # 512 is the number of pixels from the pole to the equator
-    # hacky conversion lmao moment
-
-    radius = 1024/pi
-    rho = radius*(pi/2 + radians(lat))
-    theta = radians(lon) + pi/2
+    radius = 1024 / pi
+    rho = radius * (pi / 2 + radians(lat))
+    theta = radians(lon) + pi / 2
 
     # convert to cartesian
 
-    x = -rho*cos(theta)
-    y = rho*sin(theta)
+    x = -rho * cos(theta)
+    y = rho * sin(theta)
 
     # adjust values to the coordinate system of images
 
@@ -79,7 +75,6 @@ def azimuthal_south(lat, lon):
     plt.style.use("dark_background")
     fig, ax = plt.subplots()
 
-
     plt.plot(x, y, figure=fig, marker="v", color="red")
     plt.xticks(ticks=[0], labels="")
     plt.yticks(ticks=[0], labels="")
@@ -88,5 +83,3 @@ def azimuthal_south(lat, lon):
     plt.imshow(data, figure=fig)
     fig.set_size_inches(6, 6)
     save_figure(fig=fig, name="azimuthal_south.png")
-
-
