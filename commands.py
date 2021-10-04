@@ -16,7 +16,7 @@ import airplanes
 import texttable as T
 import spotify
 import maps
-
+import wolfram
 
 help_command = commands.DefaultHelpCommand(no_category="Commands")
 bot = commands.Bot(
@@ -161,6 +161,14 @@ async def wdc(ctx, season="current"):
         + f"Season: {result['season']} Round: {result['round']}\n"
     )
     await ctx.send(f"```\n{table}\n```")
+
+
+@bot.command()
+async def compute(ctx, *args):
+    query = " ".join(args[:])
+    await ctx.send('Thinking...')
+    answer = await wolfram.WolframSearch(query)
+    await ctx.send(answer)
 
 
 @bot.command(aliases=["teams", "constructors"])

@@ -13,7 +13,7 @@ import monke
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = True
+LOUD = False
 COOLDOWN = 3600
 
 nukeLaunch = [
@@ -59,7 +59,7 @@ COUNTER = {}
 # ______________________________________________________________________________________________________________________
 @bot.event
 async def on_ready():
-    monke.Monke.channel =  bot.get_channel(866030261341650953)
+    monke.Monke.channel = bot.get_channel(866030261341650953)
     now = datetime.utcnow()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
     channel = bot.get_channel(799957897017688065)
