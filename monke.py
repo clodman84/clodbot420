@@ -5,6 +5,7 @@ from datetime import timedelta
 from commands import bot
 import asyncio
 from typing import List, Any
+from music import MusiCUNT, Song
 
 
 class Monke:
@@ -111,13 +112,17 @@ async def start(ctx, study, relax):
         if Monke.timer == 0:
 
             voice_channel = bot.get_channel(866030210007826453)
-            vc = await voice_channel.connect()
-            source = FFmpegPCMAudio(source="wator.mp3")
-            vc.play(source)
-            while vc.is_playing():
-                await asyncio.sleep(0.1)
-            await vc.disconnect()
+            is_playing = False
+            for cunt in MusiCUNT.cunts:
+                if cunt.client.channel == voice_channel:
+                    is_playing = True
+                    under_the_wator = Song("Hello I am under the Wator")
+                    cunt.playlist.insert(0, under_the_wator)
+                    cunt.client.stop()
+                    break
 
+            if not is_playing:
+                await alarm(voice_channel)
             if Monke.is_break:
                 await setStudy()
             else:
@@ -173,6 +178,15 @@ async def start(ctx, study, relax):
     Monke.rounds = 0
     Monke.counter = 0
     return
+
+
+async def alarm(voice_channel):
+    vc = await voice_channel.connect()
+    source = FFmpegPCMAudio(source="wator.mp3")
+    vc.play(source)
+    while vc.is_playing():
+        await asyncio.sleep(0.1)
+    await vc.disconnect()
 
 
 @bot.command()
@@ -285,7 +299,9 @@ async def change_goal(ctx):
     for monke in MONKEY_LIST:
         if monke.member.id == ctx.author.id:
             await changeGoal(monke)
-            description = f"{monke.member.mention} your goal was set to:\n\n {monke.goal}."
+            description = (
+                f"{monke.member.mention} your goal was set to:\n\n {monke.goal}."
+            )
             embed = Embed(
                 description=description,
                 colour=0x1ED9C0,

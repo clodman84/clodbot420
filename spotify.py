@@ -69,6 +69,16 @@ async def playlist(tracks):
     await spotify.close()
 
 
+async def getPlaylist(link):
+    spotify = Spotify(app_token, asynchronous=True)
+    spotify_playlist = await spotify.playlist(playlist_id=link.split("/")[-1])
+    await spotify.close()
+    songs = []
+    for i in spotify_playlist.tracks.items:
+        songs.append(f"{i.track.name}-{i.track.artists[0].name}")
+    return {"image": spotify_playlist.images[0].url, "songs": songs}
+
+
 def listSongs(songs):
     if len(songs) == 0:
         return None
