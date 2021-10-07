@@ -114,11 +114,13 @@ async def start(ctx, study, relax):
             voice_channel = bot.get_channel(866030210007826453)
             is_playing = False
             for cunt in MusiCUNT.cunts:
-                if cunt.client.channel == voice_channel:
+                if cunt.client.channel.guild == voice_channel.guild:
                     is_playing = True
                     under_the_wator = Song("Hello I am under the Wator")
                     cunt.playlist.insert(0, under_the_wator)
                     cunt.client.stop()
+                    if cunt.is_loop:
+                        cunt.playlist.pop(-1)
                     break
 
             if not is_playing:

@@ -5,7 +5,7 @@ import asyncio
 from discord import ClientException
 from typing import List
 import spotify
-
+from pygicord import Paginator
 # RIP GROOVY.
 
 YTDL_OPTS = {
@@ -27,19 +27,49 @@ class MusiCUNT:
         self.client = client
         self.channel = channel
         self.now_playing = None
+        self.is_loop = False
         # gets appended to the list of clients
         MusiCUNT.cunts.append(self)
 
     def next_song(self, err):
         asyncio.run_coroutine_threadsafe(self.now_playing.delete(), bot.loop)
         if len(self.playlist) > 0:
-            next_song = self.playlist.pop(0)
+            next_song = self.get_next()
             asyncio.run_coroutine_threadsafe(self.play_song(next_song), bot.loop)
         else:
             asyncio.run_coroutine_threadsafe(self.die(), bot.loop)
 
     def add_song(self, song):
         self.playlist.extend(song)
+
+    def get_next(self):
+        if self.is_loop:
+            song = self.playlist.pop(0)
+            self.playlist.append(song)
+            return song
+        else:
+            song = self.playlist.pop(0)
+            return song
+
+    def get_queue(self):
+        curr_index = 0
+        queueList = []
+        string = '```css\n'
+        while curr_index < len(self.playlist):
+            song = self.playlist[curr_index]
+            if len(song.title) > 40:
+                string += f"{curr_index+1}. {song.title[0:36]}{3*'.'}\n"
+            else:
+                string += f"{curr_index+1}. {song.title}\n"
+            curr_index += 1
+            if curr_index % 25 == 0:
+                string += '```'
+                queueList.append(string)
+                string = '```css\n'
+        else:
+            string += '```'
+            queueList.append(string)
+            return queueList
 
     async def play_song(self, song):
         self.current_song = song
@@ -107,8 +137,8 @@ async def process_query(query):
     else:
         # if it is not a spotify link then it is a YouTube link, download error should catch the any other link
         return [
-            Song(query=query)
-        ], False  # returns a list for compatibility with Spotify playlists
+                   Song(query=query)
+               ], False  # returns a list for compatibility with Spotify playlists
 
 
 @bot.command()
@@ -138,12 +168,15 @@ async def play(ctx, *args):
             player.add_song(song)
             embed = Embed(
                 title=f'{len(song)} {"item" if len(song) == 1 else "items"} added to '
-                f"queue!",
+                      f"queue!",
                 color=0x1ED9C0,
             )
             if image:
+                # I want it to delete only if there is no image in the message
                 embed.set_image(url=image)
-            await ctx.send(embed=embed, delete_after=15)
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send(embed=embed, delete_after=15)
 
     if not player:
         try:
@@ -160,11 +193,12 @@ async def play(ctx, *args):
         ).set_footer(text="RIP Groovy")
         if image:
             embed.set_image(url=image)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(embed=embed, delete_after=15)
 
-        await ctx.send(embed=embed)
 
-
-@bot.command()
+@bot.command(aliases=['p'])
 async def pause(ctx):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
@@ -178,7 +212,7 @@ async def pause(ctx):
             return
 
 
-@bot.command()
+@bot.command(aliases=['die'])
 async def disconnect(ctx):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
@@ -191,11 +225,11 @@ async def disconnect(ctx):
         if musi_cunt.client.channel == voice_channel:
             musi_cunt.playlist.clear()
             musi_cunt.client.stop()
-            await ctx.send("Sayonara Cocksucker!")
+            await ctx.send("Disconnected!")
             return
 
 
-@bot.command()
+@bot.command(aliases=['s'])
 async def skip(ctx):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
@@ -208,3 +242,58 @@ async def skip(ctx):
         if musi_cunt.client.channel == voice_channel:
             musi_cunt.client.stop()
             return
+
+
+@bot.command(aliases=['l'])
+async def loop(ctx):
+    if ctx.author.voice:
+        voice_channel = ctx.author.voice.channel
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+        return
+
+    musi_cunt: MusiCUNT
+    for musi_cunt in MusiCUNT.cunts:
+        if musi_cunt.client.channel == voice_channel:
+            if musi_cunt.is_loop:
+                musi_cunt.is_loop = False
+            else:
+                musi_cunt.is_loop = True
+            await ctx.send(f'Looping set to: {musi_cunt.is_loop}')
+
+
+@bot.command(aliases=['q'])
+async def queue(ctx):
+    if ctx.author.voice:
+        voice_channel = ctx.author.voice.channel
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+        return
+
+    musi_cunt: MusiCUNT
+    for musi_cunt in MusiCUNT.cunts:
+        if musi_cunt.client.channel == voice_channel:
+            if len(musi_cunt.playlist) == 0:
+                await ctx.send(embed=Embed(title='Your queue is empty!', color=0x1ED9C0))
+                return
+            playlist = musi_cunt.get_queue()
+            pages = []
+            for item in playlist:
+                pages.append(Embed(description=item, color=0x1ED9C0))
+            paginator = Paginator(pages=pages)
+            await paginator.start(ctx)
+
+
+@bot.command()
+async def clear(ctx):
+    if ctx.author.voice:
+        voice_channel = ctx.author.voice.channel
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+        return
+
+    musi_cunt: MusiCUNT
+    for musi_cunt in MusiCUNT.cunts:
+        if musi_cunt.client.channel == voice_channel:
+            musi_cunt.playlist.clear()
+            await ctx.send('Playlist Cleared!')
