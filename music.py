@@ -141,7 +141,7 @@ async def process_query(query):
                ], False  # returns a list for compatibility with Spotify playlists
 
 
-@bot.command()
+@bot.command(aliases=['p'])
 async def play(ctx, *args):
     # detect which channel to join and then join
     if ctx.author.voice:
@@ -173,6 +173,7 @@ async def play(ctx, *args):
             )
             if image:
                 # I want it to delete only if there is no image in the message
+                # noinspection PyTypeChecker
                 embed.set_image(url=image)
                 await ctx.send(embed=embed)
             else:
@@ -198,7 +199,7 @@ async def play(ctx, *args):
             await ctx.send(embed=embed, delete_after=15)
 
 
-@bot.command(aliases=['p'])
+@bot.command()
 async def pause(ctx):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
@@ -209,7 +210,6 @@ async def pause(ctx):
     for musi_cunt in MusiCUNT.cunts:
         if musi_cunt.client.channel == voice_channel:
             musi_cunt.pause()
-            return
 
 
 @bot.command(aliases=['die'])
@@ -226,11 +226,10 @@ async def disconnect(ctx):
             musi_cunt.playlist.clear()
             musi_cunt.client.stop()
             await ctx.send("Disconnected!")
-            return
 
 
 @bot.command(aliases=['s'])
-async def skip(ctx):
+async def skip(ctx, index=0):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
     else:
@@ -240,8 +239,15 @@ async def skip(ctx):
     musi_cunt: MusiCUNT
     for musi_cunt in MusiCUNT.cunts:
         if musi_cunt.client.channel == voice_channel:
+            i = 0
+            while i < index-1:
+                if musi_cunt.is_loop:
+                    song = musi_cunt.playlist.pop(0)
+                    musi_cunt.playlist.insert(-1, song)
+                else:
+                    musi_cunt.playlist.pop(0)
+                i += 1
             musi_cunt.client.stop()
-            return
 
 
 @bot.command(aliases=['l'])
