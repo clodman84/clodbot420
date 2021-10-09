@@ -6,6 +6,7 @@ from discord import ClientException
 from typing import List
 import spotify
 from pygicord import Paginator
+
 # RIP GROOVY.
 
 YTDL_OPTS = {
@@ -13,6 +14,7 @@ YTDL_OPTS = {
     "format": "bestaudio/best",
     "quiet": True,
     "extract_flat": "in_playlist",
+    "source_address": "0.0.0.0",  # someone on the internet claimed that this fixed the 429 errors
 }
 
 FFMPEG_BEFORE_OPTS = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
@@ -54,20 +56,20 @@ class MusiCUNT:
     def get_queue(self):
         curr_index = 0
         queueList = []
-        string = '```css\n'
+        string = "```css\n"
         while curr_index < len(self.playlist):
             song = self.playlist[curr_index]
             if len(song.title) > 40:
-                string += f"{curr_index+1}. {song.title[0:36]}{3*'.'}\n"
+                string += f"{curr_index + 1}. {song.title[0:36]}{3 * '.'}\n"
             else:
-                string += f"{curr_index+1}. {song.title}\n"
+                string += f"{curr_index + 1}. {song.title}\n"
             curr_index += 1
             if curr_index % 25 == 0:
-                string += '```'
+                string += "```"
                 queueList.append(string)
-                string = '```css\n'
+                string = "```css\n"
         else:
-            string += '```'
+            string += "```"
             queueList.append(string)
             return queueList
 
@@ -137,11 +139,11 @@ async def process_query(query):
     else:
         # if it is not a spotify link then it is a YouTube link, download error should catch the any other link
         return [
-                   Song(query=query)
-               ], False  # returns a list for compatibility with Spotify playlists
+            Song(query=query)
+        ], False  # returns a list for compatibility with Spotify playlists
 
 
-@bot.command(aliases=['p'])
+@bot.command(aliases=["p"])
 async def play(ctx, *args):
     # detect which channel to join and then join
     if ctx.author.voice:
@@ -168,7 +170,7 @@ async def play(ctx, *args):
             player.add_song(song)
             embed = Embed(
                 title=f'{len(song)} {"item" if len(song) == 1 else "items"} added to '
-                      f"queue!",
+                f"queue!",
                 color=0x1ED9C0,
             )
             if image:
@@ -180,6 +182,13 @@ async def play(ctx, *args):
                 await ctx.send(embed=embed, delete_after=15)
 
     if not player:
+
+        for musi_cunt in MusiCUNT.cunts:
+            if musi_cunt.client.channel == voice_channel:
+                musi_cunt.playlist.clear()
+                musi_cunt.client.stop()
+                await ctx.send(f'Useless MusiCUNT objects destroyed and garbage collected. {MusiCUNT.cunts}')
+
         try:
             client = await voice_channel.connect()
         except ClientException as e:
@@ -212,7 +221,33 @@ async def pause(ctx):
             musi_cunt.pause()
 
 
-@bot.command(aliases=['die'])
+@bot.command(aliases=['vol'])
+async def volume(ctx, vol):
+    """
+    Lets you adjust the volume.
+
+    Usage:
+    -----
+    --volume 100 -> The desired Volume, an integer between from 1 to 100
+    """
+    if ctx.author.voice:
+        voice_channel = ctx.author.voice.channel
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+        return
+
+    try:
+        int(vol)
+    except ValueError:
+        await ctx.send(f'{vol} is not an accepted value for volume')
+        return
+
+    for musi_cunt in MusiCUNT.cunts:
+        if musi_cunt.client.channel == voice_channel:
+            musi_cunt.client.source.volume = float(vol)/100
+
+
+@bot.command(aliases=["die"])
 async def disconnect(ctx):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
@@ -228,7 +263,7 @@ async def disconnect(ctx):
             await ctx.send("Disconnected!")
 
 
-@bot.command(aliases=['s'])
+@bot.command(aliases=["s"])
 async def skip(ctx, index=0):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
@@ -240,7 +275,7 @@ async def skip(ctx, index=0):
     for musi_cunt in MusiCUNT.cunts:
         if musi_cunt.client.channel == voice_channel:
             i = 0
-            while i < index-1:
+            while i < index - 1:
                 if musi_cunt.is_loop:
                     song = musi_cunt.playlist.pop(0)
                     musi_cunt.playlist.insert(-1, song)
@@ -250,7 +285,7 @@ async def skip(ctx, index=0):
             musi_cunt.client.stop()
 
 
-@bot.command(aliases=['l'])
+@bot.command(aliases=["l"])
 async def loop(ctx):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
@@ -265,10 +300,10 @@ async def loop(ctx):
                 musi_cunt.is_loop = False
             else:
                 musi_cunt.is_loop = True
-            await ctx.send(f'Looping set to: {musi_cunt.is_loop}')
+            await ctx.send(f"Looping set to: {musi_cunt.is_loop}")
 
 
-@bot.command(aliases=['q'])
+@bot.command(aliases=["q"])
 async def queue(ctx):
     if ctx.author.voice:
         voice_channel = ctx.author.voice.channel
@@ -280,7 +315,9 @@ async def queue(ctx):
     for musi_cunt in MusiCUNT.cunts:
         if musi_cunt.client.channel == voice_channel:
             if len(musi_cunt.playlist) == 0:
-                await ctx.send(embed=Embed(title='Your queue is empty!', color=0x1ED9C0))
+                await ctx.send(
+                    embed=Embed(title="Your queue is empty!", color=0x1ED9C0)
+                )
                 return
             playlist = musi_cunt.get_queue()
             pages = []
@@ -302,4 +339,4 @@ async def clear(ctx):
     for musi_cunt in MusiCUNT.cunts:
         if musi_cunt.client.channel == voice_channel:
             musi_cunt.playlist.clear()
-            await ctx.send('Playlist Cleared!')
+            await ctx.send("Playlist Cleared!")
