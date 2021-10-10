@@ -16,7 +16,7 @@ import asyncpg
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = False
+LOUD = True
 COOLDOWN = 3600
 nukeLaunch = [
     "https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif",
@@ -307,7 +307,12 @@ async def pills(ctx, author_id=None):
     if author_id is None:
         author_id = ctx.author.id
     else:
-        author_id = author_id[3:-1]
+        author_numeric = ''
+        for i in author_id:
+            if i.isdigit():
+                author_numeric += i
+        author_id = author_numeric
+
     pill_list = await DATABASE.getPills(str(author_id))
     await ctx.send(
         embed=Embed(
@@ -316,6 +321,7 @@ async def pills(ctx, author_id=None):
         )
     )
     return
+
 
 @tasks.loop(seconds=5.0)
 async def serverStatus():
