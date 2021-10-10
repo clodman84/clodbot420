@@ -29,6 +29,9 @@ class Monke:
     def changeGoal(self, new_goal):
         self.goal = new_goal  # this can be modded for Microsoft To Do integration
 
+    def __str__(self):
+        return f"{self.nickname}, {self.goal}, <@{self.member.id}>"
+
 
 MONKEY_LIST: List[Any] = []
 
@@ -116,7 +119,7 @@ async def start(ctx, study, relax):
             for cunt in MusiCUNT.cunts:
                 if cunt.client.channel.guild == voice_channel.guild:
                     is_playing = True
-                    under_the_wator = Song("Hello I am under the Wator")
+                    under_the_wator = Song("https://youtu.be/z6-FWJteNLI")
                     cunt.playlist.insert(0, under_the_wator)
                     cunt.client.stop()
                     if cunt.is_loop:

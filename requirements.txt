@@ -12,6 +12,7 @@ multidict==5.1.0
 beautifulsoup4==4.9.3
 tekore==3.7.1
 youtube_dl
+asyncpg
 lxml
 matplotlib
 httpx

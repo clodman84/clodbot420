@@ -11,12 +11,13 @@ import reddit
 import config
 import monke
 import music
+import databases
+import asyncpg
 
 # ______________________________________________________________________________________________________________________
 
 LOUD = False
 COOLDOWN = 3600
-
 nukeLaunch = [
     "https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif",
     "https://c.tenor.com/Bupb0hg8c-EAAAAM/cat-launch.gif",
@@ -60,6 +61,9 @@ COUNTER = {}
 # ______________________________________________________________________________________________________________________
 @bot.event
 async def on_ready():
+    global DATABASE
+    db = await asyncpg.create_pool(config.DATABASE_URL)
+    DATABASE = databases.DataBase(db=db)
     monke.Monke.channel = bot.get_channel(866030261341650953)
     now = datetime.utcnow()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
@@ -78,7 +82,8 @@ async def on_ready():
         cd = utils.countdown(
             datetime.strptime(f"2022-01-31 18:30:00", "%Y-%m-%d %H:%M:%S")
         )
-        description = f"**__February 1st 2022__ is __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ or __{cd[1][0] / 7}__ weeks away**"
+        description = f"**__February 1st 2022__ is __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ " \
+                      f"or __{cd[1][0] / 7}__ weeks away** "
         embed = Embed(description=description, colour=0x1ED9C0)
         embed.set_image(
             url="https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png"
@@ -95,6 +100,7 @@ async def on_message(message):
     global COOLDOWN
     global PUPPET
     global COUNTER
+    global DATABASE
     await bot.process_commands(message)
     if str(message.author.id) in banned:
         explosion = explosions[random.randint(0, len(explosions) - 1)]
@@ -160,6 +166,21 @@ async def on_message(message):
 
     author = message.author
     content = str(message.content)
+    if (
+        message.reference is not None
+        and not message.is_system()
+        and len(content.split()) == 4
+    ):
+        content = content.split()
+        if content[0].lower() == "based":
+            recipient = await message.channel.fetch_message(
+                message.reference.message_id
+            )
+            await DATABASE.addPill(str(recipient.author.id), '"' + content[2] + '"')
+            await message.channel.send(
+                f"{recipient.author.mention} your based counter has increased by 1!"
+            )
+
     if author.id not in COUNTER:
         COUNTER.setdefault(author.id, 0)
     else:
@@ -208,7 +229,8 @@ async def on_message(message):
 @bot.command()
 async def diagnose(ctx):
     variables = (
-        f"STUDY : {monke.Monke.__dict__}\n\n"
+        f"STUDY : {[str(monk) for monk in monke.MONKEY_LIST]}\n\n"
+        f"MUSICUNT: {[str(cunt) for cunt in music.MusiCUNT.cunts]}\n\n"
         f"COOLDOWN: {COOLDOWN}\n\n"
         f"COUNTER: {COUNTER}\n\n"
     )
@@ -278,6 +300,22 @@ async def drop(ctx, targeted):
     banned.remove(targeted)
     await ctx.send(f"<@{targeted}> was removed")
 
+
+@bot.command()
+async def pills(ctx, author_id=None):
+    global DATABASE
+    if author_id is None:
+        author_id = ctx.author.id
+    else:
+        author_id = author_id[3:-1]
+    pill_list = await DATABASE.getPills(str(author_id))
+    await ctx.send(
+        embed=Embed(
+            description=f"<@!{author_id}>\n```css\n{pill_list}```",
+            colour=0x1ED9C0,
+        )
+    )
+    return
 
 @tasks.loop(seconds=5.0)
 async def serverStatus():

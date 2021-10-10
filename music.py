@@ -14,7 +14,7 @@ YTDL_OPTS = {
     "format": "bestaudio/best",
     "quiet": True,
     "extract_flat": "in_playlist",
-    "source_address": "0.0.0.0",  # someone on the internet claimed that this fixed the 429 errors
+    "force-ipv4": True,
 }
 
 FFMPEG_BEFORE_OPTS = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
@@ -187,7 +187,9 @@ async def play(ctx, *args):
             if musi_cunt.client.channel == voice_channel:
                 musi_cunt.playlist.clear()
                 musi_cunt.client.stop()
-                await ctx.send(f'Useless MusiCUNT objects destroyed and garbage collected. {MusiCUNT.cunts}')
+                await ctx.send(
+                    f"Useless MusiCUNT objects destroyed and garbage collected. {MusiCUNT.cunts}"
+                )
 
         try:
             client = await voice_channel.connect()
@@ -221,7 +223,7 @@ async def pause(ctx):
             musi_cunt.pause()
 
 
-@bot.command(aliases=['vol'])
+@bot.command(aliases=["vol"])
 async def volume(ctx, vol):
     """
     Lets you adjust the volume.
@@ -239,12 +241,12 @@ async def volume(ctx, vol):
     try:
         int(vol)
     except ValueError:
-        await ctx.send(f'{vol} is not an accepted value for volume')
+        await ctx.send(f"{vol} is not an accepted value for volume")
         return
 
     for musi_cunt in MusiCUNT.cunts:
         if musi_cunt.client.channel == voice_channel:
-            musi_cunt.client.source.volume = float(vol)/100
+            musi_cunt.client.source.volume = float(vol) / 100
 
 
 @bot.command(aliases=["die"])
