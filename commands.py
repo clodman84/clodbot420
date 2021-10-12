@@ -368,7 +368,7 @@ async def poles(ctx, driver_id):
     await ctx.send(
         f"**{driver['firstname']} {driver['surname']} ** Age:{driver['age']}"
     )
-    driver_poles = await ctx.get_driver_poles(driver["id"])
+    driver_poles = await formula1.get_driver_poles(driver["id"])
     try:
         table = [utils.make_table(poles["data"], fmt="simple")]
     except MessageTooLongError:

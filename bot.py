@@ -62,8 +62,6 @@ COUNTER = {}
 @bot.event
 async def on_ready():
     global DATABASE
-    db = await asyncpg.create_pool(config.DATABASE_URL)
-    DATABASE = databases.DataBase(db=db)
     monke.Monke.channel = bot.get_channel(866030261341650953)
     now = datetime.utcnow()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
@@ -89,6 +87,8 @@ async def on_ready():
             url="https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png"
         )
         await channel.send(embed=embed)
+    db = await asyncpg.create_pool(config.DATABASE_URL)
+    DATABASE = databases.DataBase(db=db)
     serverStatus.start()
 
 

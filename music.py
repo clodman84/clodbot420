@@ -14,7 +14,6 @@ YTDL_OPTS = {
     "format": "bestaudio/best",
     "quiet": True,
     "extract_flat": "in_playlist",
-    "force-ipv4": True,
 }
 
 FFMPEG_BEFORE_OPTS = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"

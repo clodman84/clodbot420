@@ -1,3 +1,4 @@
+
 class DataBase:
     def __init__(self, db):
         self.db = db
@@ -26,7 +27,10 @@ class DataBase:
         data = await self.db.fetchrow(
             f"SELECT pills FROM based_counter WHERE id = '{author_id}'"
         )
-        return data['pills']
+        try:
+            return data['pills']
+        except TypeError:
+            return ['wow such empty, you are not based yet']
 
     async def getAllPills(self):
         data = await self.db.fetch(f"SELECT * FROM based_counter")
