@@ -25,6 +25,7 @@ class Monke:
         self.nickname = nick
         self.goal = goal
         self.member = member
+        self.lite = False
 
     def changeGoal(self, new_goal):
         self.goal = new_goal  # this can be modded for Microsoft To Do integration
@@ -192,6 +193,22 @@ async def alarm(voice_channel):
     while vc.is_playing():
         await asyncio.sleep(0.1)
     await vc.disconnect()
+
+
+@bot.command()
+async def lite(ctx):
+    if ctx.message.channel.id != 866030261341650953:
+        await ctx.send("Please use STUDY commands in <#866030261341650953>")
+        return
+
+    for monke in MONKEY_LIST:
+        if ctx.author.id == monke.member.id:
+            monke.lite = not monke.lite
+            await ctx.send(f'Lite mode set for user {ctx.author.mention} set to {monke.lite}')
+            return
+    else:
+        await ctx.send('You are not in the monke session')
+        return
 
 
 @bot.command()

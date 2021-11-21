@@ -1,19 +1,34 @@
+print('Importing modules...')
 import random
+print('Random imported!')
 from datetime import datetime
+print('Datetime imported!')
 import asyncio
+print('Asyncio Imported!')
 from discord import Embed
+print('Embed imported!')
 from discord.ext import tasks
+print('Discord.ext tasks imported!')
 import module
+print('Module imported!')
 import commands
+print('Commands imported!')
 import utils
+print('Utils imported')
 from space import apod
+print('Apod imported!')
 import reddit
+print('Reddit imported!')
 import config
+print('Config imported!')
 import monke
+print('Monke imported!')
 import music
+print('Music imported!')
 import databases
+print('Databases imported!')
 import asyncpg
-
+print('Asyncpg imported!\n\nImports completed!\n\n')
 # ______________________________________________________________________________________________________________________
 
 LOUD = True
@@ -141,7 +156,7 @@ async def on_message(message):
         await channel.send(str(message.content))
 
     if not monke.Monke.is_break and message.author.id in [
-        monkey.member.id for monkey in monke.MONKEY_LIST
+        monkey.member.id for monkey in monke.MONKEY_LIST if not monkey.lite
     ]:
         monke.Monke.counter += 1
         if message.channel.id != 866030261341650953:
@@ -333,5 +348,5 @@ async def serverStatus():
         monke.Monke.is_break = True
     return
 
-
+print('Starting bot...' )
 bot.run(config.DISCORD_TOKEN)

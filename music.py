@@ -121,8 +121,8 @@ class Song:
         return Embed(title=self.title, url=self.page_url, color=0x1ED9C0)
 
     def __str__(self):
-        return "title : {}, url : {}, duration : {}, page_url = {}".format(
-            self.title, self.stream_url, self.duration, self.page_url
+        return "title : {}, url : {}, duration : {}".format(
+            self.title, self.stream_url, self.duration
         )
 
 
@@ -297,10 +297,7 @@ async def loop(ctx):
     musi_cunt: MusiCUNT
     for musi_cunt in MusiCUNT.cunts:
         if musi_cunt.client.channel == voice_channel:
-            if musi_cunt.is_loop:
-                musi_cunt.is_loop = False
-            else:
-                musi_cunt.is_loop = True
+            musi_cunt.is_loop = not musi_cunt.is_loop
             await ctx.send(f"Looping set to: {musi_cunt.is_loop}")
 
 
@@ -341,3 +338,16 @@ async def clear(ctx):
         if musi_cunt.client.channel == voice_channel:
             musi_cunt.playlist.clear()
             await ctx.send("Playlist Cleared!")
+
+'''
+@bot.command(aliases=["ly"])
+async def lyrics(ctx, query="Never Gonna Give You Up"):
+    try:
+        results = await kclient.music.lyrics(query)
+    except ksoftapi.NoResults:
+        print('No lyrics found for ' + query)
+    else:
+        first = results[0]
+        embed = Embed(description=first.lyrics, color=0x1ED9C0)
+        await ctx.send(embed=embed)
+'''
