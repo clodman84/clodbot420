@@ -3,6 +3,7 @@ from discord import Embed, FFmpegPCMAudio
 from discord.errors import Forbidden
 from datetime import timedelta
 from commands import bot
+from discord import MessageType
 import asyncio
 from typing import List, Any
 from music import MusiCUNT, Song
@@ -45,6 +46,7 @@ async def start(ctx, study, relax):
 
     if ctx.author.id in [monke.member.id for monke in MONKEY_LIST]:
         await ctx.send("You are already in a monke session")
+        return
 
     try:
         int(study)
@@ -100,6 +102,9 @@ async def start(ctx, study, relax):
     # creation of the clock
     Monke.clock = await ctx.send(embed=embed)
     await Monke.clock.pin()
+    async for message in ctx.message.channel.history(limit=10):
+        if message.type is MessageType.pins_add:
+            await message.delete()
 
     await asyncio.sleep(15)
     while len(MONKEY_LIST) > 0:
@@ -143,7 +148,7 @@ async def start(ctx, study, relax):
                     colour=0x1ED9C0,
                 )
                 embed.set_footer(text="React with a ✅ if you do.")
-                message = await ctx.send(embed=embed)
+                message = await ctx.send(embed=embed, delete_after=20)
                 await message.add_reaction("✅")
                 await asyncio.sleep(15)
                 message = await ctx.fetch_message(message.id)
@@ -160,7 +165,7 @@ async def start(ctx, study, relax):
                     d += f"{monke.member.name} : {monke.goal}\n\n"
 
                 embed = Embed(
-                    title="Goals for next round",
+                    title=f"Goals for round {Monke.rounds + 1}",
                     description=d,
                     colour=0x1ED9C0,
                 )
@@ -273,7 +278,7 @@ async def join(ctx):
         await ctx.send("You need to start a study session first")
         return
     else:
-        await ctx.send(ctx.author.mention + " what's your goal for this session?")
+        await ctx.send(ctx.author.mention + " what's your goal for this session?", delete_after=125)
 
         def check(m):
             return (
@@ -287,7 +292,8 @@ async def join(ctx):
         except asyncio.TimeoutError:
             await ctx.send(
                 "You took longer than 2 minutes to describe your goal for this session, come back when you are "
-                "ready to walk the path of the **FOREVER MONKE!!**"
+                "ready to walk the path of the **FOREVER MONKE!!**",
+                delete_after=10
             )
             return
 
@@ -328,7 +334,7 @@ async def change_goal(ctx):
                 description=description,
                 colour=0x1ED9C0,
             )
-            await ctx.send(embed=embed)
+            await ctx.send(embed=embed, delete_after=30)
             break
     else:
         await ctx.send("You have not set a goal yung wan.")
@@ -363,6 +369,9 @@ async def setStudy():
 
     Monke.clock = await Monke.channel.send(role.mention, embed=embed)
     await Monke.clock.pin()
+    async for message in Monke.channel.history(limit=10):
+        if message.type is MessageType.pins_add:
+            await message.delete()
 
 
 async def setBreak():
@@ -396,6 +405,9 @@ async def setBreak():
     await Monke.clock.delete()
     Monke.clock = await Monke.channel.send(mentions, embed=embed)
     await Monke.clock.pin()
+    async for message in Monke.channel.history(limit=10):
+        if message.type is MessageType.pins_add:
+            await message.delete()
 
 
 async def changeGoal(monke):
@@ -404,7 +416,7 @@ async def changeGoal(monke):
         f"change it to?",
         colour=0x1ED9C0,
     )
-    await Monke.channel.send(monke.member.mention, embed=embed)
+    await Monke.channel.send(monke.member.mention, embed=embed, delete_after=30)
 
     def check(m):
         return (
