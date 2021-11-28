@@ -129,7 +129,8 @@ async def on_ready():
     if recoverSession:
         channel = monke.MonkeSession.channel
         await channel.send(
-            "```fix\nA monkey session was interrupted, commencing session recovery.```"
+            "```fix\nA monkey session was interrupted, commencing session recovery.```",
+            delete_after=30
         )
         # creating a monke session
         RecoveredSession = recoverSession[0]  # session details
@@ -140,15 +141,15 @@ async def on_ready():
             int(RecoveredSession["clock_id"]),
             RecoveredSession["is_break"],
         )
-        await channel.send("```fix\nSession recovered, monkey session recreated...```")
+        await channel.send("```fix\nSession recovered, monkey session recreated...```", delete_after=30)
         # recovering monke.MONKEY_LIST and recreating Monkes.
-        await channel.send("```fix\nMonkeys being rescued...```")
+        await channel.send("```fix\nMonkeys being rescued...```", delete_after=30)
         for r in recoverSession[1]:
             member = await channel.guild.fetch_member(int(r["id_"]))
             recoveredMonkey = monke.Monke(r["nick"], r["goal"], member)
             await DATABASE.removeMonke(member.id)
             monke.MONKEY_LIST.append(recoveredMonkey)
-        await channel.send("```fix\nSession recovery complete!```")
+        await channel.send("```fix\nSession recovery complete!```", delete_after=30)
         await DATABASE.clearSession()
         bot.loop.create_task(Session.start())
     serverStatus.start()
