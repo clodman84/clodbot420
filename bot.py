@@ -1,37 +1,52 @@
-print('Importing modules...')
+print("Importing modules...")
 import random
-print('Random imported!')
+
+print("Random imported!")
 from datetime import datetime
-print('Datetime imported!')
+
+print("Datetime imported!")
 import asyncio
-print('Asyncio Imported!')
+
+print("Asyncio Imported!")
 from discord import Embed
-print('Embed imported!')
+
+print("Embed imported!")
 from discord.ext import tasks
-print('Discord.ext tasks imported!')
+
+print("Discord.ext tasks imported!")
 import module
-print('Module imported!')
+
+print("Module imported!")
 import commands
-print('Commands imported!')
+
+print("Commands imported!")
 import utils
-print('Utils imported')
+
+print("Utils imported")
 from space import apod
-print('Apod imported!')
+
+print("Apod imported!")
 import reddit
-print('Reddit imported!')
+
+print("Reddit imported!")
 import config
-print('Config imported!')
+
+print("Config imported!")
 import monke
-print('Monke imported!')
+
+print("Monke imported!")
 import music
-print('Music imported!')
+
+print("Music imported!")
 import databases
-print('Databases imported!')
+
+print("Databases imported!")
 import asyncpg
-print('Asyncpg imported!\n\nImports completed!\n\n')
+
+print("Asyncpg imported!\n\nImports completed!\n")
 # ______________________________________________________________________________________________________________________
 
-LOUD = True
+LOUD = False
 COOLDOWN = 3600
 nukeLaunch = [
     "https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif",
@@ -77,11 +92,11 @@ COUNTER = {}
 @bot.event
 async def on_ready():
     global DATABASE
-    monke.Monke.channel = bot.get_channel(866030261341650953)
+    monke.MonkeSession.channel = bot.get_channel(866030261341650953)
     now = datetime.utcnow()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
     channel = bot.get_channel(799957897017688065)
-    monke.Monke.MONKE_ROLE = channel.guild.get_role(866357915308785684)
+    monke.MonkeSession.MONKE_ROLE = channel.guild.get_role(866357915308785684)
     print(channel)
     print(
         "The bot is logged in as {0.user}".format(bot)
@@ -95,8 +110,10 @@ async def on_ready():
         cd = utils.countdown(
             datetime.strptime(f"2022-01-31 18:30:00", "%Y-%m-%d %H:%M:%S")
         )
-        description = f"**__February 1st 2022__ is __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ " \
-                      f"or __{cd[1][0] / 7}__ weeks away** "
+        description = (
+            f"**__February 1st 2022__ is __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ "
+            f"or __{cd[1][0] / 7}__ weeks away** "
+        )
         embed = Embed(description=description, colour=0x1ED9C0)
         embed.set_image(
             url="https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png"
@@ -104,6 +121,36 @@ async def on_ready():
         await channel.send(embed=embed)
     db = await asyncpg.create_pool(config.DATABASE_URL)
     DATABASE = databases.DataBase(db=db)
+    monke.DATABASE = DATABASE
+    recoverSession = (
+        await DATABASE.recoverSession()
+    )  # data recovery in case a monke session gets interrupted
+    print(recoverSession)
+    if recoverSession:
+        channel = monke.MonkeSession.channel
+        await channel.send(
+            "```fix\nA monkey session was interrupted, commencing session recovery.```"
+        )
+        # creating a monke session
+        RecoveredSession = recoverSession[0]  # session details
+        Session = monke.MonkeSession(
+            RecoveredSession["study"],
+            RecoveredSession["break"],
+            RecoveredSession["rounds"],
+            int(RecoveredSession["clock_id"]),
+            RecoveredSession["is_break"],
+        )
+        await channel.send("```fix\nSession recovered, monkey session recreated...```")
+        # recovering monke.MONKEY_LIST and recreating Monkes.
+        await channel.send("```fix\nMonkeys being rescued...```")
+        for r in recoverSession[1]:
+            member = await channel.guild.fetch_member(int(r["id_"]))
+            recoveredMonkey = monke.Monke(r["nick"], r["goal"], member)
+            await DATABASE.removeMonke(member.id)
+            monke.MONKEY_LIST.append(recoveredMonkey)
+        await channel.send("```fix\nSession recovery complete!```")
+        await DATABASE.clearSession()
+        bot.loop.create_task(Session.start())
     serverStatus.start()
 
 
@@ -128,8 +175,8 @@ async def on_message(message):
             await message.delete()
 
     if (
-        len(message.content.split()) == 1
-        and "https://www.reddit.com/r/" in message.content
+            len(message.content.split()) == 1
+            and "https://www.reddit.com/r/" in message.content
     ):
         data = await reddit.get_image(message.content)
         if data is not None:
@@ -148,43 +195,50 @@ async def on_message(message):
         await message.channel.send(dom)
 
     if (
-        message.channel.id == 842796682114498570
-        and PUPPET[0]
-        and message.content[0:2] != "--"
+            message.channel.id == 842796682114498570
+            and PUPPET[0]
+            and message.content[0:2] != "--"
     ):
         channel = bot.get_channel(int(PUPPET[1]))
         await channel.send(str(message.content))
-
-    if not monke.Monke.is_break and message.author.id in [
-        monkey.member.id for monkey in monke.MONKEY_LIST if not monkey.lite
-    ]:
-        monke.Monke.counter += 1
-        if message.channel.id != 866030261341650953:
-            await message.author.send(
-                f"Don't stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when "
-                "you have a break."
-            )
+    if len(monke.MONKEY_LIST) > 0 and not monke.MONKEY_LIST[0].is_break:
+        monkey = False
+        for m in monke.MONKEY_LIST:
+            if m.member.id == message.author.id and not m.lite:
+                m.counter += 1
+                monkey = m
+        if not monkey:
+            pass
         else:
-            if monke.Monke.counter % 12 == 0:
-                await message.channel.send(
-                    "Focus now, don't chit-chat, **Forever Monke** is calling."
+            if message.channel.id != 866030261341650953:
+                await message.author.send(
+                    f"Don't stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when "
+                    "you have a break."
                 )
-        if monke.Monke.counter > 50:
-            await message.channel.send(module.generator("minecraft"))
-            await message.channel.send(explosions[random.randint(0, len(doom) - 1)])
-            await message.delete()
-        elif monke.Monke.counter == 48:
-            await message.channel.send(
-                "2 more messages from those who are supposed to be studying, and I enter doom "
-                "mode"
-            )
+            else:
+                if monkey.counter % 12 == 0:
+                    await message.channel.send(
+                        f"Focus now, don't chit-chat {message.author.mention}, **Forever Monke** is calling."
+                    )
+                if monkey.counter > 50:
+                    await message.channel.send(module.generator("minecraft"))
+                    await message.channel.send(
+                        explosions[random.randint(0, len(doom) - 1)]
+                    )
+                    await message.delete()
+
+                elif monkey.counter == 48:
+                    await message.channel.send(
+                        f"2 more messages from {message.author.mention} and I enter doom "
+                        "mode"
+                    )
 
     author = message.author
     content = str(message.content)
     if (
-        message.reference is not None
-        and not message.is_system()
-        and len(content.split()) == 4
+            message.reference is not None
+            and not message.is_system()
+            and len(content.split()) == 4
     ):
         content = content.split()
         if content[0].lower() == "based":
@@ -205,30 +259,30 @@ async def on_message(message):
         if not utils.contains(message.content.lower(), ["sus", "s u s"]):
             embed = Embed(
                 description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your "
-                f"sentence:**\n\n{content}",
+                            f"sentence:**\n\n{content}",
                 colour=0x1ED9C0,
             )
             embed.set_footer(text=module.generator("sites"))
             await message.channel.send(embed=embed)
             await message.delete()
     if message.channel.category.id != 860176783755313182 and (
-        utils.contains(message.content.lower(), [":lewd", "hentai", "ecchi", "l e w d"])
-        or message.author.id in [337481187419226113, 571027211407196161]
+            utils.contains(message.content.lower(), [":lewd", "hentai", "ecchi", "l e w d"])
+            or message.author.id in [337481187419226113, 571027211407196161]
     ):
         dom = doom[random.randint(0, len(doom) - 1)]
         await message.channel.send(dom)
         await message.delete()
     if (
-        message.attachments
-        or utils.contains(content, ["/", "%", ":", "http", "--"])
-        or message.reference
+            message.attachments
+            or utils.contains(content, ["/", "%", ":", "http", "--"])
+            or message.reference
     ):
         return
     elif (
-        (COUNTER[author.id]) % 50 == 0
-        and COOLDOWN == 0
-        and len(content) <= 2048
-        and not message.author.bot
+            (COUNTER[author.id]) % 50 == 0
+            and COOLDOWN == 0
+            and len(content) <= 2048
+            and not message.author.bot
     ):
         Text = await module.translate(message.content, str(author))
         embed = Embed(description="*" + Text[0] + "*", colour=0x1ED9C0)
@@ -322,7 +376,7 @@ async def pills(ctx, author_id=None):
     if author_id is None:
         author_id = ctx.author.id
     else:
-        author_numeric = ''
+        author_numeric = ""
         for i in author_id:
             if i.isdigit():
                 author_numeric += i
@@ -343,10 +397,8 @@ async def serverStatus():
     global COOLDOWN
     if COOLDOWN > 0:
         COOLDOWN -= 5.0
-    if len(monke.MONKEY_LIST) == 0 and not monke.Monke.is_break:
-        await asyncio.sleep(120)
-        monke.Monke.is_break = True
     return
 
-print('Starting bot...' )
+
+print("Starting bot...")
 bot.run(config.DISCORD_TOKEN)

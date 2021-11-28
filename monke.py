@@ -8,28 +8,258 @@ import asyncio
 from typing import List, Any
 from music import MusiCUNT, Song
 
+DATABASE = None
 
-class Monke:
-    timer = 0  # Time to be displayed on the clock
-    break_ = 0  # Break time duration
-    study = 0  # Study time duration
-    is_break = True
-    rounds = 0  # number of monke sessions
-    clock = None  # The clock
-    clock_des = None
-    counter = 0
+# somebody touch mah spaghetti
 
+# here is the idea there will be a class called self which is in control of the Monke Session, there will be an
+# external list called MONKEY_LIST which containes MONKES, members of the monke sessions, The monke session will have
+# inbuilt methods start join leave and setBreak and setStudy. The external discord command functions exist to only pass
+# on whatever happens to the monke session class.
+
+
+class MonkeSession:
     channel = None
     MONKE_ROLE = None
 
+    def __init__(self, study, break_, rounds=0, clock_id=0, is_break=0):
+        self.study = study  # The number of study minutes
+        self.break_ = break_  # The number of break minutes
+        self.timer = self.study * 60  # The amount time that is left
+
+        if is_break == 0:
+            self.is_break = False  # Self explanatory
+        else:
+            self.is_break = True
+        self.rounds = rounds  # Number of complete monke sessions
+
+        if clock_id == 0:
+            self.clock = None  # The clock message that gets edited, if no clock id gets passed it works normally
+        else:
+            self.clock = clock_id
+
+        if not self.is_break and self.rounds == 0:
+            self.clock_des = (
+                "```fix\n"
+                "Time to get started. MONKE MODE!!\n\nTime left (work) - {}\n```"
+            )
+        elif not self.is_break:
+            self.clock_des = (
+                "```fix\n"
+                "Play time is over fellow MONKE, now get back to work.\n\nTime left (work) - {}\n```"
+            )
+        else:
+            self.clock_des = (
+                "```fix\n"
+                "Its break time, you can chill now, hug a cactus or something\n\nTime left (break) - {"
+                "}\n``` "
+            )
+        # String template for the clock
+        asyncio.run_coroutine_threadsafe(
+            DATABASE.setSession(study, break_, rounds, clock_id, is_break), bot.loop
+        )
+
+    async def start(self):
+
+        if self.clock:
+            clock = await self.channel.fetch_message(self.clock)
+            self.clock = clock
+            for embed in self.clock.embeds:
+                self.timer = int(embed.to_dict()["footer"]["text"])
+        else:
+            # creation of the clock if there is no clock already
+            self.clock_des.format(timedelta(seconds=self.timer))
+            embed = Embed(
+                description=self.clock_des.format(timedelta(seconds=self.timer)),
+                colour=0x1ED9C0,
+            )
+            embed.set_footer(text=self.timer)
+            self.clock = await self.channel.send(embed=embed)
+            await self.clock.pin()
+            await DATABASE.updateClock(self.clock.id, 0)
+
+            async for message in self.channel.history(limit=10):
+                if message.type is MessageType.pins_add:
+                    await message.delete()
+
+        await asyncio.sleep(15)
+        while len(MONKEY_LIST) > 0:
+            if self.timer > 0:
+                self.timer -= 5
+                self.clock_des.format(timedelta(seconds=self.timer))
+                embed = Embed(
+                    description=self.clock_des.format(timedelta(seconds=self.timer)),
+                    colour=0x1ED9C0,
+                )
+                embed.set_footer(text=self.timer)
+                await self.clock.edit(embed=embed)
+                await asyncio.sleep(5)
+
+            if self.timer == 0:
+
+                voice_channel = bot.get_channel(866030210007826453)
+                is_playing = False
+                for cunt in MusiCUNT.cunts:
+                    if cunt.client.channel.guild == voice_channel.guild:
+                        is_playing = True
+                        under_the_wator = Song("https://youtu.be/z6-FWJteNLI")
+                        cunt.playlist.insert(0, under_the_wator)
+                        cunt.client.stop()
+                        if cunt.is_loop:
+                            cunt.playlist.pop(-1)
+                        break
+
+                if not is_playing:
+                    await alarm(voice_channel)
+                if self.is_break:
+                    await self.setStudy()
+                else:
+                    await self.setBreak()
+                    self.rounds += 1
+                    await DATABASE.incrementRounds()
+                    d = ""
+                    for monke in MONKEY_LIST:
+                        d += f"{monke.nickname} : {monke.goal}\n\n"
+                    embed = Embed(
+                        title="Do you want to change your goal?",
+                        description=d,
+                        colour=0x1ED9C0,
+                    )
+                    embed.set_footer(text="React with a ✅ if you do.")
+                    message = await self.channel.send(embed=embed, delete_after=20)
+                    await message.add_reaction("✅")
+                    await asyncio.sleep(15)
+                    message = await self.channel.fetch_message(message.id)
+
+                    for reaction in message.reactions:
+                        if str(reaction) == "✅":
+                            user_id = [
+                                user.id for user in await reaction.users().flatten()
+                            ]
+                            for monke in MONKEY_LIST:
+                                if monke.member.id in user_id:
+                                    await changeGoal(monke=monke)
+
+                    d = ""
+                    for monke in MONKEY_LIST:
+                        d += f"{monke.member.name} : {monke.goal}\n\n"
+
+                    embed = Embed(
+                        title=f"Goals for round {self.rounds + 1}",
+                        description=d,
+                        colour=0x1ED9C0,
+                    )
+                    await self.channel.send(embed=embed)
+
+        if not self.is_break:
+            minutes = (
+                self.rounds * int(self.study) + int(self.study) - int(self.timer / 60)
+            )
+        else:
+            minutes = self.rounds * int(self.study)
+
+        await self.clock.delete()
+        description = (
+            f"{self.rounds} complete sessions and a total of {minutes} minutes of work "
+            f"and {self.rounds * int(self.break_)} minutes of break. Come back again, __**FOREVER MONKE!!**__ "
+        )
+        embed = Embed(description=description, colour=0x1ED9C0)
+        embed.set_image(
+            url="https://media.discordapp.net/attachments/800004618972037120/867313741293158450/OhMyGodILoveMonkey.png"
+        )
+        # removes the Monke session from the monke table in the DATABASE
+        await DATABASE.clearSession()
+        await self.channel.send(embed=embed)
+        return
+
+    async def setBreak(self):
+        """Changes the timer variable and sets all the members of the session to a break state"""
+        mentions = ""
+        for monke in MONKEY_LIST:
+            author = monke.member
+            new_nick = f"[BREAK] {author.name}"
+            monke.counter = 0
+            await author.remove_roles(MonkeSession.MONKE_ROLE)
+            try:
+                await author.edit(nick=new_nick)
+            except Forbidden:
+                pass
+            mentions += author.mention
+
+        self.timer = self.break_ * 60
+        self.is_break = True
+        self.clock_des = (
+            "```fix\n"
+            "Its break time, you can chill now, hug a cactus or something\n\nTime left (break) - {"
+            "}\n``` "
+        )
+
+        embed = Embed(
+            description=self.clock_des.format(timedelta(seconds=self.timer)),
+            colour=0x1ED9C0,
+        )
+        embed.set_footer(text=self.timer)
+        await self.clock.delete()
+        self.clock = await self.channel.send(mentions, embed=embed)
+        await self.clock.pin()
+        await DATABASE.updateClock(self.clock.id, 1)
+        async for message in self.channel.history(limit=10):
+            if message.type is MessageType.pins_add:
+                await message.delete()
+
+    async def setStudy(self):
+        """Changes the timer variable and sets all the members of the session to a Monke state"""
+        await self.clock.delete()
+        role = self.MONKE_ROLE
+        for monke in MONKEY_LIST:
+            author = monke.member
+            new_nick = f"[STUDY] {author.name}"
+
+            await author.add_roles(role)
+            try:
+                await author.edit(nick=new_nick)
+            except Forbidden:
+                pass
+
+        self.timer = self.study * 60
+        self.is_break = False
+
+        self.clock_des = (
+            "```fix\n"
+            "Play time is over fellow MONKE, now get back to work.\n\nTime left (work) - {}\n```"
+        )
+        embed = Embed(
+            description=self.clock_des.format(timedelta(seconds=self.timer)),
+            colour=0x1ED9C0,
+        )
+        embed.set_footer(text=self.timer)
+        self.clock = await self.channel.send(role.mention, embed=embed)
+        await self.clock.pin()
+        await DATABASE.updateClock(self.clock.id, 0)
+        # gets rid of the system message that says a message was pinned by aternos_cunt
+        async for message in MonkeSession.channel.history(limit=10):
+            if message.type is MessageType.pins_add:
+                await message.delete()
+
+
+class Monke:
     def __init__(self, nick, goal, member):
         self.nickname = nick
-        self.goal = goal
+        self.goal = None
         self.member = member
+        self.changeGoal(goal)
+        self.counter = 0
         self.lite = False
+        self.is_break = False
+        asyncio.run_coroutine_threadsafe(
+            DATABASE.addMonke(member.id, goal, nick), bot.loop
+        )
 
     def changeGoal(self, new_goal):
         self.goal = new_goal  # this can be modded for Microsoft To Do integration
+        asyncio.run_coroutine_threadsafe(
+            DATABASE.setGoal(self.member.id, self.goal), bot.loop
+        )
 
     def __str__(self):
         return f"{self.nickname}, {self.goal}, <@{self.member.id}>"
@@ -75,119 +305,9 @@ async def start(ctx, study, relax):
         return
 
     MONKEY_LIST.append(Monke(ctx.author.nick, msg.content, ctx.author))
-
-    # timer settings
-    Monke.break_ = int(relax) * 60
-    Monke.study = int(study) * 60
-    Monke.timer = Monke.study
-    Monke.is_break = False
-
-    # Confirmation of Goal
-    embed = Embed(
-        description=f"```Your goal:\n\n{msg.content}\n\nA timer of {study} minutes of work and {relax} minutes of "
-        f"break has been set```",
-        colour=0x1ED9C0,
-    )
-    await ctx.send(embed=embed)
-
-    Monke.clock_des = (
-        "```fix\n" "Time to get started. MONKE MODE!!\n\nTime left (work) - {}\n```"
-    )
-    Monke.clock_des.format(timedelta(seconds=Monke.timer))
-    embed = Embed(
-        description=Monke.clock_des.format(timedelta(seconds=Monke.timer)),
-        colour=0x1ED9C0,
-    )
-
-    # creation of the clock
-    Monke.clock = await ctx.send(embed=embed)
-    await Monke.clock.pin()
-    async for message in ctx.message.channel.history(limit=10):
-        if message.type is MessageType.pins_add:
-            await message.delete()
-
-    await asyncio.sleep(15)
-    while len(MONKEY_LIST) > 0:
-        if Monke.timer > 0:
-            Monke.timer -= 5
-            Monke.clock_des.format(timedelta(seconds=Monke.timer))
-            embed = Embed(
-                description=Monke.clock_des.format(timedelta(seconds=Monke.timer)),
-                colour=0x1ED9C0,
-            )
-            await Monke.clock.edit(embed=embed)
-            await asyncio.sleep(5)
-
-        if Monke.timer == 0:
-
-            voice_channel = bot.get_channel(866030210007826453)
-            is_playing = False
-            for cunt in MusiCUNT.cunts:
-                if cunt.client.channel.guild == voice_channel.guild:
-                    is_playing = True
-                    under_the_wator = Song("https://youtu.be/z6-FWJteNLI")
-                    cunt.playlist.insert(0, under_the_wator)
-                    cunt.client.stop()
-                    if cunt.is_loop:
-                        cunt.playlist.pop(-1)
-                    break
-
-            if not is_playing:
-                await alarm(voice_channel)
-            if Monke.is_break:
-                await setStudy()
-            else:
-                await setBreak()
-                Monke.rounds += 1
-                d = ""
-                for monke in MONKEY_LIST:
-                    d += f"{monke.nickname} : {monke.goal}\n\n"
-                embed = Embed(
-                    title="Do you want to change your goal?",
-                    description=d,
-                    colour=0x1ED9C0,
-                )
-                embed.set_footer(text="React with a ✅ if you do.")
-                message = await ctx.send(embed=embed, delete_after=20)
-                await message.add_reaction("✅")
-                await asyncio.sleep(15)
-                message = await ctx.fetch_message(message.id)
-
-                for reaction in message.reactions:
-                    if str(reaction) == "✅":
-                        user_id = [user.id for user in await reaction.users().flatten()]
-                        for monke in MONKEY_LIST:
-                            if monke.member.id in user_id:
-                                await changeGoal(monke=monke)
-
-                d = ""
-                for monke in MONKEY_LIST:
-                    d += f"{monke.member.name} : {monke.goal}\n\n"
-
-                embed = Embed(
-                    title=f"Goals for round {Monke.rounds + 1}",
-                    description=d,
-                    colour=0x1ED9C0,
-                )
-                await ctx.send(embed=embed)
-
-    if not Monke.is_break:
-        minutes = Monke.rounds * int(study) + int(study) - int(Monke.timer / 60)
-    else:
-        minutes = Monke.rounds * int(study)
-
-    await Monke.clock.delete()
-    description = (
-        f"{Monke.rounds} complete sessions and a total of {minutes} minutes of work "
-        f"and {Monke.rounds * int(relax)} minutes of break. Come back again, __**FOREVER MONKE!!**__ "
-    )
-    embed = Embed(description=description, colour=0x1ED9C0)
-    embed.set_image(
-        url="https://media.discordapp.net/attachments/800004618972037120/867313741293158450/OhMyGodILoveMonkey.png"
-    )
-    await ctx.send(embed=embed)
-    Monke.rounds = 0
-    Monke.counter = 0
+    print("Monkey added to MonkeyList")
+    Session = MonkeSession(int(study), int(relax))
+    bot.loop.create_task(Session.start())
     return
 
 
@@ -209,10 +329,12 @@ async def lite(ctx):
     for monke in MONKEY_LIST:
         if ctx.author.id == monke.member.id:
             monke.lite = not monke.lite
-            await ctx.send(f'Lite mode set for user {ctx.author.mention} set to {monke.lite}')
+            await ctx.send(
+                f"Lite mode set for user {ctx.author.mention} set to {monke.lite}"
+            )
             return
     else:
-        await ctx.send('You are not in the monke session')
+        await ctx.send("You are not in the monke session")
         return
 
 
@@ -255,10 +377,10 @@ async def leave(ctx):
                 await monke.member.edit(nick=nick)
             except Forbidden:
                 pass
-            if not Monke.is_break:
-                role = ctx.guild.get_role(866357915308785684)
-                await monke.member.remove_roles(role)
+            if not monke.is_break:
+                await monke.member.remove_roles(MonkeSession.MONKE_ROLE)
             MONKEY_LIST.remove(monke)
+            await DATABASE.removeMonke(monke.member.id)
             del monke
             break
     else:
@@ -278,7 +400,9 @@ async def join(ctx):
         await ctx.send("You need to start a study session first")
         return
     else:
-        await ctx.send(ctx.author.mention + " what's your goal for this session?", delete_after=125)
+        await ctx.send(
+            ctx.author.mention + " what's your goal for this session?", delete_after=125
+        )
 
         def check(m):
             return (
@@ -293,7 +417,7 @@ async def join(ctx):
             await ctx.send(
                 "You took longer than 2 minutes to describe your goal for this session, come back when you are "
                 "ready to walk the path of the **FOREVER MONKE!!**",
-                delete_after=10
+                delete_after=10,
             )
             return
 
@@ -305,9 +429,8 @@ async def join(ctx):
 
         MONKEY_LIST.append(Monke(ctx.author.nick, msg.content, ctx.author))
         nick = ctx.author.name
-        if not Monke.is_break:
-            role = ctx.guild.get_role(866357915308785684)
-            await ctx.author.add_roles(role)
+        if not MONKEY_LIST[0].is_break:
+            await ctx.author.add_roles(MonkeSession.MONKE_ROLE)
             newNick = f"[STUDY] {nick}"
         else:
             newNick = f"[BREAK] {nick}"
@@ -340,89 +463,20 @@ async def change_goal(ctx):
         await ctx.send("You have not set a goal yung wan.")
 
 
-async def setStudy():
-    """Changes the timer variable and sets all the members of the session to a Monke state"""
-    await Monke.clock.delete()
-    role = Monke.MONKE_ROLE
-    for monke in MONKEY_LIST:
-        author = monke.member
-        new_nick = f"[STUDY] {author.name}"
-
-        await author.add_roles(role)
-        try:
-            await author.edit(nick=new_nick)
-        except Forbidden:
-            pass
-
-    Monke.timer = Monke.study
-    Monke.is_break = False
-
-    Monke.clock_des = (
-        "```fix\n"
-        "Play time is over fellow MONKE, now get back to work.\n\nTime left (work) - {}\n```"
-    )
-    Monke.clock_des.format(timedelta(seconds=Monke.timer))
-    embed = Embed(
-        description=Monke.clock_des.format(timedelta(seconds=Monke.timer)),
-        colour=0x1ED9C0,
-    )
-
-    Monke.clock = await Monke.channel.send(role.mention, embed=embed)
-    await Monke.clock.pin()
-    async for message in Monke.channel.history(limit=10):
-        if message.type is MessageType.pins_add:
-            await message.delete()
-
-
-async def setBreak():
-    """Changes the timer variable and sets all the members of the session to a break state"""
-    mentions = ""
-    for monke in MONKEY_LIST:
-        author = monke.member
-        new_nick = f"[BREAK] {author.name}"
-
-        await author.remove_roles(Monke.MONKE_ROLE)
-        try:
-            await author.edit(nick=new_nick)
-        except Forbidden:
-            pass
-        mentions += author.mention
-
-    Monke.timer = Monke.break_
-    Monke.is_break = True
-    Monke.counter = 0
-    Monke.clock_des = (
-        "```fix\n"
-        "Its break time, you can chill now, hug a cactus or something\n\nTime left (break) - {"
-        "}\n``` "
-    )
-
-    embed = Embed(
-        description=Monke.clock_des.format(timedelta(seconds=Monke.timer)),
-        colour=0x1ED9C0,
-    )
-
-    await Monke.clock.delete()
-    Monke.clock = await Monke.channel.send(mentions, embed=embed)
-    await Monke.clock.pin()
-    async for message in Monke.channel.history(limit=10):
-        if message.type is MessageType.pins_add:
-            await message.delete()
-
-
 async def changeGoal(monke):
     embed = Embed(
         description=f"Your goal is:\n\n{monke.goal}\n\nWhat do you want to "
         f"change it to?",
         colour=0x1ED9C0,
     )
-    await Monke.channel.send(monke.member.mention, embed=embed, delete_after=30)
+    await MonkeSession.channel.send(monke.member.mention, embed=embed, delete_after=30)
 
     def check(m):
         return (
-            m.channel == Monke.channel
+            m.channel == MonkeSession.channel
             and m.author.id == monke.member.id
             and m.content != "--join "
+            and len(m.content) < 255
         )
 
     try:
@@ -430,7 +484,7 @@ async def changeGoal(monke):
         monke.changeGoal(msg.content)
 
     except asyncio.TimeoutError:
-        await Monke.channel.send(
+        await MonkeSession.channel.send(
             f"{monke.member.mention} you took too long to describe your new goal for this "
             f"session, you can change it next session **FOREVER MONKE!!**"
         )
