@@ -179,6 +179,7 @@ class MonkeSession:
             author = monke.member
             new_nick = f"[BREAK] {author.name}"
             monke.counter = 0
+            monke.is_break = True
             await author.remove_roles(MonkeSession.MONKE_ROLE)
             try:
                 await author.edit(nick=new_nick)
@@ -214,7 +215,7 @@ class MonkeSession:
         for monke in MONKEY_LIST:
             author = monke.member
             new_nick = f"[STUDY] {author.name}"
-
+            monke.is_break = False
             await author.add_roles(role)
             try:
                 await author.edit(nick=new_nick)
