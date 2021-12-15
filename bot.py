@@ -290,7 +290,7 @@ async def on_message(message):
         embed.set_footer(text="-" + Text[1])
         if Text[2] == 200:
             await message.channel.send(embed=embed)
-            await message.delete()
+            # await message.delete()
         if Text[1][-4:] == "CUNT":
             COOLDOWN = 3600
     return
