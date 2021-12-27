@@ -238,6 +238,10 @@ async def on_message(message):
                     )
 
     author = message.author
+    if message.author.id == 797152303757000715 and utils.contains(message.content.lower(), ['🤡','👏','🤩']):
+        await message.delete()
+        await message.channel.send('Shut the fuck up Gayathri, no more 🤡, 👏, 🤩 emojis for you.', delete_after=30)
+
     content = str(message.content)
     if (
             message.reference is not None
