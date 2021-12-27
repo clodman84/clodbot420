@@ -8,7 +8,7 @@ print("Datetime imported!")
 import asyncio
 
 print("Asyncio Imported!")
-from discord import Embed
+from discord import Embed, File
 
 print("Embed imported!")
 from discord.ext import tasks
@@ -44,6 +44,9 @@ print("Databases imported!")
 import asyncpg
 
 print("Asyncpg imported!\n\nImports completed!\n")
+
+import meme
+
 # ______________________________________________________________________________________________________________________
 
 LOUD = True
@@ -239,17 +242,28 @@ async def on_message(message):
     if (
             message.reference is not None
             and not message.is_system()
-            and len(content.split()) == 4
     ):
-        content = content.split()
-        if content[0].lower() == "based":
-            recipient = await message.channel.fetch_message(
-                message.reference.message_id
-            )
+        split_content = content.split()
+        is_based = (split_content[0].lower() == "based" and len(split_content) == 4)
+        is_chad = (split_content[0].lower() == "giga-quote")
+        is_cringe = (split_content[0].lower() == "cringe")
+
+        recipient = await message.channel.fetch_message(
+            message.reference.message_id
+        )
+        chad_text = recipient.content.split()
+        chad_text.append('\n-'+str(recipient.author).split("#")[0])
+        if is_based:
             await DATABASE.addPill(str(recipient.author.id), '"' + content[2] + '"')
             await message.channel.send(
                 f"{recipient.author.mention} your based counter has increased by 1!"
             )
+        if (is_based and len(chad_text) <= 25) or is_chad:
+            meme.giga_chad(' '.join(chad_text)).save("tmp.jpg")
+            await message.channel.send(file=File("tmp.jpg"))
+        elif is_cringe and len(chad_text) <= 25:
+            meme.angrysoyjack(' '.join(chad_text)).save("tmp.jpg")
+            await message.channel.send(file=File("tmp.jpg"))
 
     if author.id not in COUNTER:
         COUNTER.setdefault(author.id, 0)
