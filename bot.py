@@ -258,7 +258,7 @@ async def on_message(message):
         chad_text = recipient.content.split()
         chad_text.append('\n-'+str(recipient.author).split("#")[0])
         if is_based:
-            await DATABASE.addPill(str(recipient.author.id), '"' + content[2] + '"')
+            await DATABASE.addPill(str(recipient.author.id), '"' + split_content[2] + '"')
             await message.channel.send(
                 f"{recipient.author.mention} your based counter has increased by 1!"
             )
