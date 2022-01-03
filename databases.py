@@ -1,5 +1,3 @@
-print("Ya boy databases just got imported yo!")
-
 
 class DataBase:
     def __init__(self, db):
@@ -17,6 +15,8 @@ class DataBase:
     async def addPill(self, author_id, pill):
         connection = await self.db.acquire()
         async with connection.transaction():
+            pill.replace("`", "")
+            pill.replace('"', "")
             data = await self.db.execute(
                 f"UPDATE based_counter set pills = pills || '{'{' + pill + '}'}' WHERE id = '{author_id}';"
             )
@@ -142,3 +142,25 @@ class DataBase:
         else:
             monkeyData = await self.db.fetch("SELECT * FROM Monkeys")
             return session_data, monkeyData
+
+
+async def setup():
+    db = await asyncpg.create_pool(config.DATABASE_URL)
+    DATABASE = DataBase(db=db)
+    pills = await DATABASE.getAllPills()
+    for i in pills:
+        print(i)
+
+    for item in pillfix.items():
+        author_id = item[0]
+        pill = '{' + item[1] + '}'
+        command = f"UPDATE based_counter SET pills = \'{pill}\' WHERE id = '{author_id}';"
+        print(command)
+        await DATABASE.db.execute(command)
+
+
+if __name__ == '__main__':
+    import asyncpg
+    import config
+    import asyncio
+    asyncio.get_event_loop().run_until_complete(setup())

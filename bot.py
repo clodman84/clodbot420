@@ -46,10 +46,10 @@ import asyncpg
 print("Asyncpg imported!\n\nImports completed!\n")
 
 import meme
-
+from pygicord import Paginator
 # ______________________________________________________________________________________________________________________
 
-LOUD = True
+LOUD = False
 COOLDOWN = 3600
 nukeLaunch = [
     "https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif",
@@ -95,10 +95,13 @@ COUNTER = {}
 @bot.event
 async def on_ready():
     global DATABASE
+    global SUS_PINGU
+
     monke.MonkeSession.channel = bot.get_channel(866030261341650953)
     now = datetime.utcnow()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
     channel = bot.get_channel(799957897017688065)
+    SUS_PINGU = bot.get_channel(858700343113416704)
     monke.MonkeSession.MONKE_ROLE = channel.guild.get_role(866357915308785684)
     print(channel)
     print(
@@ -167,6 +170,7 @@ async def on_message(message):
     global PUPPET
     global COUNTER
     global DATABASE
+    global SUS_PINGU
     await bot.process_commands(message)
     if str(message.author.id) in banned:
         explosion = explosions[random.randint(0, len(explosions) - 1)]
@@ -256,7 +260,14 @@ async def on_message(message):
             message.reference.message_id
         )
         chad_text = recipient.content.split()
-        chad_text.append('\n-'+str(recipient.author).split("#")[0])
+        chad_text.append('\n-' + str(recipient.author).split("#")[0])
+
+        if message.author.id == recipient.author.id:
+            # cringe bro, calling yourself based??? smh what a normie
+            is_based = False
+            is_cringe = True
+            chad_text = ['somebody', 'pls', 'call', 'me', 'based', 'waaaaaa!!!!']
+
         if is_based:
             await DATABASE.addPill(str(recipient.author.id), '"' + split_content[2] + '"')
             await message.channel.send(
@@ -264,7 +275,10 @@ async def on_message(message):
             )
         if (is_based and len(chad_text) <= 25) or is_chad:
             meme.giga_chad(' '.join(chad_text)).save("tmp.jpg")
-            await message.channel.send(file=File("tmp.jpg"))
+            if message.channel.guild.id == 797800736599441488:
+                await SUS_PINGU.send(file=File("tmp.jpg"))
+            else:
+                await message.channel.send(file=File("tmp.jpg"))
         elif is_cringe and len(chad_text) <= 25:
             meme.angrysoyjack(' '.join(chad_text)).save("tmp.jpg")
             await message.channel.send(file=File("tmp.jpg"))
@@ -282,8 +296,9 @@ async def on_message(message):
                 colour=0x1ED9C0,
             )
             embed.set_footer(text=module.generator("sites"))
-            await message.channel.send(embed=embed)
             await message.delete()
+            await message.channel.send(embed=embed, delete_after=15)
+
     if message.channel.category.id != 860176783755313182 and (
             utils.contains(message.content.lower(), [":lewd", "hentai", "ecchi", "l e w d"])
             or message.author.id in [337481187419226113, 571027211407196161]
@@ -402,13 +417,18 @@ async def pills(ctx, author_id=None):
         author_id = author_numeric
 
     pill_list = await DATABASE.getPills(str(author_id))
-    await ctx.send(
-        embed=Embed(
-            description=f"<@!{author_id}>\n```css\n{pill_list}```",
+
+    n = 25
+    pages = []
+    for pills in [pill_list[i * n: (i + 1) * n] for i in range((len(pill_list) + n - 1) // n)]:
+        embed = Embed(
+            description=f"<@!{author_id}>\n```css\n{pills}```",
             colour=0x1ED9C0,
         )
-    )
-    return
+        pages.append(embed)
+
+    paginator = Paginator(pages=pages)
+    await paginator.start(ctx)
 
 
 @tasks.loop(seconds=5.0)
