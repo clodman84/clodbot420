@@ -49,7 +49,7 @@ import meme
 from pygicord import Paginator
 # ______________________________________________________________________________________________________________________
 
-LOUD = False
+LOUD = True
 COOLDOWN = 3600
 nukeLaunch = [
     "https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif",
@@ -262,7 +262,7 @@ async def on_message(message):
         chad_text = recipient.content.split()
         chad_text.append('\n-' + str(recipient.author).split("#")[0])
 
-        if message.author.id == recipient.author.id:
+        if message.author.id == recipient.author.id and is_based:
             # cringe bro, calling yourself based??? smh what a normie
             is_based = False
             is_cringe = True
