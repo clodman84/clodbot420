@@ -92,23 +92,17 @@ async def translate(txt, author):
 
 async def joke():
     """JOKE API. Returns a Joke"""
-
-    if random.randint(0, 10) <= 6:
-        url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
-        querystring = {"type": "single, twopart"}
-        headers = {
-            "x-rapidapi-key": "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
-            "x-rapidapi-host": "jokeapi-v2.p.rapidapi.com",
-        }
-        response = await get(url=url, headers=headers, params=querystring)
-        if response.json()["type"] == "single" and response.json()["error"] == False:
-            return response.json()["joke"]
-        elif response.json()["type"] == "twopart" and response.json()["error"] == False:
-            return f"{response.json()['setup']}\n||{response.json()['delivery']}||"
-    else:
-        url = "https://official-joke-api.appspot.com/random_joke"
-        response = await get(url=url)
-        return f"{response.json()['setup']}\n||{response.json()['punchline']}||"
+    url = "https://jokeapi-v2.p.rapidapi.com/joke/Any"
+    querystring = {"type": "single, twopart"}
+    headers = {
+        "x-rapidapi-key": "b2efcc243dmsh9563d2fd99f8086p161761jsn0796dda8a1e7",
+        "x-rapidapi-host": "jokeapi-v2.p.rapidapi.com",
+    }
+    response = await get(url=url, headers=headers, params=querystring)
+    if response.json()["type"] == "single" and response.json()["error"] == False:
+        return response.json()["joke"]
+    elif response.json()["type"] == "twopart" and response.json()["error"] == False:
+        return f"{response.json()['setup']}\n||{response.json()['delivery']}||"
 
 
 if __name__ == "__main__":
