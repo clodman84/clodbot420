@@ -81,7 +81,7 @@ def countdown(target: datetime):
     Calculate time to `target` datetime object from current time when invoked.
     Returns a list containing the string output and tuple of (days, hrs, mins, sec).
     """
-    delta = target - datetime.utcnow()
+    delta = abs(target - datetime.utcnow())
     d = delta.days if delta.days > 0 else 0
     # timedelta only stores seconds so calculate mins and hours by dividing remainder
     seconds = delta.seconds + delta.days * 86400

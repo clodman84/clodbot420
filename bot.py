@@ -1,52 +1,21 @@
-print("Importing modules...")
 import random
-
-print("Random imported!")
 from datetime import datetime
-
-print("Datetime imported!")
 import asyncio
-
-print("Asyncio Imported!")
 from discord import Embed, File
-
-print("Embed imported!")
 from discord.ext import tasks
-
-print("Discord.ext tasks imported!")
 import module
-
-print("Module imported!")
 import commands
-
-print("Commands imported!")
 import utils
-
-print("Utils imported")
 from space import apod
-
-print("Apod imported!")
 import reddit
-
-print("Reddit imported!")
 import config
-
-print("Config imported!")
 import monke
-
-print("Monke imported!")
 import music
-
-print("Music imported!")
 import databases
-
-print("Databases imported!")
 import asyncpg
-
-print("Asyncpg imported!\n\nImports completed!\n")
-
 import meme
 from pygicord import Paginator
+
 # ______________________________________________________________________________________________________________________
 
 LOUD = True
@@ -117,8 +86,8 @@ async def on_ready():
             datetime.strptime(f"2022-01-31 18:30:00", "%Y-%m-%d %H:%M:%S")
         )
         description = (
-            f"**__February 1st 2022__ is __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ "
-            f"or __{cd[1][0] / 7}__ weeks away** "
+            f"**__February 1st 2022__ was __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ "
+            f"or __{cd[1][0] / 7}__ weeks ago** "
         )
         embed = Embed(description=description, colour=0x1ED9C0)
         embed.set_image(
@@ -242,7 +211,7 @@ async def on_message(message):
                     )
 
     author = message.author
-    if message.author.id == 797152303757000715 and utils.contains(message.content.lower(), ['🤡','👏','🤩']):
+    if message.author.id == 797152303757000715 and utils.contains(message.content.lower(), ['🤡', '👏', '🤩']):
         await message.delete()
         await message.channel.send('Shut the fuck up Gayathri, no more 🤡, 👏, 🤩 emojis for you.', delete_after=30)
 
@@ -343,7 +312,7 @@ async def diagnose(ctx):
 @bot.command()
 async def remindMe(ctx):
     cd = utils.countdown(datetime.strptime(f"2022-01-31 18:30:00", "%Y-%m-%d %H:%M:%S"))
-    description = f"**__February 1st 2022__ is __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ or __{cd[1][0] / 7}__ weeks away**"
+    description = f"**__February 1st 2022__ was __{cd[0]}__ or __{cd[2]} seconds__ or __{cd[1][0] / 30} months__ or __{cd[1][0] / 7}__ weeks ago**"
     embed = Embed(description=description, colour=0x1ED9C0)
     embed.set_image(
         url="https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png"
