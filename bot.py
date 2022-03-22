@@ -246,10 +246,11 @@ async def on_message(message):
             is_chad = True
         if (is_based and len(chad_text) <= 50) or is_chad:
             meme.giga_chad(' '.join(chad_text)).save("tmp.jpg")
-            if message.channel.guild.id == 797800736599441488 and not is_chad:
-                await SUS_PINGU.send(file=File("tmp.jpg"))
-            else:
-                await message.channel.send(file=File("tmp.jpg"))
+            #if message.channel.guild.id == 797800736599441488 and not is_chad:
+            #    await SUS_PINGU.send(file=File("tmp.jpg"))
+            #else:
+            #    await message.channel.send(file=File("tmp.jpg"))
+            await message.channel.send(file=File("tmp.jpg"))
         elif is_cringe and len(chad_text) <= 50:
             meme.angrysoyjack(' '.join(chad_text)).save("tmp.jpg")
             await message.channel.send(file=File("tmp.jpg"))
