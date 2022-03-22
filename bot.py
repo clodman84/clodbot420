@@ -18,7 +18,7 @@ from pygicord import Paginator
 
 # ______________________________________________________________________________________________________________________
 
-LOUD = True
+LOUD = False
 COOLDOWN = 3600
 nukeLaunch = [
     "https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif",
@@ -243,6 +243,7 @@ async def on_message(message):
             #    f"{recipient.author.mention} your based counter has increased by 1!"
             #)
             chad_text = ['The', 'based', 'counter', 'is', 'down', 'for', 'maintenance', '\n-clodbot420']
+            is_chad = True
         if (is_based and len(chad_text) <= 50) or is_chad:
             meme.giga_chad(' '.join(chad_text)).save("tmp.jpg")
             if message.channel.guild.id == 797800736599441488 and not is_chad:
