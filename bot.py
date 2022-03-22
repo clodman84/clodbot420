@@ -238,17 +238,18 @@ async def on_message(message):
             chad_text = ['somebody', 'pls', 'call', 'me', 'based', 'waaaaaa!!!!']
 
         if is_based:
-            await DATABASE.addPill(str(recipient.author.id), '"' + split_content[2] + '"')
-            await message.channel.send(
-                f"{recipient.author.mention} your based counter has increased by 1!"
-            )
-        if (is_based and len(chad_text) <= 25) or is_chad:
+            #await DATABASE.addPill(str(recipient.author.id), '"' + split_content[2] + '"')
+            #await message.channel.send(
+            #    f"{recipient.author.mention} your based counter has increased by 1!"
+            #)
+            chad_text = ['The', 'based', 'counter', 'is', 'down', 'for', 'maintenance', '\n-clodbot420']
+        if (is_based and len(chad_text) <= 50) or is_chad:
             meme.giga_chad(' '.join(chad_text)).save("tmp.jpg")
             if message.channel.guild.id == 797800736599441488 and not is_chad:
                 await SUS_PINGU.send(file=File("tmp.jpg"))
             else:
                 await message.channel.send(file=File("tmp.jpg"))
-        elif is_cringe and len(chad_text) <= 25:
+        elif is_cringe and len(chad_text) <= 50:
             meme.angrysoyjack(' '.join(chad_text)).save("tmp.jpg")
             await message.channel.send(file=File("tmp.jpg"))
 
