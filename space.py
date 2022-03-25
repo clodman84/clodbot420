@@ -71,7 +71,7 @@ async def isro_BIMG(date, year, time):
             time = time[:-2] + "00"
         if len(time) == 3:
             time = "0" + time
-        url = f"https://mosdac.gov.in/look/3D_IMG/gallery/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
+        url = f"https://mosdac.gov.in/look/3D_IMG/preview/{year}/{date}/3DIMG_{date}{year}_{time}_L1C_ASIA_MER_BIMG.jpg"
         urls.append(url)
         # trying 29 and 59
         if time[2:] == "00":

@@ -1,3 +1,4 @@
+import pprint
 
 class DataBase:
     def __init__(self, db):
@@ -145,19 +146,22 @@ class DataBase:
 
 
 async def setup():
+    # This function is an entry point for me to do some database management and checkups etc, it's bad, but it works
     db = await asyncpg.create_pool(config.DATABASE_URL)
     DATABASE = DataBase(db=db)
     pills = await DATABASE.getAllPills()
-    for i in pills:
-        print(i)
-
-    for item in pillfix.items():
-        author_id = item[0]
-        pill = '{' + item[1] + '}'
-        command = f"UPDATE based_counter SET pills = \'{pill}\' WHERE id = '{author_id}';"
-        print(command)
-        await DATABASE.db.execute(command)
-
+    # [[pillID, pillData, pillReceiver, pillSender, serverID, channelID, time]]
+    newStructure = []
+    count = 1
+    for user in pills:
+        for pill in user["pills"]:
+            data = [None]*7
+            data[0] = count
+            data[1] = pill
+            data[2] = user["id"]
+            newStructure.append(data)
+            count += 1
+    pprint.pprint(newStructure)
 
 if __name__ == '__main__':
     import asyncpg
