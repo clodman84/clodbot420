@@ -137,10 +137,11 @@ async def on_message(message):
     # commands
     global COOLDOWN
     global PUPPET
-    global COUNTER
     global DATABASE
     global SUS_PINGU
     await bot.process_commands(message)
+
+    # missile program
     if str(message.author.id) in banned:
         explosion = explosions[random.randint(0, len(explosions) - 1)]
         launch = nukeLaunch[random.randint(0, len(nukeLaunch) - 1)]
@@ -151,6 +152,7 @@ async def on_message(message):
             await asyncio.sleep(5)
             await message.delete()
 
+    # reddit moment
     if (
             len(message.content.split()) == 1
             and "https://www.reddit.com/r/" in message.content
@@ -166,11 +168,13 @@ async def on_message(message):
             await message.channel.send(embed=embed)
             await message.delete()
 
+    # he asked
     if utils.contains(message.content.lower(), ["who-asked", "who asked"]):
         await message.channel.send("**IT WAS ME! I WAS THE ONE WHO ASKED**")
         dom = doom[random.randint(0, len(doom) - 1)]
         await message.channel.send(dom)
 
+    # ventriloquist
     if (
             message.channel.id == 842796682114498570
             and PUPPET[0]
@@ -178,12 +182,16 @@ async def on_message(message):
     ):
         channel = bot.get_channel(int(PUPPET[1]))
         await channel.send(str(message.content))
+
+    # evolve to monke
     if len(monke.MONKEY_LIST) > 0 and not monke.MONKEY_LIST[0].is_break:
+
         monkey = False
         for m in monke.MONKEY_LIST:
             if m.member.id == message.author.id and not m.lite:
                 m.counter += 1
                 monkey = m
+
         if not monkey:
             pass
         else:
@@ -210,11 +218,12 @@ async def on_message(message):
                         "mode"
                     )
 
-    author = message.author
+    # clown emoji ban
     if message.author.id == 797152303757000715 and utils.contains(message.content.lower(), ['🤡', '👏', '🤩']):
         await message.delete()
         await message.channel.send('Shut the fuck up Gayathri, no more 🤡, 👏, 🤩 emojis for you.', delete_after=30)
 
+    # based on what?
     content = str(message.content)
     if (
             message.reference is not None
@@ -255,49 +264,6 @@ async def on_message(message):
             meme.angrysoyjack(' '.join(chad_text)).save("tmp.jpg")
             await message.channel.send(file=File("tmp.jpg"))
 
-    if author.id not in COUNTER:
-        COUNTER.setdefault(author.id, 0)
-    else:
-        COUNTER[author.id] += 1
-
-    if message.channel.id == 858700343113416704:
-        if not utils.contains(message.content.lower(), ["sus", "s u s"]):
-            embed = Embed(
-                description=f"**<@{message.author.id}> You sussy bitch, breaking the sus rule, no sus in your "
-                            f"sentence:**\n\n{content}",
-                colour=0x1ED9C0,
-            )
-            embed.set_footer(text=module.generator("sites"))
-            await message.delete()
-            await message.channel.send(embed=embed, delete_after=15)
-
-    if message.channel.category.id != 860176783755313182 and (
-            utils.contains(message.content.lower(), [":lewd", "hentai", "ecchi", "l e w d"])
-            or message.author.id in [337481187419226113, 571027211407196161]
-    ):
-        dom = doom[random.randint(0, len(doom) - 1)]
-        await message.channel.send(dom)
-        await message.delete()
-    if (
-            message.attachments
-            or utils.contains(content, ["/", "%", ":", "http", "--"])
-            or message.reference
-    ):
-        return
-    elif (
-            (COUNTER[author.id]) % 50 == 0
-            and COOLDOWN == 0
-            and len(content) <= 2048
-            and not message.author.bot
-    ):
-        Text = await module.translate(message.content, str(author))
-        embed = Embed(description="*" + Text[0] + "*", colour=0x1ED9C0)
-        embed.set_footer(text="-" + Text[1])
-        if Text[2] == 200:
-            await message.channel.send(embed=embed)
-            # await message.delete()
-        if Text[1][-4:] == "CUNT":
-            COOLDOWN = 3600
     return
 
 
