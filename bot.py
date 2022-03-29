@@ -256,7 +256,7 @@ async def on_message(message):
             chad_text = ['somebody', 'pls', 'call', 'me', 'based', 'waaaaaa!!!!']
 
         if is_based:
-            await DATABASE.addPill(split_content[2], recipient.author.id, message.author.id, message.channel.id, message.channel.guild.id)
+            await DATABASE.addPill(split_content[2], recipient.author.id, message.author.id, message.channel.guild.id, message.channel.id)
             await message.channel.send(
                 f"{recipient.author.mention} your based counter has increased by 1!"
             )
