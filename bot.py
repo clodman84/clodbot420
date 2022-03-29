@@ -132,6 +132,9 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    # this entire function and the whole program in general is a massive fucking mess and my brain calcifies while I try
+    # to read this shit, I will fix it later
+
     if message.author == bot.user:
         return
     # commands
@@ -226,18 +229,24 @@ async def on_message(message):
     # based on what?
     content = str(message.content)
     if (
+            # the message has to be reply to trigger this part, and not a system message
             message.reference is not None
             and not message.is_system()
     ):
         split_content = content.split()
+        # the content gets split and depending on what the first word is, one of three things happen
         is_based = (split_content[0].lower() == "based" and len(split_content) == 4)
         is_chad = (split_content[0].lower() == "giga-quote")
         is_cringe = (split_content[0].lower() == "cringe")
 
+        # we find the recipient
         recipient = await message.channel.fetch_message(
             message.reference.message_id
         )
+        # the chad-text is whatever the recipient said that was either based or cringe
         chad_text = recipient.content.split()
+
+        # we append the recipients name to the end of their sentence
         chad_text.append('\n-' + str(recipient.author).split("#")[0])
 
         if message.author.id == recipient.author.id and is_based:
@@ -247,19 +256,19 @@ async def on_message(message):
             chad_text = ['somebody', 'pls', 'call', 'me', 'based', 'waaaaaa!!!!']
 
         if is_based:
-            #await DATABASE.addPill(str(recipient.author.id), '"' + split_content[2] + '"')
-            #await message.channel.send(
-            #    f"{recipient.author.mention} your based counter has increased by 1!"
-            #)
-            chad_text = ['The', 'based', 'counter', 'is', 'down', 'for', 'maintenance', '\n-clodbot420']
-            is_chad = True
+            await DATABASE.addPill(split_content[2], recipient.author.id, message.author.id, message.channel.id, message.channel.guild.id)
+            await message.channel.send(
+                f"{recipient.author.mention} your based counter has increased by 1!"
+            )
+            # chad_text = ['The', 'based', 'counter', 'is', 'down', 'for', 'maintenance', '\n-clodbot420']
+            # is_chad = True
+
         if (is_based and len(chad_text) <= 50) or is_chad:
             meme.giga_chad(' '.join(chad_text)).save("tmp.jpg")
-            #if message.channel.guild.id == 797800736599441488 and not is_chad:
-            #    await SUS_PINGU.send(file=File("tmp.jpg"))
-            #else:
-            #    await message.channel.send(file=File("tmp.jpg"))
-            await message.channel.send(file=File("tmp.jpg"))
+            if message.channel.guild.id == 797800736599441488 and not is_chad:
+                await SUS_PINGU.send(file=File("tmp.jpg"))
+            else:
+                await message.channel.send(file=File("tmp.jpg"))
         elif is_cringe and len(chad_text) <= 50:
             meme.angrysoyjack(' '.join(chad_text)).save("tmp.jpg")
             await message.channel.send(file=File("tmp.jpg"))
@@ -347,14 +356,16 @@ async def pills(ctx, author_id=None):
     global DATABASE
     if author_id is None:
         author_id = ctx.author.id
+        server = None
     else:
         author_numeric = ""
         for i in author_id:
             if i.isdigit():
                 author_numeric += i
         author_id = author_numeric
+        server = ctx.guild.id
 
-    pill_list = await DATABASE.getPills(str(author_id))
+    pill_list = await DATABASE.getPills(author_id, server=server)
 
     n = 25
     pages = []

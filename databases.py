@@ -1,42 +1,41 @@
-import pprint
 
 class DataBase:
     def __init__(self, db):
         self.db = db
 
-    async def registerBased(self, author_id, pill):
+    async def management(self, query):
         connection = await self.db.acquire()
         async with connection.transaction():
-            data = await self.db.execute(
-                f"INSERT INTO based_counter VALUES('{author_id}', '{'{' + pill + '}'}');"
-            )
+            data = await self.db.execute(query)
         await self.db.release(connection)
         return data
 
-    async def addPill(self, author_id, pill):
+    async def addPill(self, pill, receiver, sender, server, channel):
         connection = await self.db.acquire()
         async with connection.transaction():
-            pill.replace("`", "")
+            pill.replace("`", "")   # no quotes allowed.
             pill.replace('"', "")
             data = await self.db.execute(
-                f"UPDATE based_counter set pills = pills || '{'{' + pill + '}'}' WHERE id = '{author_id}';"
+                f"insert into pills (id, pill, receiver, sender, server, channel) "
+                f"values (DEFAULT,'{pill}','{receiver}','{sender}','{server}','{channel}');"
             )
-            if data.split()[-1] == "0":
-                data = await self.registerBased(author_id, pill)
         await self.db.release(connection)
         return data
 
-    async def getPills(self, author_id):
-        data = await self.db.fetchrow(
-            f"SELECT pills FROM based_counter WHERE id = '{author_id}'"
-        )
-        try:
-            return data["pills"]
-        except TypeError:
-            return ["wow such empty, you are not based yet"]
+    async def getPills(self, author_id, server):
+        if server is not None:
+            data = await self.db.fetch(f"SELECT pill FROM pills "
+                                       f"WHERE (receiver = '{author_id}' and server = '{server}')")
+        else:
+            data = await self.db.fetch(f"SELECT pill FROM pills WHERE receiver = '{author_id}'")
+
+        if len(data) > 0:
+            return [i["pill"] for i in data]
+        else:
+            return ["wow such empty, you are not based in this server yet"]
 
     async def getAllPills(self):
-        data = await self.db.fetch(f"SELECT * FROM based_counter")
+        data = await self.db.fetch(f"SELECT * FROM pills")
         return data
 
     async def createMonkeTable(self):
@@ -147,21 +146,22 @@ class DataBase:
 
 async def setup():
     # This function is an entry point for me to do some database management and checkups etc, it's bad, but it works
+
     db = await asyncpg.create_pool(config.DATABASE_URL)
     DATABASE = DataBase(db=db)
-    pills = await DATABASE.getAllPills()
-    # [[pillID, pillData, pillReceiver, pillSender, serverID, channelID, time]]
-    newStructure = []
-    count = 1
-    for user in pills:
-        for pill in user["pills"]:
-            data = [None]*7
-            data[0] = count
-            data[1] = pill
-            data[2] = user["id"]
-            newStructure.append(data)
-            count += 1
-    pprint.pprint(newStructure)
+    # query = """CREATE TABLE pills (
+    #     id serial primary key,
+    #     pill varchar(128) not null,
+    #     receiver char(18) not null,
+    #     sender char(18) not null,
+    #     server char(18) not null,
+    #     channel char(18) not null,
+    #     pillDate date not null default current_date
+    # );"""
+    query = "SELECT setval('pills_id_seq', max(id)) FROM pills;"
+    data = await DATABASE.management(query)
+    print(data)
+
 
 if __name__ == '__main__':
     import asyncpg
