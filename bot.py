@@ -382,6 +382,37 @@ async def pills(ctx, author_id=None):
     await paginator.start(ctx)
 
 
+@bot.command()
+async def pillsGiven(ctx, author_id=None):
+    global DATABASE
+    if author_id is None:
+        author_id = ctx.author.id
+        server = None
+    else:
+        author_numeric = ""
+        for i in author_id:
+            if i.isdigit():
+                author_numeric += i
+        author_id = author_numeric
+        server = ctx.guild.id
+
+    pill_list = await DATABASE.getPillsGiven(author_id, server=server)
+    n = 20
+    # the list of pills gets brocken into smaller lists each with n pills in them
+    pill_list = [pill_list[i * n: (i + 1) * n] for i in range((len(pill_list) + n - 1) // n)]
+    pages = []
+    for pillGroup in pill_list:
+        pills = '\n'.join(['**'+pill[0]+'**  `'+pill[1]+'`  -<@!'+pill[2]+'>' for pill in pillGroup])
+        embed = Embed(
+            description=f"<@!{author_id}>'s pills:\n\n{pills}",
+            colour=0x1ED9C0,
+        )
+        pages.append(embed)
+
+    paginator = Paginator(pages=pages)
+    await paginator.start(ctx)
+
+
 @tasks.loop(seconds=5.0)
 async def serverStatus():
     global COOLDOWN

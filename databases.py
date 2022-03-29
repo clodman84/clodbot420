@@ -34,6 +34,18 @@ class DataBase:
         else:
             return ["wow such empty, you are not based in this server yet"]
 
+    async def getPillsGiven(self, author_id, server):
+        if server is not None:
+            data = await self.db.fetch(f"SELECT pill, receiver FROM pills "
+                                       f"WHERE (sender = '{author_id}' and server = '{server}')")
+        else:
+            data = await self.db.fetch(f"SELECT pill, receiver FROM pills WHERE sender = '{author_id}'")
+
+        if len(data) > 0:
+            return [(str(index+1), i["pill"], i["receiver"]) for index, i in enumerate(data)]
+        else:
+            return ["wow such empty, you are not based in this server yet"]
+
     async def getAllPills(self):
         data = await self.db.fetch(f"SELECT * FROM pills")
         return data
@@ -158,7 +170,7 @@ async def setup():
     #     channel char(18) not null,
     #     pillDate date not null default current_date
     # );"""
-    query = "SELECT setval('pills_id_seq', max(id)) FROM pills;"
+    query = "UPDATE pills SET sender = '692285581467713627' where pill = 'black-love';"
     data = await DATABASE.management(query)
     print(data)
 
