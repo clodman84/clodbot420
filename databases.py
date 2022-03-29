@@ -24,13 +24,13 @@ class DataBase:
 
     async def getPills(self, author_id, server):
         if server is not None:
-            data = await self.db.fetch(f"SELECT pill FROM pills "
+            data = await self.db.fetch(f"SELECT pill, sender FROM pills "
                                        f"WHERE (receiver = '{author_id}' and server = '{server}')")
         else:
-            data = await self.db.fetch(f"SELECT pill FROM pills WHERE receiver = '{author_id}'")
+            data = await self.db.fetch(f"SELECT pill, sender FROM pills WHERE receiver = '{author_id}'")
 
         if len(data) > 0:
-            return [i["pill"] for i in data]
+            return [(str(index+1), i["pill"], i["sender"]) for index, i in enumerate(data)]
         else:
             return ["wow such empty, you are not based in this server yet"]
 

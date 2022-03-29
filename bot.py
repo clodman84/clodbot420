@@ -366,12 +366,14 @@ async def pills(ctx, author_id=None):
         server = ctx.guild.id
 
     pill_list = await DATABASE.getPills(author_id, server=server)
-
-    n = 25
+    n = 20
+    # the list of pills gets brocken into smaller lists each with n pills in them
+    pill_list = [pill_list[i * n: (i + 1) * n] for i in range((len(pill_list) + n - 1) // n)]
     pages = []
-    for pills in [pill_list[i * n: (i + 1) * n] for i in range((len(pill_list) + n - 1) // n)]:
+    for pillGroup in pill_list:
+        pills = '\n'.join(['**'+pill[0]+'**  `'+pill[1]+'`  -<@!'+pill[2]+'>' for pill in pillGroup])
         embed = Embed(
-            description=f"<@!{author_id}>\n```css\n{pills}```",
+            description=f"<@!{author_id}>'s pills:\n\n{pills}",
             colour=0x1ED9C0,
         )
         pages.append(embed)
