@@ -404,7 +404,7 @@ async def pillsGiven(ctx, author_id=None):
     for pillGroup in pill_list:
         pills = '\n'.join(['**'+pill[0]+'**  `'+pill[1]+'`  -<@!'+pill[2]+'>' for pill in pillGroup])
         embed = Embed(
-            description=f"<@!{author_id}>'s pills:\n\n{pills}",
+            description=f"<@!{author_id}>'s has given these pills:\n\n{pills}",
             colour=0x1ED9C0,
         )
         pages.append(embed)
