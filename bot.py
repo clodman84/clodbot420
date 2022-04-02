@@ -2,7 +2,6 @@ import random
 from datetime import datetime
 import asyncio
 from discord import Embed, File
-from discord.ext import tasks
 import module
 import commands
 import utils
@@ -19,7 +18,8 @@ from pygicord import Paginator
 # ______________________________________________________________________________________________________________________
 
 LOUD = False
-COOLDOWN = 3600
+
+# TODO: This nuke launch thing kinda off sucks.
 nukeLaunch = [
     "https://c.tenor.com/29eE-n-_4xYAAAAM/atomic-nuke.gif",
     "https://c.tenor.com/Bupb0hg8c-EAAAAM/cat-launch.gif",
@@ -66,16 +66,17 @@ async def on_ready():
     global DATABASE
     global SUS_PINGU
 
-    monke.MonkeSession.channel = bot.get_channel(866030261341650953)
     now = datetime.utcnow()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")  # starts server
     channel = bot.get_channel(799957897017688065)
     SUS_PINGU = bot.get_channel(858700343113416704)
+    # TODO: needs to change
     monke.MonkeSession.MONKE_ROLE = channel.guild.get_role(866357915308785684)
     print(channel)
     print(
         "The bot is logged in as {0.user}".format(bot)
     )  # these variables are going to be used again
+
     if LOUD:
         APoD = await apod()
         embed = Embed(title=APoD[2], description=APoD[0], colour=0x1ED9C0)
@@ -94,40 +95,57 @@ async def on_ready():
             url="https://cdn.discordapp.com/attachments/842796682114498570/876530474472857671/MrM.png"
         )
         await channel.send(embed=embed)
+
     db = await asyncpg.create_pool(config.DATABASE_URL)
     DATABASE = databases.DataBase(db=db)
     monke.DATABASE = DATABASE
+
     recoverSession = (
         await DATABASE.recoverSession()
     )  # data recovery in case a monke session gets interrupted
-    print(recoverSession)
+
     if recoverSession:
-        channel = monke.MonkeSession.channel
-        await channel.send(
-            "```fix\nA monkey session was interrupted, commencing session recovery.```",
-            delete_after=30
-        )
-        # creating a monke session
-        RecoveredSession = recoverSession[0]  # session details
-        Session = monke.MonkeSession(
-            RecoveredSession["study"],
-            RecoveredSession["break"],
-            RecoveredSession["rounds"],
-            int(RecoveredSession["clock_id"]),
-            RecoveredSession["is_break"],
-        )
-        await channel.send("```fix\nSession recovered, monkey session recreated...```", delete_after=30)
-        # recovering monke.MONKEY_LIST and recreating Monkes.
-        await channel.send("```fix\nMonkeys being rescued...```", delete_after=30)
-        for r in recoverSession[1]:
-            member = await channel.guild.fetch_member(int(r["id_"]))
-            recoveredMonkey = monke.Monke(r["nick"], r["goal"], member)
-            await DATABASE.removeMonke(member.id)
-            monke.MONKEY_LIST.append(recoveredMonkey)
-        await channel.send("```fix\nSession recovery complete!```", delete_after=30)
-        await DATABASE.clearSession()
-        bot.loop.create_task(Session.start())
-    serverStatus.start()
+        sessionList = []
+        monke.MONKEY_LIST = []
+        guildMap = {}
+
+        for session in recoverSession[0]:
+            # now we create the sessions:
+            channel = bot.get_channel(int(session["channelid"]))
+            await channel.send(
+                        "```fix\nA monkey session was interrupted, commencing session recovery.```",
+                        delete_after=30
+                    )
+            sessionID = session['sessionid']
+            guildMap[sessionID] = channel.guild
+            start = session['starttime']
+            clockID = session['clock_id']
+            break_ = session["breakduration"]
+            work = session['workduration']
+
+            # trying to check how many hours have passed.
+            elapsed = int(datetime.now().timestamp() - start.timestamp())
+            n_rounds, remainder = divmod(elapsed, (work + break_)*60)
+            if remainder > work*60:
+                is_break = True
+            else:
+                is_break = False
+            sessionList.append(monke.MonkeSession(work, break_, channel, rounds=n_rounds,
+                                                  clock_id=clockID, is_break=is_break, sessionID=sessionID))
+            await channel.send("```fix\nSession recovered, monkey session recreated...```", delete_after=30)
+
+        for simian in recoverSession[1]:
+            sessionID = simian['sessionid']
+            guild = guildMap[sessionID]
+            member = await guild.fetch_member(int(simian['discordid']))
+            nick = simian['nick']
+            goal = simian['goal']
+            print(goal)
+            monke.MONKEY_LIST.append(monke.Monke(sessionID, member, nick, False, goal))
+
+        for session in sessionList:
+            await session.channel.send("```fix\nThe monkeys were rescued!```", delete_after=30)
+            bot.loop.create_task(session.start())
 
 
 @bot.event
@@ -138,7 +156,6 @@ async def on_message(message):
     if message.author == bot.user:
         return
     # commands
-    global COOLDOWN
     global PUPPET
     global DATABASE
     global SUS_PINGU
@@ -281,7 +298,6 @@ async def diagnose(ctx):
     variables = (
         f"STUDY : {[str(monk) for monk in monke.MONKEY_LIST]}\n\n"
         f"MUSICUNT: {[str(cunt) for cunt in music.MusiCUNT.cunts]}\n\n"
-        f"COOLDOWN: {COOLDOWN}\n\n"
         f"COUNTER: {COUNTER}\n\n"
     )
     await ctx.send(variables)
@@ -404,21 +420,13 @@ async def pillsGiven(ctx, author_id=None):
     for pillGroup in pill_list:
         pills = '\n'.join(['**'+pill[0]+'**  `'+pill[1]+'`  -<@!'+pill[2]+'>' for pill in pillGroup])
         embed = Embed(
-            description=f"<@!{author_id}>'s has given these pills:\n\n{pills}",
+            description=f"<@!{author_id}>'s pills:\n\n{pills}",
             colour=0x1ED9C0,
         )
         pages.append(embed)
 
     paginator = Paginator(pages=pages)
     await paginator.start(ctx)
-
-
-@tasks.loop(seconds=5.0)
-async def serverStatus():
-    global COOLDOWN
-    if COOLDOWN > 0:
-        COOLDOWN -= 5.0
-    return
 
 
 print("Starting bot...")
