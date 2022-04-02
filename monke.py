@@ -487,7 +487,7 @@ async def changeGoal(monke, channel):
 
     def check(m):
         return (
-                m.channel == channel
+                m.channel.id == channel.id
                 and m.author.id == monke.member.id
                 and m.content != "--join "
                 and len(m.content) < 255
