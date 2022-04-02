@@ -1,12 +1,12 @@
 
 class DataBase:
     def __init__(self, db):
-        self.db = db
+        self.db: asyncpg.pool.Pool = db
 
     async def management(self, query):
         connection = await self.db.acquire()
         async with connection.transaction():
-            data = await self.db.execute(query)
+            data = await connection.execute(query)
         await self.db.release(connection)
         return data
 
@@ -15,7 +15,7 @@ class DataBase:
         async with connection.transaction():
             pill.replace("`", "")   # no quotes allowed.
             pill.replace('"', "")
-            data = await self.db.execute(
+            data = await connection.execute(
                 f"insert into pills (id, pill, receiver, sender, server, channel) "
                 f"values (DEFAULT,'{pill}','{receiver}','{sender}','{server}','{channel}');"
             )
@@ -50,110 +50,91 @@ class DataBase:
         data = await self.db.fetch(f"SELECT * FROM pills")
         return data
 
-    async def createMonkeTable(self):
-        connection = await self.db.acquire()
-        async with connection.transaction():
-            data = await self.db.execute(
-                "DROP TABLE Monkeys;"
-                "CREATE TABLE Monkeys (id_ varchar, goal varchar, nick varchar);"
-            )
-        await self.db.release(connection)
-        return data
-
-    async def addMonke(self, author_id, goal, nick):
-        print("Monkey Added")
+    async def addMonke(self, sessionID, authorID, goal, nick):
         # called during the __init__ of a Monke
+        # and also when the monke changes its goal, whether, there is a bool val
+        print(f"Trying to add monke - {authorID} to session - {sessionID}")
         connection = await self.db.acquire()
         async with connection.transaction():
-            data = await self.db.execute(
-                f"INSERT INTO Monkeys VALUES('{author_id}', '{goal}', '{nick}');"
+            query = f"UPDATE monke set active = FALSE where sessionID = '{sessionID}' and discordid = '{authorID}';"
+            await connection.execute(
+                # turn off all the active goals in the session by this author and then add another row
+                query
             )
+            query = f"INSERT INTO monke (sessionID, discordID, goal, nick) " \
+                    f"VALUES('{sessionID}','{authorID}', '{goal}', '{nick}');"
+            data = await connection.execute(
+                query
+            )
+        print("Monkey Added!")
         await self.db.release(connection)
         return data
 
-    # The monke functions
-    async def setGoal(self, author_id, goal):
-        # called during monke.changeGoal()
-        connection = await self.db.acquire()
-        async with connection.transaction():
-            data = await self.db.execute(
-                f"UPDATE Monkeys set goal = '{goal}' WHERE id_ = '{author_id}';"
-            )
-        await self.db.release(connection)
-        return data
-
-    async def removeMonke(self, author_id):
+    async def removeMonke(self, authorID, sessionID):
         # called during the leave command
         print("Monkey Removed")
         connection = await self.db.acquire()
         async with connection.transaction():
-            data = await self.db.execute(
-                f"DELETE FROM Monkeys WHERE id_ = '{author_id}';"
+            data = await connection.execute(
+                f"UPDATE monke set active = FALSE where discordid = '{authorID}' and sessionID = '{sessionID}'"
             )
         await self.db.release(connection)
         return data
 
-    async def createMonkeSession(self):
-        connection = await self.db.acquire()
-        async with connection.transaction():
-            data = await self.db.execute(
-                "DROP TABLE MonkeSession; "
-                "CREATE TABLE MonkeSession (id_ varchar, study int, break int, rounds int, clock_id varchar, is_break int);"
-            )
-        await self.db.release(connection)
-        return data
-
-    async def clearSession(self):
+    async def endSession(self, sessionID):
         # called during the end of a MonkeSession.start() the id_ of a monkey session is Monke
         connection = await self.db.acquire()
         async with connection.transaction():
-            data = await self.db.execute(
-                f"DELETE FROM MonkeSession WHERE id_ = 'Monke';"
+            data = await connection.execute(
+                f"UPDATE monkesessions SET endtime = current_timestamp WHERE sessionID = '{sessionID}';"
             )
         await self.db.release(connection)
         return data
 
-    async def setSession(self, study, break_, rounds, clock_id, is_break):
+    async def setSession(self, sessionID, channelID, serverID, starterID, break_ , study, clock_id):
         # called during the __init__ of a MonkeSession
+        print("Setting Session...")
         connection = await self.db.acquire()
         async with connection.transaction():
-            data = await self.db.execute(
-                f"INSERT INTO MonkeSession VALUES('Monke', {study}, {break_}, {rounds}, '{clock_id}', {is_break});"
+            data = await connection.execute(
+                f"INSERT INTO MonkeSessions "
+                f"(sessionID,channelID, serverid, starterid, starttime, breakduration, workduration, clock_id) "
+                f"VALUES('{sessionID}', '{channelID}','{serverID}','{starterID}', "
+                f"current_timestamp, {break_}, {study}, '{clock_id}');"
             )
         await self.db.release(connection)
+        print(f"Session - {sessionID} has been set!")
         return data
 
-    async def incrementRounds(self):
-        # called in MonkeSession.start() to increment the number of rounds
-        connection = await self.db.acquire()
-        async with connection.transaction():
-            data = await self.db.execute(
-                f"UPDATE MonkeSession set rounds = rounds + 1 WHERE id_ = 'Monke';"
-            )
-        await self.db.release(connection)
-        return data
+    async def getAvailableSessions(self, serverID):
+        data = await self.db.fetchrow(f"SELECT sessionID from monkesessions "
+                                      f"where serverID = '{serverID}' and endtime is null")
+        if data is None:
+            return False
+        else:
+            return data['sessionid']
 
-    async def updateClock(self, clock_id, is_break):
+    async def updateClock(self, clock_id, sessionID):
         # called in MonkeSession.start() to increment the number of rounds
+        print(f"Trying to update clock_id to {clock_id} to session - {sessionID}")
         connection = await self.db.acquire()
         async with connection.transaction():
+            query = f"UPDATE MonkeSessions set clock_id = '{clock_id}' WHERE sessionID = '{sessionID}';"
+            print(query)
             data = await self.db.execute(
-                f"UPDATE MonkeSession set clock_id = '{clock_id}' WHERE id_ = 'Monke';"
+                query
             )
-            await self.db.execute(
-                f"UPDATE MonkeSession set is_break = {is_break} WHERE id_ = 'Monke';"
-            )
+        print("Clock Updated!")
         await self.db.release(connection)
         return data
 
     async def recoverSession(self):
-        # called when bot on_ready() to get details for any incomplete sessions if none are found, it returns False
-        session_data = await self.db.fetchrow("SELECT * FROM MonkeSession")
+         session_data = await self.db.fetch("SELECT * FROM monkesessions where endtime is null")
         if session_data is None:
             return False
         else:
-            monkeyData = await self.db.fetch("SELECT * FROM Monkeys")
-            return session_data, monkeyData
+            monkey_data = await self.db.fetch("SELECT * FROM monke where active = true")
+            return session_data, monkey_data
 
 
 async def setup():
@@ -170,7 +151,7 @@ async def setup():
     #     channel char(18) not null,
     #     pillDate date not null default current_date
     # );"""
-    query = "UPDATE pills SET sender = '692285581467713627' where pill = 'black-love';"
+    query = "select * from monke"
     data = await DATABASE.management(query)
     print(data)
 

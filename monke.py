@@ -1,14 +1,18 @@
+import discord
 from discord.ext.commands.errors import BadArgument
 from discord import Embed, FFmpegPCMAudio
 from discord.errors import Forbidden
 from datetime import timedelta
+
+import databases
 from commands import bot
 from discord import MessageType
 import asyncio
 from typing import List, Any
 from music import MusiCUNT, Song
+import uuid
 
-DATABASE = None
+DATABASE: databases.DataBase
 
 # somebody touch mah spaghetti
 
@@ -17,15 +21,20 @@ DATABASE = None
 # inbuilt methods start join leave and setBreak and setStudy. The external discord command functions exist to only pass
 # on whatever happens to the monke session class.
 
+# TODO: Restructure the monkey list technique to be able to handle multiple sessions,
+#  make it an attribute for each session
+MONKEY_LIST: List[Any] = []
+
 
 class MonkeSession:
-    channel = None
     MONKE_ROLE = None
 
-    def __init__(self, study, break_, rounds=0, clock_id=0, is_break=0):
+    def __init__(self, study, break_, channel, rounds=0, clock_id=0, is_break=0, sessionID=None):
         self.study = study  # The number of study minutes
         self.break_ = break_  # The number of break minutes
         self.timer = self.study * 60  # The amount time that is left
+        self.clock: discord.Message
+        self.channel: discord.TextChannel = channel
 
         if is_break == 0:
             self.is_break = False  # Self explanatory
@@ -33,10 +42,7 @@ class MonkeSession:
             self.is_break = True
         self.rounds = rounds  # Number of complete monke sessions
 
-        if clock_id == 0:
-            self.clock = None  # The clock message that gets edited, if no clock id gets passed it works normally
-        else:
-            self.clock = clock_id
+        self.clock_id = clock_id
 
         if not self.is_break and self.rounds == 0:
             self.clock_des = (
@@ -55,15 +61,15 @@ class MonkeSession:
                 "}\n``` "
             )
         # String template for the clock
-        asyncio.run_coroutine_threadsafe(
-            DATABASE.setSession(study, break_, rounds, clock_id, is_break), bot.loop
-        )
+        if sessionID is None:
+            self.sessionID = uuid.uuid1().hex
+        else:
+            self.sessionID = sessionID
 
     async def start(self):
 
-        if self.clock:
-            clock = await self.channel.fetch_message(self.clock)
-            self.clock = clock
+        if self.clock_id != 0:
+            self.clock = await self.channel.fetch_message(self.clock_id)
             for embed in self.clock.embeds:
                 self.timer = int(embed.to_dict()["footer"]["text"])
         else:
@@ -73,10 +79,10 @@ class MonkeSession:
                 description=self.clock_des.format(timedelta(seconds=self.timer)),
                 colour=0x1ED9C0,
             )
-            embed.set_footer(text=self.timer)
+            embed.set_footer(text=str(self.timer))
             self.clock = await self.channel.send(embed=embed)
             await self.clock.pin()
-            await DATABASE.updateClock(self.clock.id, 0)
+            await DATABASE.updateClock(self.clock.id, self.sessionID)
 
             async for message in self.channel.history(limit=10):
                 if message.type is MessageType.pins_add:
@@ -91,7 +97,7 @@ class MonkeSession:
                     description=self.clock_des.format(timedelta(seconds=self.timer)),
                     colour=0x1ED9C0,
                 )
-                embed.set_footer(text=self.timer)
+                embed.set_footer(text=str(self.timer))
                 await self.clock.edit(embed=embed)
                 await asyncio.sleep(5)
 
@@ -116,7 +122,6 @@ class MonkeSession:
                 else:
                     await self.setBreak()
                     self.rounds += 1
-                    await DATABASE.incrementRounds()
                     d = ""
                     for monke in MONKEY_LIST:
                         d += f"{monke.nickname} : {monke.goal}\n\n"
@@ -138,7 +143,7 @@ class MonkeSession:
                             ]
                             for monke in MONKEY_LIST:
                                 if monke.member.id in user_id:
-                                    await changeGoal(monke=monke)
+                                    await changeGoal(monke, self.channel)
 
                     d = ""
                     for monke in MONKEY_LIST:
@@ -153,7 +158,7 @@ class MonkeSession:
 
         if not self.is_break:
             minutes = (
-                self.rounds * int(self.study) + int(self.study) - int(self.timer / 60)
+                    self.rounds * int(self.study) + int(self.study) - int(self.timer / 60)
             )
         else:
             minutes = self.rounds * int(self.study)
@@ -168,7 +173,7 @@ class MonkeSession:
             url="https://media.discordapp.net/attachments/800004618972037120/867313741293158450/OhMyGodILoveMonkey.png"
         )
         # removes the Monke session from the monke table in the DATABASE
-        await DATABASE.clearSession()
+        await DATABASE.endSession(self.sessionID)
         await self.channel.send(embed=embed)
         return
 
@@ -203,7 +208,7 @@ class MonkeSession:
         await self.clock.delete()
         self.clock = await self.channel.send(mentions, embed=embed)
         await self.clock.pin()
-        await DATABASE.updateClock(self.clock.id, 1)
+        await DATABASE.updateClock(self.clock.id, self.sessionID)
         async for message in self.channel.history(limit=10):
             if message.type is MessageType.pins_add:
                 await message.delete()
@@ -236,37 +241,33 @@ class MonkeSession:
         embed.set_footer(text=self.timer)
         self.clock = await self.channel.send(role.mention, embed=embed)
         await self.clock.pin()
-        await DATABASE.updateClock(self.clock.id, 0)
+        await DATABASE.updateClock(self.clock.id, self.sessionID)
         # gets rid of the system message that says a message was pinned by aternos_cunt
-        async for message in MonkeSession.channel.history(limit=10):
+        async for message in self.channel.history(limit=10):
             if message.type is MessageType.pins_add:
                 await message.delete()
 
 
 class Monke:
-    def __init__(self, nick, goal, member):
+    def __init__(self, sessionID, member, nick, add2DB=True, goal=None):
         self.nickname = nick
-        self.goal = None
+        self.goal = goal
         self.member = member
-        self.changeGoal(goal)
         self.counter = 0
         self.lite = False
         self.is_break = False
-        asyncio.run_coroutine_threadsafe(
-            DATABASE.addMonke(member.id, goal, nick), bot.loop
-        )
+        self.sessionID = sessionID
+        if add2DB:
+            self.changeGoal(goal)
 
     def changeGoal(self, new_goal):
         self.goal = new_goal  # this can be modded for Microsoft To Do integration
         asyncio.run_coroutine_threadsafe(
-            DATABASE.setGoal(self.member.id, self.goal), bot.loop
+            DATABASE.addMonke(self.sessionID, self.member.id, self.goal, self.nickname), bot.loop
         )
 
     def __str__(self):
         return f"{self.nickname}, {self.goal}, <@{self.member.id}>"
-
-
-MONKEY_LIST: List[Any] = []
 
 
 @bot.command()
@@ -291,9 +292,9 @@ async def start(ctx, study, relax):
 
     def check(m):
         return (
-            m.channel == ctx.message.channel
-            and m.author == ctx.author
-            and m.content != "--join"
+                m.channel == ctx.message.channel
+                and m.author == ctx.author
+                and m.content != "--join"
         )
 
     try:
@@ -305,9 +306,10 @@ async def start(ctx, study, relax):
         )
         return
 
-    MONKEY_LIST.append(Monke(ctx.author.nick, msg.content, ctx.author))
-    print("Monkey added to MonkeyList")
-    Session = MonkeSession(int(study), int(relax))
+    Session = MonkeSession(int(study), int(relax), msg.channel)
+    await DATABASE.setSession(Session.sessionID, msg.channel.id, msg.channel.guild.id, ctx.author.id, int(relax),
+                              int(study), 0)
+    MONKEY_LIST.append(Monke(Session.sessionID, ctx.author, msg.content, ctx.author.nick))
     bot.loop.create_task(Session.start())
     return
 
@@ -381,7 +383,7 @@ async def leave(ctx):
             if not monke.is_break:
                 await monke.member.remove_roles(MonkeSession.MONKE_ROLE)
             MONKEY_LIST.remove(monke)
-            await DATABASE.removeMonke(monke.member.id)
+            await DATABASE.removeMonke(monke.member.id, monke.sessionID)
             del monke
             break
     else:
@@ -395,9 +397,12 @@ async def join(ctx):
         return
 
     if ctx.author.id in [monke.member.id for monke in MONKEY_LIST]:
-        await ctx.send("You are already a part of the study session")
+        await ctx.send("You are already a part of a monke session")
         return
-    if len(MONKEY_LIST) == 0:
+
+    sessionID = await DATABASE.getAvailableSessions(ctx.guild.id)
+
+    if not sessionID:
         await ctx.send("You need to start a study session first")
         return
     else:
@@ -407,9 +412,9 @@ async def join(ctx):
 
         def check(m):
             return (
-                m.channel == ctx.message.channel
-                and m.author == ctx.author
-                and m.content != "--join"
+                    m.channel == ctx.message.channel
+                    and m.author == ctx.author
+                    and m.content != "--join"
             )
 
         try:
@@ -428,7 +433,7 @@ async def join(ctx):
         )
         await ctx.send(embed=embed)
 
-        MONKEY_LIST.append(Monke(ctx.author.nick, msg.content, ctx.author))
+        MONKEY_LIST.append(Monke(sessionID, ctx.author, msg.content, ctx.author.nick))
         nick = ctx.author.name
         if not MONKEY_LIST[0].is_break:
             await ctx.author.add_roles(MonkeSession.MONKE_ROLE)
@@ -450,7 +455,7 @@ async def change_goal(ctx):
 
     for monke in MONKEY_LIST:
         if monke.member.id == ctx.author.id:
-            await changeGoal(monke)
+            await changeGoal(monke, ctx)
             description = (
                 f"{monke.member.mention} your goal was set to:\n\n {monke.goal}."
             )
@@ -464,20 +469,20 @@ async def change_goal(ctx):
         await ctx.send("You have not set a goal yung wan.")
 
 
-async def changeGoal(monke):
+async def changeGoal(monke, channel):
     embed = Embed(
         description=f"Your goal is:\n\n{monke.goal}\n\nWhat do you want to "
-        f"change it to?",
+                    f"change it to?",
         colour=0x1ED9C0,
     )
-    await MonkeSession.channel.send(monke.member.mention, embed=embed, delete_after=30)
+    await channel.send(monke.member.mention, embed=embed, delete_after=30)
 
     def check(m):
         return (
-            m.channel == MonkeSession.channel
-            and m.author.id == monke.member.id
-            and m.content != "--join "
-            and len(m.content) < 255
+                m.channel == channel
+                and m.author.id == monke.member.id
+                and m.content != "--join "
+                and len(m.content) < 255
         )
 
     try:
@@ -485,7 +490,7 @@ async def changeGoal(monke):
         monke.changeGoal(msg.content)
 
     except asyncio.TimeoutError:
-        await MonkeSession.channel.send(
+        await channel.send(
             f"{monke.member.mention} you took too long to describe your new goal for this "
             f"session, you can change it next session **FOREVER MONKE!!**"
         )
