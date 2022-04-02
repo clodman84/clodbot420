@@ -23,16 +23,24 @@ DATABASE: databases.DataBase
 
 # TODO: Restructure the monkey list technique to be able to handle multiple sessions,
 #  make it an attribute for each session
+
+# TODO: Easy TODOs
+#  1. Add a rounds column for the monke table and an increment active rounds for session function to keep track of
+#  number of rounds that a specific goal was used for.
+#  2. Make the timer setting functions not read and look at the message to set, set it in the constructor
 MONKEY_LIST: List[Any] = []
 
 
 class MonkeSession:
     MONKE_ROLE = None
 
-    def __init__(self, study, break_, channel, rounds=0, clock_id=0, is_break=0, sessionID=None):
+    def __init__(self, study, break_, channel, rounds=0, clock_id=0, is_break=0, sessionID=None, timer=None):
         self.study = study  # The number of study minutes
         self.break_ = break_  # The number of break minutes
-        self.timer = self.study * 60  # The amount time that is left
+        if timer is None:
+            self.timer = self.study * 60  # The amount time that is left
+        else:
+            self.timer = timer
         self.clock: discord.Message
         self.channel: discord.TextChannel = channel
 
@@ -309,7 +317,7 @@ async def start(ctx, study, relax):
     Session = MonkeSession(int(study), int(relax), msg.channel)
     await DATABASE.setSession(Session.sessionID, msg.channel.id, msg.channel.guild.id, ctx.author.id, int(relax),
                               int(study), 0)
-    MONKEY_LIST.append(Monke(Session.sessionID, ctx.author, msg.content, ctx.author.nick))
+    MONKEY_LIST.append(Monke(Session.sessionID, ctx.author, ctx.author.nick, goal=msg.content))
     bot.loop.create_task(Session.start())
     return
 
@@ -433,7 +441,7 @@ async def join(ctx):
         )
         await ctx.send(embed=embed)
 
-        MONKEY_LIST.append(Monke(sessionID, ctx.author, msg.content, ctx.author.nick))
+        MONKEY_LIST.append(Monke(sessionID, ctx.author, ctx.author.nick, goal=msg.content))
         nick = ctx.author.name
         if not MONKEY_LIST[0].is_break:
             await ctx.author.add_roles(MonkeSession.MONKE_ROLE)
