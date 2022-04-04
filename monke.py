@@ -274,7 +274,7 @@ class Monke:
         )
 
     async def logComplete(self):
-        await DATABASE.logComplete(self.goal)
+        await DATABASE.logComplete(self.goal, self.member.id)
 
     def __str__(self):
         return f"{self.nickname}, {self.goal}, <@{self.member.id}>"

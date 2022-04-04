@@ -151,11 +151,11 @@ class DataBase:
             monkey_data = await self.db.fetch("SELECT * FROM monke where active = true")
             return session_data, monkey_data
 
-    async def logComplete(self, goal):
+    async def logComplete(self, goal, discordID):
         # marks all the goals with the same name as complete
         connection = await self.db.acquire()
         async with connection.transaction():
-            query = f"UPDATE monke set complete = true where goal = '{goal}' "
+            query = f"UPDATE monke set complete = true where goal = '{goal}' and discordid = '{discordID}'"
             data = await connection.execute(query)
         await self.db.release(connection)
         return data
