@@ -468,7 +468,8 @@ async def join(ctx):
             for goalGroup in goalDivisions:
                 pills = '\n'.join([f"{goal[0] + 1}. {goal[1]}" for goal in goalGroup])
                 embed = Embed(
-                    description=f"You can pick up where you left off last time.```fix\n{pills}\n```",
+                    description=f"You can pick up where you left off last time.```fix\n{pills}\n``` Set short "
+                                f"achievable goals that you can complete in a few sessions. Not **MATHS!!**.",
                     colour=0x1ED9C0,
                 )
                 embed.set_footer(text="Enter a number from the menu to start a session with one of these goals, "
