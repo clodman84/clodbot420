@@ -131,7 +131,8 @@ async def on_ready():
             else:
                 is_break = False
             sessionList.append(monke.MonkeSession(work, break_, channel, rounds=n_rounds,
-                                                  clock_id=clockID, is_break=is_break, sessionID=sessionID))
+                                                  clock_id=clockID, is_break=is_break,
+                                                  sessionID=sessionID, timer=remainder))
             await channel.send("```fix\nSession recovered, monkey session recreated...```", delete_after=30)
 
         for simian in recoverSession[1]:
