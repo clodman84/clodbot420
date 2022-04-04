@@ -512,7 +512,7 @@ async def join(ctx):
         )
         await ctx.send(embed=embed)
 
-        MONKEY_LIST.append(Monke(sessionID, ctx.author, ctx.author.nick, goal=msg.content))
+        MONKEY_LIST.append(Monke(sessionID, ctx.author, ctx.author.nick, goal=goal))
         nick = ctx.author.name
         if not MONKEY_LIST[0].is_break:
             await ctx.author.add_roles(MonkeSession.MONKE_ROLE)
