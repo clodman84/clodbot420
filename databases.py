@@ -50,6 +50,13 @@ class DataBase:
         data = await self.db.fetch(f"SELECT * FROM pills")
         return data
 
+    async def getUserGoals(self, discordid):
+        data = await self.db.fetch(f"select distinct goal from monke "
+                                   f"where complete = false and discordid='{discordid}'")
+        if data:
+            data = [[index, goal["goal"]] for index, goal in enumerate(data)]
+        return data
+
     async def addMonke(self, sessionID, authorID, goal, nick):
         # called during the __init__ of a Monke
         # and also when the monke changes its goal, whether, there is a bool val
@@ -61,8 +68,8 @@ class DataBase:
                 # turn off all the active goals in the session by this author and then add another row
                 query
             )
-            query = f"INSERT INTO monke (sessionID, discordID, goal, nick) " \
-                    f"VALUES('{sessionID}','{authorID}', '{goal}', '{nick}');"
+            query = f"INSERT INTO monke (sessionID, discordID, goal, nick, complete) " \
+                    f"VALUES('{sessionID}','{authorID}', '{goal}', '{nick}', false);"
             data = await connection.execute(
                 query
             )
@@ -121,20 +128,37 @@ class DataBase:
         async with connection.transaction():
             query = f"UPDATE MonkeSessions set clock_id = '{clock_id}' WHERE sessionID = '{sessionID}';"
             print(query)
-            data = await self.db.execute(
+            data = await connection.execute(
                 query
             )
         print("Clock Updated!")
         await self.db.release(connection)
         return data
 
+    async def incrementRounds(self, sessionID):
+        connection = await self.db.acquire()
+        async with connection.transaction():
+            query = f"UPDATE monke set rounds = rounds + 1 where sessionid = '{sessionID}'"
+            data = await connection.execute(query)
+        await self.db.release(connection)
+        return data
+
     async def recoverSession(self):
         session_data = await self.db.fetch("SELECT * FROM monkesessions where endtime is null")
-        if session_data is None:
+        if not session_data:
             return False
         else:
             monkey_data = await self.db.fetch("SELECT * FROM monke where active = true")
             return session_data, monkey_data
+
+    async def logComplete(self, goal):
+        # marks all the goals with the same name as complete
+        connection = await self.db.acquire()
+        async with connection.transaction():
+            query = f"UPDATE monke set complete = true where goal = '{goal}' "
+            data = await connection.execute(query)
+        await self.db.release(connection)
+        return data
 
 
 async def setup():
@@ -152,7 +176,7 @@ async def setup():
     #     pillDate date not null default current_date
     # );"""
     query = "select * from monke"
-    data = await DATABASE.management(query)
+    data = await DATABASE.getUserGoals("793451663339290644")
     print(data)
 
 

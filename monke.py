@@ -3,7 +3,7 @@ from discord.ext.commands.errors import BadArgument
 from discord import Embed, FFmpegPCMAudio
 from discord.errors import Forbidden
 from datetime import timedelta
-
+from pygicord import Paginator
 import databases
 from commands import bot
 from discord import MessageType
@@ -78,8 +78,6 @@ class MonkeSession:
 
         if self.clock_id != 0:
             self.clock = await self.channel.fetch_message(self.clock_id)
-            for embed in self.clock.embeds:
-                self.timer = int(embed.to_dict()["footer"]["text"])
         else:
             # creation of the clock if there is no clock already
             self.clock_des.format(timedelta(seconds=self.timer))
@@ -129,16 +127,17 @@ class MonkeSession:
                     await self.setStudy()
                 else:
                     await self.setBreak()
+                    await DATABASE.incrementRounds(self.sessionID)
                     self.rounds += 1
                     d = ""
                     for monke in MONKEY_LIST:
-                        d += f"{monke.nickname} : {monke.goal}\n\n"
+                        d += f"```fix\n{monke.nickname} : {monke.goal}```\n"
                     embed = Embed(
                         title="Do you want to change your goal?",
                         description=d,
                         colour=0x1ED9C0,
                     )
-                    embed.set_footer(text="React with a ✅ if you do.")
+                    embed.set_footer(text="Changing your goal marks it as completed.")
                     message = await self.channel.send(embed=embed, delete_after=20)
                     await message.add_reaction("✅")
                     await asyncio.sleep(15)
@@ -152,7 +151,7 @@ class MonkeSession:
                             for monke in MONKEY_LIST:
                                 if monke.member.id in user_id:
                                     await changeGoal(monke, self.channel)
-
+                                    await monke.logComplete()
                     d = ""
                     for monke in MONKEY_LIST:
                         d += f"{monke.member.name} : {monke.goal}\n\n"
@@ -274,6 +273,9 @@ class Monke:
             DATABASE.addMonke(self.sessionID, self.member.id, self.goal, self.nickname), bot.loop
         )
 
+    async def logComplete(self):
+        await DATABASE.logComplete(self.goal)
+
     def __str__(self):
         return f"{self.nickname}, {self.goal}, <@{self.member.id}>"
 
@@ -294,9 +296,28 @@ async def start(ctx, study, relax):
     except ValueError:
         raise BadArgument(f"Can't convert {study} or {relax} to an integer")
 
-    await ctx.send(
-        "The Journey of the Forever Monke begins with a goal. Mine is total world domination, what's yours?"
-    )
+    unfinished_goals = await DATABASE.getUserGoals(ctx.author.id)
+    if unfinished_goals:
+        n = 20
+        goalDivisions = [unfinished_goals[i * n: (i + 1) * n] for i in range((len(unfinished_goals) + n - 1) // n)]
+        pages = []
+
+        for goalGroup in goalDivisions:
+            pills = '\n'.join([f"{goal[0] + 1}. {goal[1]}" for goal in goalGroup])
+            embed = Embed(
+                description=f"You can pick up where you left off last time.```fix\n{pills}\n``` Set short achievable "
+                            f"goals that you can complete in a few sessions. Not **MATHS!!**.",
+                colour=0x1ED9C0,
+            )
+            embed.set_footer(text="Enter a number from the menu to start a session with one of these goals, "
+                                  "or just enter a brand new goal.")
+            pages.append(embed)
+
+        paginator = Paginator(pages=pages)
+        bot.loop.create_task(paginator.start(ctx))
+    else:
+        await ctx.send("The Journey of the Forever Monke begins with a goal. "
+                       "Mine is total world domination, what's yours?")
 
     def check(m):
         return (
@@ -307,6 +328,7 @@ async def start(ctx, study, relax):
 
     try:
         msg = await bot.wait_for("message", timeout=120, check=check)
+
     except asyncio.TimeoutError:
         await ctx.send(
             "You took longer than 2 minutes to describe your goal for this session, come back when you are "
@@ -314,10 +336,32 @@ async def start(ctx, study, relax):
         )
         return
 
+    try:
+        goal = unfinished_goals[int(msg.content) - 1][1]
+    except ValueError:
+        goal = msg.content
+    except IndexError:
+        await ctx.send("Enter a valid number from the menu.")
+        return
+
+    embed = Embed(
+        description=f"```Your goal:\n\n{goal}\n\nhas been set```",
+        colour=0x1ED9C0,
+    )
+    await ctx.send(embed=embed)
+
     Session = MonkeSession(int(study), int(relax), msg.channel)
     await DATABASE.setSession(Session.sessionID, msg.channel.id, msg.channel.guild.id, ctx.author.id, int(relax),
                               int(study), 0)
-    MONKEY_LIST.append(Monke(Session.sessionID, ctx.author, ctx.author.nick, goal=msg.content))
+    MONKEY_LIST.append(Monke(Session.sessionID, ctx.author, ctx.author.nick, goal=goal))
+
+    await ctx.author.add_roles(MonkeSession.MONKE_ROLE)
+    newNick = f"[STUDY] {ctx.author.name}"
+    try:
+        await ctx.author.edit(nick=newNick)
+    except Forbidden:
+        pass
+
     bot.loop.create_task(Session.start())
     return
 
@@ -380,6 +424,7 @@ async def leave(ctx):
                     await ctx.send(
                         f"Well done! {ctx.author.mention} You are on the path to Forver Monke"
                     )
+                    await monke.logComplete()
             except asyncio.TimeoutError:
                 await ctx.send("Couldn't decide if you succeeded? Nevermind.")
 
@@ -414,9 +459,27 @@ async def join(ctx):
         await ctx.send("You need to start a study session first")
         return
     else:
-        await ctx.send(
-            ctx.author.mention + " what's your goal for this session?", delete_after=125
-        )
+        unfinished_goals = await DATABASE.getUserGoals(ctx.author.id)
+        if unfinished_goals:
+            n = 20
+            goalDivisions = [unfinished_goals[i * n: (i + 1) * n] for i in range((len(unfinished_goals) + n - 1) // n)]
+            pages = []
+
+            for goalGroup in goalDivisions:
+                pills = '\n'.join([f"{goal[0] + 1}. {goal[1]}" for goal in goalGroup])
+                embed = Embed(
+                    description=f"You can pick up where you left off last time.```fix\n{pills}\n```",
+                    colour=0x1ED9C0,
+                )
+                embed.set_footer(text="Enter a number from the menu to start a session with one of these goals, "
+                                      "or just enter a brand new goal.")
+                pages.append(embed)
+
+            paginator = Paginator(pages=pages)
+            bot.loop.create_task(paginator.start(ctx))
+        else:
+            await ctx.send("The Journey of the Forever Monke begins with a goal. "
+                           "Mine is total world domination, what's yours?")
 
         def check(m):
             return (
@@ -427,16 +490,24 @@ async def join(ctx):
 
         try:
             msg = await bot.wait_for("message", timeout=120, check=check)
+
         except asyncio.TimeoutError:
             await ctx.send(
                 "You took longer than 2 minutes to describe your goal for this session, come back when you are "
-                "ready to walk the path of the **FOREVER MONKE!!**",
-                delete_after=10,
+                "ready to walk the path of the **FOREVER MONKE!!**"
             )
             return
 
+        try:
+            goal = unfinished_goals[int(msg.content) - 1][1]
+        except ValueError:
+            goal = msg.content
+        except IndexError:
+            await ctx.send("Enter a valid number from the menu.")
+            return
+
         embed = Embed(
-            description=f"```Your goal:\n\n{msg.content}\n\nhas been set```",
+            description=f"```Your goal:\n\n{goal}\n\nhas been set```",
             colour=0x1ED9C0,
         )
         await ctx.send(embed=embed)
