@@ -128,11 +128,13 @@ async def on_ready():
             n_rounds, remainder = divmod(elapsed, (work + break_)*60)
             if remainder > work*60:
                 is_break = True
+                time = break_*60 - remainder
             else:
                 is_break = False
+                time = work*60 - remainder
             sessionList.append(monke.MonkeSession(work, break_, channel, rounds=n_rounds,
                                                   clock_id=clockID, is_break=is_break,
-                                                  sessionID=sessionID, timer=remainder))
+                                                  sessionID=sessionID, timer=time))
             await channel.send("```fix\nSession recovered, monkey session recreated...```", delete_after=30)
 
         for simian in recoverSession[1]:
