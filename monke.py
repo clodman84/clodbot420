@@ -151,7 +151,6 @@ class MonkeSession:
                             for monke in MONKEY_LIST:
                                 if monke.member.id in user_id:
                                     await changeGoal(monke, self.channel)
-                                    await monke.logComplete()
                     d = ""
                     for monke in MONKEY_LIST:
                         d += f"{monke.member.name} : {monke.goal}\n\n"
@@ -550,6 +549,7 @@ async def change_goal(ctx):
 
 
 async def changeGoal(monke, channel):
+    await monke.logComplete()
     embed = Embed(
         description=f"Your goal is:\n\n{monke.goal}\n\nWhat do you want to "
                     f"change it to?",
