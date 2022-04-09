@@ -138,7 +138,7 @@ class DataBase:
     async def incrementRounds(self, sessionID):
         connection = await self.db.acquire()
         async with connection.transaction():
-            query = f"UPDATE monke set rounds = rounds + 1 where sessionid = '{sessionID}'"
+            query = f"UPDATE monke set rounds = rounds + 1 where sessionid = '{sessionID}' and active = true"
             data = await connection.execute(query)
         await self.db.release(connection)
         return data
@@ -176,8 +176,6 @@ async def setup():
     #     pillDate date not null default current_date
     # );"""
     query = "select * from monke"
-    data = await DATABASE.getUserGoals("793451663339290644")
-    print(data)
 
 
 if __name__ == '__main__':
