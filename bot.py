@@ -8,9 +8,7 @@ import utils
 from space import apod
 import reddit
 import config
-import monke
 import music
-import databases
 import asyncpg
 import meme
 from pygicord import Paginator
@@ -71,7 +69,6 @@ async def on_ready():
     channel = bot.get_channel(799957897017688065)
     SUS_PINGU = bot.get_channel(858700343113416704)
     # TODO: needs to change
-    monke.MonkeSession.MONKE_ROLE = channel.guild.get_role(866357915308785684)
     print(channel)
     print(
         "The bot is logged in as {0.user}".format(bot)
@@ -97,58 +94,6 @@ async def on_ready():
         await channel.send(embed=embed)
 
     db = await asyncpg.create_pool(config.DATABASE_URL)
-    DATABASE = databases.DataBase(db=db)
-    monke.DATABASE = DATABASE
-
-    recoverSession = (
-        await DATABASE.recoverSession()
-    )  # data recovery in case a monke session gets interrupted
-
-    if recoverSession:
-        sessionList = []
-        monke.MONKEY_LIST = []
-        guildMap = {}
-
-        for session in recoverSession[0]:
-            # now we create the sessions:
-            channel = bot.get_channel(int(session["channelid"]))
-            await channel.send(
-                        "```fix\nA monkey session was interrupted, commencing session recovery.```",
-                        delete_after=30
-                    )
-            sessionID = session['sessionid']
-            guildMap[sessionID] = channel.guild
-            start = session['starttime']
-            clockID = session['clock_id']
-            break_ = session["breakduration"]
-            work = session['workduration']
-
-            # trying to check how many hours have passed.
-            elapsed = int(datetime.now().timestamp() - start.timestamp())
-            n_rounds, remainder = divmod(elapsed, (work + break_)*60)
-            if remainder > work*60:
-                is_break = True
-                time = break_*60 - remainder
-            else:
-                is_break = False
-                time = work*60 - remainder
-            sessionList.append(monke.MonkeSession(work, break_, channel, rounds=n_rounds,
-                                                  clock_id=clockID, is_break=is_break,
-                                                  sessionID=sessionID, timer=time))
-            await channel.send("```fix\nSession recovered, monkey session recreated...```", delete_after=30)
-
-        for simian in recoverSession[1]:
-            sessionID = simian['sessionid']
-            guild = guildMap[sessionID]
-            member = await guild.fetch_member(int(simian['discordid']))
-            nick = simian['nick']
-            goal = simian['goal']
-            print(goal)
-            monke.MONKEY_LIST.append(monke.Monke(sessionID, member, nick, False, goal))
-
-        for session in sessionList:
-            await session.channel.send("```fix\nThe monkeys were rescued!```", delete_after=30)
-            bot.loop.create_task(session.start())
 
 
 @bot.event
@@ -206,40 +151,6 @@ async def on_message(message):
         channel = bot.get_channel(int(PUPPET[1]))
         await channel.send(str(message.content))
 
-    # evolve to monke
-    if len(monke.MONKEY_LIST) > 0 and not monke.MONKEY_LIST[0].is_break:
-
-        monkey = False
-        for m in monke.MONKEY_LIST:
-            if m.member.id == message.author.id and not m.lite:
-                m.counter += 1
-                monkey = m
-
-        if not monkey:
-            pass
-        else:
-            if message.channel.id != 866030261341650953:
-                await message.author.send(
-                    f"Don't stray from the path to **FOREVER MONKE**. Focus yung wan, you can talk when "
-                    "you have a break."
-                )
-            else:
-                if monkey.counter % 12 == 0:
-                    await message.channel.send(
-                        f"Focus now, don't chit-chat {message.author.mention}, **Forever Monke** is calling."
-                    )
-                if monkey.counter > 50:
-                    await message.channel.send(module.generator("minecraft"))
-                    await message.channel.send(
-                        explosions[random.randint(0, len(doom) - 1)]
-                    )
-                    await message.delete()
-
-                elif monkey.counter == 48:
-                    await message.channel.send(
-                        f"2 more messages from {message.author.mention} and I enter doom "
-                        "mode"
-                    )
 
     # clown emoji ban
     if message.author.id == 797152303757000715 and utils.contains(message.content.lower(), ['🤡', '👏', '🤩']):
@@ -299,7 +210,6 @@ async def on_message(message):
 @bot.command()
 async def diagnose(ctx):
     variables = (
-        f"STUDY : {[str(monk) for monk in monke.MONKEY_LIST]}\n\n"
         f"MUSICUNT: {[str(cunt) for cunt in music.MusiCUNT.cunts]}\n\n"
         f"COUNTER: {COUNTER}\n\n"
     )
