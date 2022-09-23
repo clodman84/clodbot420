@@ -2,7 +2,6 @@ from collections import OrderedDict
 from functools import update_wrapper, wraps
 import asyncio
 import time
-from typing import Callable
 
 
 class Cache:
@@ -51,6 +50,7 @@ class Cache:
                 return cache[key]
 
         if asyncio.iscoroutinefunction(self._func):
+
             @wraps(self._func)
             async def tmp():
                 return await self._func(*args, **kwargs)
@@ -78,11 +78,11 @@ class Cache:
 
 class SimpleTimer:
     """
-    with SimpleTimer("Test Timer", print) as timer:
-        for i in range(34):
-            print("bananas")
+    with SimpleTimer("Test Timer") as timer:
+        ...
 
-    second parameter is a function that takes in the string for the time and does stuff with it, called at exit().
+    print(timer)
+    > Test Timer completed in xyz seconds
     """
 
     def __init__(self, process_name=None):
@@ -98,10 +98,11 @@ class SimpleTimer:
         self.total = time.perf_counter() - self.start
 
     def __str__(self):
-        return f"{self.name + ' ' if self.name else ''}completed in {self.total} seconds"
+        return (
+            f"{self.name + ' ' if self.name else ''}completed in {self.total} seconds"
+        )
 
 
 def divideIterable(iterable, n):
-    """Divides a given iterable into chunks of max size n, returns a list with each chunk."""
-    return [iterable[i * n: (i + 1) * n] for i in range((len(iterable) + n - 1) // n)]
-
+    """Divides a given iterable into chunks of max size n, returns a list of chunks"""
+    return [iterable[i * n : (i + 1) * n] for i in range((len(iterable) + n - 1) // n)]
