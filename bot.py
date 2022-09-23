@@ -2,14 +2,13 @@ import discord
 from discord.ext import commands
 import logging
 from logging.handlers import RotatingFileHandler
-import colorlog
 import traceback
 import settings
+import sys
 from cogs.discord_utils.Context import Context
 from cogs.discord_utils.Embeds import makeEmbeds
-from clodbot.http import SingletonSession
 
-log = logging.getLogger("clodbot")
+log = logging.getLogger('clodbot')
 log.setLevel(logging.DEBUG)
 
 
@@ -23,25 +22,20 @@ class ClodBot(commands.Bot):
             voice_states=True,
             messages=True,
             reactions=True,
-            message_content=True,
-        )
+            message_content=True)
 
         super().__init__(
             command_prefix="--",
             description="Sulfate and Paraben free.",
             intents=intents,
         )
-        self.error_hook = None
+        self.error_channel = self.get_channel(settings.ERROR_CHANNEL)
         self.dev_guild = settings.DEV_GUILD
         self.initialExt = initialExt
 
     async def setup_hook(self) -> None:
         for extension in self.initialExt:
             await self.load_extension(extension)
-        session = SingletonSession(loop=self.loop)
-        self.error_hook = discord.Webhook.from_url(
-            url=settings.ERROR_WEBHOOK, session=session
-        )
         # guild = discord.Object(self.dev_guild)
         # self.tree.copy_global_to(guild=guild)
         # await self.tree.sync(guild=guild)
@@ -49,82 +43,62 @@ class ClodBot(commands.Bot):
 
     async def close(self):
         log.info("Closing connection to Discord.")
-        await SingletonSession().close()
         await super().close()
 
     async def get_context(self, message, *, cls=Context) -> Context:
         return await super().get_context(message, cls=cls)
 
-    async def on_command_error(
-        self, ctx: Context, error: commands.CommandError
-    ) -> None:
-        log.error(f"In command {ctx.command.qualified_name}: {str(error)}")
+    async def on_command_error(self, ctx: Context, error: commands.CommandError) -> None:
+        log.error(str(error))
         if isinstance(error, commands.NoPrivateMessage):
-            await ctx.send("This command cannot be used in private messages.")
+            await ctx.send('This command cannot be used in private messages.')
         elif isinstance(error, commands.DisabledCommand):
-            await ctx.send("This command is disabled and cannot be used.")
+            await ctx.send('This command is disabled and cannot be used.')
         elif isinstance(error, commands.CommandOnCooldown):
             await ctx.send(f"Dude, chill. {str(error)}")
         elif isinstance(error, commands.NotOwner):
             await ctx.send("This command can only be used by my owner.")
         elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send("Something went wrong.")
             original = error.original
             if not isinstance(original, discord.HTTPException):
-                trace = (
-                    f"In command {ctx.command.qualified_name}:\n"
-                    + "".join(traceback.format_tb(original.__traceback__))
-                    + str(error)
-                )
-                for message in makeEmbeds(trace):
-                    await self.error_hook.send(embed=message)
+                print(f'In {ctx.command.qualified_name}:', file=sys.stderr)
+                traceback.print_tb(original.__traceback__)
+                print(f'{original.__class__.__name__}: {original}', file=sys.stderr)
+                tb = traceback.format_tb(original.__traceback__)
+                for message in makeEmbeds(tb):  # embeds that will fit the long traceback messages.
+                    await self.error_channel.send(embed=message)
         elif isinstance(error, commands.ArgumentParsingError):
             await ctx.send(str(error))
 
 
 def main():
-    logger = logging.getLogger("discord")
-    logger.setLevel(logging.DEBUG)
-    logging.getLogger("discord.http").setLevel(logging.INFO)
-    logging.getLogger("discord.gateway").setLevel(logging.INFO)
+    logger = logging.getLogger('discord')
+    logger.setLevel(logging.INFO)
+    logging.getLogger('discord.http').setLevel(logging.INFO)
 
     logFileHandler = RotatingFileHandler(
-        filename="app.log",
-        encoding="utf-8",
+        filename='app.log',
+        encoding='utf-8',
         maxBytes=7 * 1024 * 1024,  # 7 MiB so that I can send it in chat.
         backupCount=5,  # Rotate through 5 files
     )
-    streamHandler = colorlog.StreamHandler()
-    dt_fmt = "%Y-%m-%d %H:%M:%S"
-    formatter = logging.Formatter(
-        "[{asctime}] [{levelname:<8}] {name}: {message}", dt_fmt, style="{"
-    )
-    colorFormatter = colorlog.ColoredFormatter(
-        "{log_color}[{asctime}] [{levelname:<8}] {name}: {message}",
-        dt_fmt,
-        style="{",
-        log_colors={
-            "DEBUG": "cyan",
-            "INFO": "green",
-            "WARNING": "yellow",
-            "ERROR": "red",
-            "CRITICAL": "red,bg_white",
-        },
-    )
+    streamHandler = logging.StreamHandler()
+    dt_fmt = '%Y-%m-%d %H:%M:%S'
+    formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
 
     logFileHandler.setFormatter(formatter)
-    streamHandler.setFormatter(colorFormatter)
+    streamHandler.setFormatter(formatter)
 
     logger.addHandler(logFileHandler)
     logger.addHandler(streamHandler)
     log.addHandler(logFileHandler)
     log.addHandler(streamHandler)
 
-    ext = ["cogs.admin"]
+    ext = ['cogs.admin']
     bot = ClodBot(ext)
     log.info("Starting Bot")
     bot.run(token=settings.DISCORD_TOKEN, log_handler=None)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
