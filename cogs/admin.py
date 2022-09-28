@@ -11,7 +11,6 @@ log = logging.getLogger("clodbot.cogs.admin")
 class AdminCog(commands.Cog):
     def __init__(self, bot: ClodBot):
         self.bot = bot
-        self.last_result = None
 
     async def cog_check(self, ctx: Context):
         return await self.bot.is_owner(ctx.author)
