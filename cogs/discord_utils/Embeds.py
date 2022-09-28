@@ -12,10 +12,12 @@ def makeEmbeds(string, prefix="```py\n", suffix="```"):
 
 
 class ClodEmbed(Embed):
-    """Just colour for now"""
+    """Just colour for now, if status is false, the colour is red"""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, colour=settings.COLOUR, **kwargs)
+    def __init__(self, *args, status=True, **kwargs):
+        super().__init__(
+            *args, colour=(settings.COLOUR if status else 0xFF0000), **kwargs
+        )
 
 
 class EmbedInterface:

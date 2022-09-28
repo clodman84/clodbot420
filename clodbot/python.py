@@ -1,9 +1,11 @@
 import ast
 import textwrap
 from clodbot.utils import SimpleTimer
-import traceback
 from contextlib import redirect_stdout
 import io
+import logging
+
+log = logging.getLogger("clodbot.core.python")
 
 
 def insert_returns(body):
@@ -23,24 +25,21 @@ def insert_returns(body):
 
 
 def cleanup_code(content: str) -> str:
-    """Automatically removes code blocks from the code."""
-    # remove ```py\n```
     if content.startswith("```") and content.endswith("```"):
         return "\n".join(content.split("\n")[1:-1])
-
     return content.strip("` \n")
 
 
 async def execute(code, env):
     code = f'async def _func():\n{textwrap.indent(cleanup_code(code), "  ")}'
-    parsed = ast.parse(code)
-    insert_returns(parsed.body[0].body)
     status: bool
     output: str
     time: str
     stdout = io.StringIO()
 
     try:
+        parsed = ast.parse(code)
+        insert_returns(parsed.body[0].body)
         exec(compile(parsed, filename="<ast>", mode="exec"), env)
     except Exception as e:
         value = stdout.getvalue()
@@ -54,12 +53,22 @@ async def execute(code, env):
             with SimpleTimer() as timer:
                 returned = await eval(f"_func()", env)
         value = stdout.getvalue()
-        output = f"Printed:\n{value}\nReturned:\n{returned}"
+        output = (
+            f"Printed:\n"
+            f"```py\n"
+            f"{None if value == '' else value}\n"
+            f"```\n"
+            f"Returned:\n"
+            f"```py\n"
+            f"{returned}\n"
+            f"```"
+        )
         status = True
         time = str(timer)
         return status, output, time
     except Exception as e:
+        value = stdout.getvalue()
         status = False
-        output = f"{traceback.format_exc()}\n{str(e)}"
+        output = f"{value}{e.__class__.__name__}: {e}"
         time = "could not compute"
         return status, output, time
