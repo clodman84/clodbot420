@@ -9,17 +9,14 @@ log = logging.getLogger("clodbot.core.python")
 
 
 def insert_returns(body):
-    # insert return stmt if the last expression is a expression statement
     if isinstance(body[-1], ast.Expr):
         body[-1] = ast.Return(body[-1].value)
         ast.fix_missing_locations(body[-1])
 
-    # for if statements, we insert returns into the body and the orelse
     if isinstance(body[-1], ast.If):
         insert_returns(body[-1].body)
         insert_returns(body[-1].orelse)
 
-    # for with blocks, again we insert returns into the body
     if isinstance(body[-1], ast.With):
         insert_returns(body[-1].body)
 
@@ -30,29 +27,28 @@ def cleanup_code(content: str) -> str:
     return content.strip("` \n")
 
 
-async def execute(code, env):
-    code = f'async def _func():\n{textwrap.indent(cleanup_code(code), "  ")}'
-    status: bool
-    output: str
-    time: str
-    stdout = io.StringIO()
+class Output:
+    def __init__(
+        self, status: bool, value: str, returned, time: str = "could not compute"
+    ) -> None:
+        """Output that holds the result of code execution
 
-    try:
-        parsed = ast.parse(code)
-        insert_returns(parsed.body[0].body)
-        exec(compile(parsed, filename="<ast>", mode="exec"), env)
-    except Exception as e:
-        value = stdout.getvalue()
-        status = False
-        output = f"{value}{e.__class__.__name__}: {e}"
-        time = "could not compile"
-        return status, output, time
+        Args:
+            status (bool): The status of the execution, False if there was an error
+            value (str): The values printed to stdout
+            returned (any): The returned object from code execution
+            time (str, optional): The time it took to execute. Defaults to "could not compute".
+        """
+        self.status = status
+        self.value = value
+        self.returned = returned
+        self.time = time
 
-    try:
-        with redirect_stdout(stdout):
-            with SimpleTimer() as timer:
-                returned = await eval(f"_func()", env)
-        value = stdout.getvalue()
+    def __str__(self) -> str:
+        value = self.value
+        returned = self.returned
+        if not self.status:
+            return f"{value}{returned.__class__.__name__}: {returned}"
         output = (
             f"Printed:\n"
             f"```py\n"
@@ -63,12 +59,35 @@ async def execute(code, env):
             f"{returned}\n"
             f"```"
         )
-        status = True
-        time = str(timer)
-        return status, output, time
-    except Exception as e:
+        return output
+
+
+async def execute(code, env):
+    code = f'async def _func():\n{textwrap.indent(cleanup_code(code), "  ")}'
+    status: bool
+    time: str
+    stdout = io.StringIO()
+
+    try:
+        parsed = ast.parse(code)
+        insert_returns(parsed.body[0].body)
+        exec(compile(parsed, filename="<ast>", mode="exec"), env)
+    except Exception as returned:
         value = stdout.getvalue()
         status = False
-        output = f"{value}{e.__class__.__name__}: {e}"
-        time = "could not compute"
-        return status, output, time
+        return Output(status, value, returned)
+
+    try:
+        with redirect_stdout(stdout):
+            with SimpleTimer() as timer:
+                returned = await eval("_func()", env)
+        value = stdout.getvalue()
+
+        status = True
+        time = str(timer)
+        return Output(status, value, returned, time)
+
+    except Exception as returned:
+        value = stdout.getvalue()
+        status = False
+        return Output(status, value, returned)

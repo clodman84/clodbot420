@@ -11,7 +11,7 @@ log = logging.getLogger("clodbot.cogs.admin")
 class AdminCog(commands.Cog):
     def __init__(self, bot: ClodBot):
         self.bot = bot
-        self.retain = False
+        self.last_result = None
 
     async def cog_check(self, ctx: Context):
         return await self.bot.is_owner(ctx.author)
@@ -25,11 +25,18 @@ class AdminCog(commands.Cog):
             "author": ctx.author,
             "guild": ctx.guild,
             "message": ctx.message,
+            "_": self.last_result,
         }
         env.update(globals())
-        status, output, time = await python.execute(code, env)
-        await ctx.tick(status)
-        embed = ClodEmbed(description=output, status=status).set_footer(text=time)
+        output = await python.execute(code, env)
+
+        if output.status and not isinstance(output.returned, Exception):
+            self.last_result = output.returned
+
+        await ctx.tick(output.status)
+        embed = ClodEmbed(description=str(output), status=output.status).set_footer(
+            text=output.time
+        )
         await ctx.safe_send(embed=embed)
 
 
