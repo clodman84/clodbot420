@@ -5,6 +5,7 @@ from clodbot import python
 from bot import ClodBot
 import logging
 from pathlib import Path
+import psutil
 
 log = logging.getLogger("clodbot.cogs.admin")
 
@@ -67,6 +68,11 @@ class AdminCog(commands.Cog):
         treeString += "```"
         embed = ClodEmbed(description=treeString)
         await ctx.safe_send(embed=embed)
+
+    @commands.command(hidden=True)
+    async def systemperf(self, ctx):
+        stats = f"```py\nMemory:\n\t{psutil.virtual_memory()}\n\nCPU Frequency:\n\t{psutil.cpu_freq()}\n```"
+        await ctx.send(embed=ClodEmbed(description=stats))
 
 
 async def setup(bot):
