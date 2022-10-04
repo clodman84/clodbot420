@@ -61,12 +61,13 @@ class ClodBot(commands.Bot):
         elif isinstance(error, commands.CommandInvokeError):
             original = error.original
             if not isinstance(original, discord.HTTPException):
-                print(f'In {ctx.command.qualified_name}:', file=sys.stderr)
-                traceback.print_tb(original.__traceback__)
-                print(f'{original.__class__.__name__}: {original}', file=sys.stderr)
-                tb = traceback.format_tb(original.__traceback__)
-                for message in makeEmbeds(tb):  # embeds that will fit the long traceback messages.
-                    await self.error_channel.send(embed=message)
+                trace = (
+                    f"In command '{ctx.command.qualified_name}':\n"
+                    + "".join(traceback.format_tb(original.__traceback__))
+                    + str(error)
+                )
+                for message in makeEmbeds(trace):
+                    await self.error_hook.send(embed=message)
         elif isinstance(error, commands.ArgumentParsingError):
             await ctx.send(str(error))
 
