@@ -3,10 +3,9 @@ import discord
 from discord.ext import commands
 from .Embeds import ClodEmbed
 from typing import Optional
+from textwrap import fill
 import logging
 
-# from textwrap import wrap
-import json
 
 log = logging.getLogger("clodbot.disutils.context")
 
@@ -25,10 +24,9 @@ class Context(commands.Context):
         try:
             await self.send(content, embed=embed)
         except Exception as e:
-            embedDict = json.dumps(
-                embed.to_dict(), indent=4
-            )  # using this to format the dictionary
-            data = f"{content}\n{embedDict}"
+            data = (
+                f"Content:\n\n{fill(str(content), width=75)}\n{'_'*75}\n\n{str(embed)}"
+            )
             fp = io.BytesIO(data.encode())
             await self.send(f"{str(e)}. Trying to send a file instead...")
             return await self.send(

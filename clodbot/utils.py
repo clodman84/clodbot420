@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from functools import update_wrapper, wraps
+from textwrap import fill
 import asyncio
 import time
 
@@ -106,3 +107,17 @@ class SimpleTimer:
 def divideIterable(iterable, n):
     """Divides a given iterable into chunks of max size n, returns a list of chunks"""
     return [iterable[i * n : (i + 1) * n] for i in range((len(iterable) + n - 1) // n)]
+
+
+def dictionaryFormatter(dictionary: dict, indent: int = 1):
+    for key, value in dictionary.items():
+        yield f"{'    '*(indent-1)}{str(key)}:"
+        if isinstance(value, dict):
+            yield from dictionaryFormatter(value, indent + 1)
+        else:
+            yield fill(
+                str(value),
+                width=75,
+                initial_indent="    " * indent,
+                subsequent_indent="    " * indent,
+            )

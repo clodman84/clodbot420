@@ -23,9 +23,7 @@ def tree(dir_path: Path, prefix: str = ""):
     pointers = [tee] * (len(contents) - 1) + [last]
     for pointer, path in zip(pointers, contents):
         yield prefix + pointer + path.name
-        if path.is_dir() and not (
-            path.name in ignore
-        ):  # don't want a huge tree with the .git files in them
+        if path.is_dir() and not (path.name in ignore):
             extension = branch if pointer == tee else space
             yield from tree(path, prefix=prefix + extension)
 
