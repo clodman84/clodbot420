@@ -59,16 +59,13 @@ class AdminCog(commands.Cog):
         await ctx.safe_send(embed=embed)
 
     @commands.command(hidden=True)
-    async def tree(self, ctx):
-        treeString = "```py\n"
-        for line in tree(Path(".")):
-            treeString += line + "\n"
-        treeString += "```"
-        embed = ClodEmbed(description=treeString)
+    async def dir(self, ctx):
+        treeString = "\n".join(tree(Path(".")))
+        embed = ClodEmbed(description=f"```py\n{treeString}\n```")
         await ctx.safe_send(embed=embed)
 
     @commands.command(hidden=True)
-    async def systemperf(self, ctx):
+    async def perf(self, ctx):
         stats = f"```py\nMemory:\n\t{psutil.virtual_memory()}\n\nCPU Frequency:\n\t{psutil.cpu_freq()}\n```"
         await ctx.send(embed=ClodEmbed(description=stats))
 
