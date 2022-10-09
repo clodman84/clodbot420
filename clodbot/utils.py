@@ -1,3 +1,4 @@
+from ast import main
 from collections import OrderedDict
 from functools import update_wrapper, wraps
 from textwrap import fill
@@ -70,11 +71,12 @@ class Cache:
         key = hash(args) + hash(frozenset(sorted(kwargs.items())))
         return key
 
-    def remove(self, *args):
+    def remove(self, *args, **kwargs):
         cache = self._cache
-        if args in cache:
-            return self._cache.pop(args)
-        raise KeyError(f"{args} not in cache for {self.__name__}")
+        key = self._generate_hash_key(*args, **kwargs)
+        if key in cache:
+            return self._cache.pop(key)
+        raise KeyError(f"{args, kwargs} not in cache for {self.__name__}")
 
 
 class SimpleTimer:
