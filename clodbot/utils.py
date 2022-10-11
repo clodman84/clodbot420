@@ -1,4 +1,3 @@
-from ast import main
 from collections import OrderedDict
 from functools import update_wrapper, wraps
 from textwrap import fill
@@ -12,7 +11,7 @@ class Cache:
 
     Params:
         maxsize - Sets the maximum cache size
-        ttl     - None by default, if pass in, each cached item gets set a fixed Time To Live
+        ttl     - None by default, if passed in, each cached item gets set a fixed Time To Live
     Usage:
         @cache
         def test():
@@ -90,7 +89,7 @@ class SimpleTimer:
 
     def __init__(self, process_name=None):
         self.start = None
-        self.total = None
+        self.time = None
         self.name = process_name
 
     def __enter__(self):
@@ -98,12 +97,10 @@ class SimpleTimer:
         return self
 
     def __exit__(self, *args):
-        self.total = time.perf_counter() - self.start
+        self.time = time.perf_counter() - self.start
 
     def __str__(self):
-        return (
-            f"{self.name + ' ' if self.name else ''}completed in {self.total} seconds"
-        )
+        return f"{self.name + ' ' if self.name else ''}completed in {self.time} seconds"
 
 
 def divideIterable(iterable, n):
