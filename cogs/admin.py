@@ -124,15 +124,23 @@ class AdminCog(commands.Cog):
         )
         queries = {
             "description": None,
-            "status": lambda x: x.lower() in {"true", "y", "yes"},
+            "status": lambda x: x.lower().strip() in {"true", "y", "yes"},
+            "title": lambda x: None if x.lower().strip() == "none" else x,
+            "url": lambda x: None if x.lower().strip() == "none" else x,
         }
-        interactor = TextInteractor(queries, ctx, self.bot)
+        prompts = {
+            "status": "Enter status, if True, the embed will have the default colour, if False it will be Red",
+            "title": "Enter title, say 'none' to skip",
+            "url": "Enter url, say 'none' to skip",
+        }
+        interactor = TextInteractor(queries, prompts, ctx, self.bot)
         try:
             response = await interactor.getResponses()
         except InteractionCancelledError:
             await ctx.tick(False)
             return
         embed = ClodEmbed(**response)
+        await interactor.cleanup()
         await channel.send(embed=embed)
         await ctx.tick(True)
 

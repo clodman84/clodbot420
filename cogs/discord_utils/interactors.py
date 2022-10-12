@@ -1,7 +1,7 @@
 from bot import ClodBot
 from .context import Context
 from .embeds import ClodEmbed
-from typing import Callable
+from typing import Callable, List
 from discord import Message
 
 
@@ -11,9 +11,12 @@ class InteractionCancelledError(Exception):
 
 class TextInteractor:
     """
-    A simple way to interact with the user in an interactive conversational way. Handles input conversion and validation,
-    cancellation and the message loop. All you need to do is pass in a dictionary, then `await
+    A simple way to interact with the user in an interactive conversational way. Handles input conversion and
+    validation, cancellation and the message loop. All you need to do is pass in a dictionary, then `await
     TextInteractor.getResponse()` to get back the same dictionary with all the values filled in by the user.
+
+    Other methods:
+        cleanup() to delete all the back and forth messages between clodbot and the user
 
     Example
     -------
@@ -33,23 +36,31 @@ class TextInteractor:
             response = await interactor.getResponses()
     """
 
-    def __init__(self, queries: dict, ctx: Context, bot: ClodBot):
+    def __init__(self, queries: dict, prompts: dict, ctx: Context, bot: ClodBot):
         """
         Parameters
         ----------
         queries:
-            A dictionary of keys and values. The user will be prompted to enter a value for each key. If the value for a
-            callable, then it is called on the user input to further validate the user response. The callable should
-            raise a ValueError to reject an input and return the value it wants to store as a response.
+            The user will be prompted to enter a value for each key. If the value for a key in this `queries` dictionary
+            is a function, then it is called on the user input to further validate the user response. The callable
+            should raise a ValueError to reject an input and return the value it wants to store as a response. This
+            behaviour can be used to set defaults, convert the user input into types, etc.
+        prompts:
+            If a key from `queries` is present in this, it is what the user will see, if it isn't, it will default to an
+            "Enter {key}: " prompt.
         ctx:
             The Context to do all the questioning
         bot:
             The bot user
         """
         self.queries = queries
+        self.prompts = {
+            key: prompts[key] if key in prompts else f"Enter {key}:" for key in queries
+        }
         self.bot = bot
         self.author = ctx.author
         self.ctx = ctx
+        self.interactions: List[Message] = []
 
     async def getResponses(self) -> dict:
         """
@@ -64,15 +75,17 @@ class TextInteractor:
         bot = self.bot
         for key, value in self.queries.items():
             promptEmbed = ClodEmbed(
-                description=f"```fix\nEnter {key}:\n```"
+                description=f"```fix\n{self.prompts[key]}:\n```"
             ).set_footer(text="Say 'cancel!' to stop")
             while True:
-                await ctx.send(embed=promptEmbed)
+                prompt = await ctx.send(embed=promptEmbed)
+                self.interactions.append(prompt)
                 response: Message = await bot.wait_for(
                     "message",
                     check=lambda x: x.author == self.author
                     and x.channel == ctx.channel,
                 )
+                self.interactions.append(response)
                 response: str = response.content
                 if response == "cancel!":
                     raise InteractionCancelledError
@@ -85,8 +98,15 @@ class TextInteractor:
                             description=f"There was something wrong with your input. {ValueError}",
                             status=False,
                         )
-                        await ctx.send(embed=errorEmbed)
+                        error = await ctx.send(embed=errorEmbed)
+                        self.interactions.append(error)
                         continue
                 self.queries[key] = response
                 break
         return self.queries
+
+    async def cleanup(self):
+        """
+        Deletes every interaction between the bot and the user, neat and tidy.
+        """
+        await self.ctx.channel.delete_messages(self.interactions)
