@@ -1,7 +1,7 @@
 import io
 import discord
 from discord.ext import commands
-from .Embeds import ClodEmbed
+from .embeds import ClodEmbed
 from typing import Optional
 from textwrap import fill
 import logging

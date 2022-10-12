@@ -1,8 +1,10 @@
 from collections import OrderedDict
 from functools import update_wrapper, wraps
 from textwrap import fill
+from typing import Collection, Tuple
 import asyncio
 import time
+import math
 
 
 class Cache:
@@ -110,7 +112,7 @@ def divideIterable(iterable, n):
 
 def dictionaryFormatter(dictionary: dict, indent: int = 1):
     for key, value in dictionary.items():
-        yield f"{'    '*(indent-1)}{str(key)}:"
+        yield f"{'    ' * (indent - 1)}{str(key)}:"
         if isinstance(value, dict):
             yield from dictionaryFormatter(value, indent + 1)
         else:
@@ -120,3 +122,30 @@ def dictionaryFormatter(dictionary: dict, indent: int = 1):
                 initial_indent="    " * indent,
                 subsequent_indent="    " * indent,
             )
+
+
+def mean_stddev(collection: Collection[float]) -> Tuple[float, float]:
+    """
+    Takes a collection of floats and returns (mean, stddev) as a tuple. Stolen from Jishaku, used by the rtt command.
+    """
+    average = sum(collection) / len(collection)
+    if len(collection) > 1:
+        stddev = math.sqrt(
+            sum(math.pow(reading - average, 2) for reading in collection)
+            / (len(collection) - 1)
+        )
+    else:
+        stddev = 0.0
+    return average, stddev
+
+
+def natural_size(size_in_bytes: int) -> str:
+    """
+    Converts a number of bytes to an appropriately-scaled unit
+    E.g.:
+        1024 -> 1.00 KiB
+        12345678 -> 11.77 MiB
+    """
+    units = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB")
+    power = int(math.log(max(abs(size_in_bytes), 1), 1024))
+    return f"{size_in_bytes / (1024 ** power):.2f} {units[power]}"

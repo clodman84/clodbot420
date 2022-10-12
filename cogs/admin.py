@@ -1,12 +1,11 @@
 from discord.ext import commands
-from cogs.discord_utils.Context import Context
-from cogs.discord_utils.Embeds import ClodEmbed
+from cogs.discord_utils.context import Context
+from cogs.discord_utils.embeds import ClodEmbed
+from cogs.discord_utils.interactors import TextInteractor, InteractionCancelledError
 from clodbot import python, utils
-from bot import ClodBot
-from typing import List, Collection, Tuple
-import math
-import logging
 from pathlib import Path
+from bot import ClodBot
+import logging
 import psutil
 
 log = logging.getLogger("clodbot.cogs.admin")
@@ -30,44 +29,21 @@ def tree(dir_path: Path, prefix: str = ""):
             yield from tree(path, prefix=prefix + extension)
 
 
-def mean_stddev(collection: Collection[float]) -> Tuple[float, float]:
-    """
-    Takes a collection of floats and returns (mean, stddev) as a tuple. Stolen from Jishaku, used by the rtt command.
-    """
-    average = sum(collection) / len(collection)
-    if len(collection) > 1:
-        stddev = math.sqrt(
-            sum(math.pow(reading - average, 2) for reading in collection)
-            / (len(collection) - 1)
-        )
-    else:
-        stddev = 0.0
-    return average, stddev
-
-
-def natural_size(size_in_bytes: int) -> str:
-    """
-    Converts a number of bytes to an appropriately-scaled unit
-    E.g.:
-        1024 -> 1.00 KiB
-        12345678 -> 11.77 MiB
-    """
-    units = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB")
-
-    power = int(math.log(max(abs(size_in_bytes), 1), 1024))
-
-    return f"{size_in_bytes / (1024 ** power):.2f} {units[power]}"
-
-
 class AdminCog(commands.Cog):
     def __init__(self, bot: ClodBot):
         self.bot = bot
 
     async def cog_check(self, ctx: Context):
-        return await self.bot.is_owner(ctx.author)
+        if await self.bot.is_owner(ctx.author):
+            return True
+        else:
+            raise commands.NotOwner
 
-    @commands.command(hidden=True, name="eval")
+    @commands.command(name="eval")
     async def _eval(self, ctx: Context, *, code: str):
+        """
+        Evaluates python code.
+        """
         env = {
             "bot": self.bot,
             "ctx": ctx,
@@ -89,14 +65,20 @@ class AdminCog(commands.Cog):
         )
         await ctx.safe_send(embed=embed)
 
-    @commands.command(hidden=True)
-    async def dir(self, ctx):
+    @commands.command()
+    async def dir(self, ctx: Context):
+        """
+        Sends the current directory tree structure.
+        """
         treeString = "\n".join(tree(Path(".")))
         embed = ClodEmbed(description=f"```py\n{treeString}\n```")
         await ctx.safe_send(embed=embed)
 
-    @commands.command(hidden=True)
-    async def perf(self, ctx):
+    @commands.command()
+    async def perf(self, ctx: Context):
+        """
+        Gives performance metrics for the bot, mostly memory usage.
+        """
         summary = ""
         try:
             proc = psutil.Process()
@@ -105,9 +87,9 @@ class AdminCog(commands.Cog):
                 try:
                     mem = proc.memory_full_info()
                     summary += (
-                        f"Using {natural_size(mem.rss)} bytes physical memory and "
-                        f"{natural_size(mem.vms)} bytes virtual memory, "
-                        f"{natural_size(mem.uss)} bytes of which unique to this process.\n"
+                        f"Using {utils.natural_size(mem.rss)} physical memory and "
+                        f"{utils.natural_size(mem.vms)} virtual memory, "
+                        f"{utils.natural_size(mem.uss)} of which unique to this process.\n"
                     )
                 except psutil.AccessDenied:
                     pass
@@ -116,7 +98,6 @@ class AdminCog(commands.Cog):
                     name = proc.name()
                     pid = proc.pid
                     thread_count = proc.num_threads()
-
                     summary += f"Running on PID {pid} (`{name}`) with {thread_count} thread(s).\n"
                 except psutil.AccessDenied:
                     pass
@@ -131,23 +112,40 @@ class AdminCog(commands.Cog):
         await ctx.send(embed=ClodEmbed(description=f"```fix\n{summary}\n```"))
 
     @commands.command()
-    async def rtt(self, ctx):
+    async def embed(self, ctx: Context, channel: int):
+        """
+        Sends an embed to desired channel.
+        """
+        channel = self.bot.get_channel(channel)
+        await ctx.send(
+            embed=ClodEmbed(
+                description=f"Sending embed to {channel.name} in {channel.guild.name}."
+            )
+        )
+        queries = {
+            "description": None,
+            "status": lambda x: x.lower() in {"true", "y", "yes"},
+        }
+        interactor = TextInteractor(queries, ctx, self.bot)
+        try:
+            response = await interactor.getResponses()
+        except InteractionCancelledError:
+            await ctx.tick(False)
+            return
+        embed = ClodEmbed(**response)
+        await channel.send(embed=embed)
+        await ctx.tick(True)
 
+    @commands.command()
+    async def rtt(self, ctx: Context):
         """
         Calculates Round-Trip Time to the API. Stolen from Jishaku with minor changes to fit clodbot's style.
         """
-
         message = None
+        api_readings = []
+        websocket_readings = []
 
-        # We'll show each of these readings as well as an average and standard deviation.
-        api_readings: List[float] = []
-        # We'll also record websocket readings, but we'll only provide the average.
-        websocket_readings: List[float] = []
-
-        # We do 6 iterations here.
-        # This gives us 5 visible readings, because a request can't include the stats for itself.
         for _ in range(6):
-            # First generate the text
             text = "Calculating round-trip time...\n\n"
             text += "\n".join(
                 f"Reading {index + 1}: {reading * 1000:.2f}ms"
@@ -155,11 +153,10 @@ class AdminCog(commands.Cog):
             )
 
             if api_readings:
-                average, stddev = mean_stddev(api_readings)
+                average, stddev = utils.mean_stddev(api_readings)
                 text += f"\n\nAverage: {average * 1000:.2f} \N{PLUS-MINUS SIGN} {stddev * 1000:.2f}ms"
             else:
                 text += "\n\nNo readings yet."
-
             if websocket_readings:
                 average = sum(websocket_readings) / len(websocket_readings)
                 text += f"\nWebsocket latency: {average * 1000:.2f}ms"
@@ -167,7 +164,6 @@ class AdminCog(commands.Cog):
                 text += f"\nWebsocket latency: {self.bot.latency * 1000:.2f}ms"
 
             embed = ClodEmbed(description=f"```fix\n{text}```")
-            # Now do the actual request and reading
             if message:
                 with utils.SimpleTimer() as timer:
                     await message.edit(embed=embed)
@@ -176,7 +172,6 @@ class AdminCog(commands.Cog):
                 with utils.SimpleTimer() as timer:
                     message = await ctx.send(embed=embed)
                 api_readings.append(timer.time)
-
             # Ignore websocket latencies that are 0 or negative because they usually mean we've got bad heartbeats
             if self.bot.latency > 0.0:
                 websocket_readings.append(self.bot.latency)

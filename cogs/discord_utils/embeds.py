@@ -4,9 +4,10 @@ from discord.ext import commands
 import settings
 
 
-def makeEmbeds(string, prefix="```py\n", suffix="```"):
+def makeEmbeds(string, prefix="```py\n", suffix="```", status=True):
+
     return [
-        ClodEmbed(description=f"{prefix}{d}{suffix}")
+        ClodEmbed(description=f"{prefix}{d}{suffix}", status=status)
         for d in utils.divideIterable(string, 4000)
     ]
 

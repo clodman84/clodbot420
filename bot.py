@@ -4,9 +4,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 import traceback
 import settings
-import sys
-from cogs.discord_utils.Context import Context
-from cogs.discord_utils.Embeds import makeEmbeds
+from cogs.discord_utils.context import Context
+from cogs.discord_utils.embeds import makeEmbeds, ClodEmbed
+from clodbot.http import SingletonSession
 
 log = logging.getLogger('clodbot')
 log.setLevel(logging.DEBUG)
@@ -48,8 +48,9 @@ class ClodBot(commands.Bot):
     async def get_context(self, message, *, cls=Context) -> Context:
         return await super().get_context(message, cls=cls)
 
-    async def on_command_error(self, ctx: Context, error: commands.CommandError) -> None:
-        log.error(str(error))
+    async def on_command_error(
+        self, ctx: Context, error: commands.CommandError
+    ) -> None:
         if isinstance(error, commands.NoPrivateMessage):
             await ctx.send('This command cannot be used in private messages.')
         elif isinstance(error, commands.DisabledCommand):
@@ -59,6 +60,8 @@ class ClodBot(commands.Bot):
         elif isinstance(error, commands.NotOwner):
             await ctx.send("This command can only be used by my owner.")
         elif isinstance(error, commands.CommandInvokeError):
+            log.error(f"In command {ctx.command.qualified_name}: {str(error)}")
+            await ctx.send("Something went wrong.")
             original = error.original
             if not isinstance(original, discord.HTTPException):
                 trace = (
@@ -66,10 +69,16 @@ class ClodBot(commands.Bot):
                     + "".join(traceback.format_tb(original.__traceback__))
                     + str(error)
                 )
-                for message in makeEmbeds(trace):
+                for message in makeEmbeds(trace, status=False):
                     await self.error_hook.send(embed=message)
-        elif isinstance(error, commands.ArgumentParsingError):
-            await ctx.send(str(error))
+        elif isinstance(error, commands.UserInputError):
+            errorEmbed = ClodEmbed(
+                description=f"{str(error).capitalize()}. Your command isn't correct/complete. Use "
+                f"'--help {ctx.command.qualified_name}' to learn how to use this "
+                f"command. Idiot.",
+                status=False,
+            )
+            await ctx.send(embed=errorEmbed)
 
 
 def main():
