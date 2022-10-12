@@ -54,6 +54,11 @@ class TextInteractor:
     async def getResponses(self) -> dict:
         """
         Await this to get back a dictionary of user responses.
+
+        Raises
+        ------
+            InteractionCancelledError
+                If the user says 'cancel!' at any point
         """
         ctx = self.ctx
         bot = self.bot

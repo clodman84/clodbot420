@@ -11,20 +11,24 @@ class Cache:
     """A cache decorator for functions. The function itself turns into an object of this class and gets a .remove()
     method which can be used to remove specific items from the cache. Returns an awaitable for asynchronous functions.
 
-    Params:
-        maxsize - Sets the maximum cache size
-        ttl     - None by default, if passed in, each cached item gets set a fixed Time To Live
-    Usage:
-        @cache
-        def test():
-            ...
+    Example
+    -------
+        Basic usage without any parameters: ::
 
-        @cache(maxsize=128, ttl=4):
-        def test():
-            ...
+            @cache
+            def square(n):
+               return n**n
 
-        test(34)
-        test.remove(34) #removes 34 from the cache
+        Setting maxsize to 128 and time to live to 4 seconds, after which the cache will re-evaluate the output: ::
+
+            @cache(maxsize=128, ttl=4):
+            def square(n):
+                return n**n
+
+        Computing a value and removing it from the cache: ::
+
+            square(34)
+            square.remove(34)  # removes 34 from the cache
     """
 
     def __init__(self, func=None, maxsize=128, ttl=None):
@@ -82,11 +86,15 @@ class Cache:
 
 class SimpleTimer:
     """
-    with SimpleTimer("Test Timer") as timer:
-        ...
+    Example
+    -------
+        Timing something and printing the total time as a formatted string: ::
 
-    print(timer)
-    > Test Timer completed in xyz seconds
+            with SimpleTimer("Test Timer") as timer:
+                ...
+
+            print(timer)
+            >> Test Timer completed in xyz seconds
     """
 
     def __init__(self, process_name=None):

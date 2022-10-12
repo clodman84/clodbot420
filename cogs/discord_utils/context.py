@@ -20,7 +20,6 @@ class Context(commands.Context):
         embed: Optional[ClodEmbed] = None,
         fileType="txt",
     ) -> discord.Message:
-        """Tries sending a file if something went wrong with sending the message, usually because it's too long"""
         try:
             await self.send(content, embed=embed)
         except Exception as e:

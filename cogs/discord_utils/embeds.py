@@ -13,7 +13,20 @@ def makeEmbeds(string, prefix="```py\n", suffix="```", status=True):
 
 
 class ClodEmbed(Embed):
+    """
+    Just an embed with colours and __str__() method.
+    """
+
     def __init__(self, *args, status=True, **kwargs):
+        """
+
+        Parameters
+        ----------
+        args
+        status
+            If True (default) then the embed will be the default bot colour, if False, it will be red.
+        kwargs
+        """
         super().__init__(
             *args, colour=(settings.COLOUR if status else 0xFF0000), **kwargs
         )
