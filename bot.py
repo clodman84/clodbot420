@@ -82,9 +82,11 @@ class ClodBot(commands.Bot):
 
 
 def main():
-    logger = logging.getLogger('discord')
-    logger.setLevel(logging.INFO)
-    logging.getLogger('discord.http').setLevel(logging.INFO)
+    logger = logging.getLogger("discord")
+    logger.setLevel(logging.DEBUG)
+    logging.getLogger("discord.http").setLevel(logging.INFO)
+    logging.getLogger("discord.gateway").setLevel(logging.INFO)
+    logging.getLogger("discord.client").setLevel(logging.INFO)
 
     logFileHandler = RotatingFileHandler(
         filename='app.log',
