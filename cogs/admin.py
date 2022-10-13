@@ -12,6 +12,7 @@ from bot import ClodBot
 from typing import Callable
 import logging
 import psutil
+import discord
 
 log = logging.getLogger("clodbot.cogs.admin")
 
@@ -162,6 +163,11 @@ class AdminCog(commands.Cog):
         await ctx.send(
             "Send this embed?", embed=embed, view=YesOrNoMenu(yes, no, ctx.author)
         )
+
+    @commands.command()
+    async def logs(self, ctx: Context):
+        file = discord.File("./app.log")
+        await ctx.send(file=file)
 
     @commands.command()
     async def rtt(self, ctx: Context):
