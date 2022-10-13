@@ -129,15 +129,15 @@ class AdminCog(commands.Cog):
         )
         none_to_skip: Callable = lambda x: None if x.lower().strip() == "none" else x
         queries = {
+            "title": none_to_skip,
             "description": none_to_skip,
             "status": lambda x: x.lower().strip() in {"true", "y", "yes"},
-            "title": none_to_skip,
             "url": none_to_skip,
         }
         prompts = {
+            "title": "Enter title, say 'none' to skip",
             "description": "Enter description, say 'none' to skip",
             "status": "Enter status, if True, the embed will have the default colour, if False it will be Red",
-            "title": "Enter title, say 'none' to skip",
             "url": "Enter url, say 'none' to skip",
         }
         interactor = TextInteractor(queries, prompts, ctx, self.bot)
