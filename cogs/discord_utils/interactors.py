@@ -14,23 +14,23 @@ class YesOrNoMenu(ui.View):
     simple menu with yes or no buttons.
     """
 
-    def __init__(self, tickCallback, crossCallback, author, timeout=120):
+    def __init__(self, yesCallback, noCallback, author, timeout=120):
         super().__init__(timeout=timeout)
-        self.tickCallback = tickCallback
-        self.crossCallback = crossCallback
+        self.tickCallback = yesCallback
+        self.crossCallback = noCallback
         self.author = author
 
     async def interaction_check(self, interaction: Interaction, /) -> bool:
         return interaction.user == self.author
 
     @ui.button(label="Yes", style=ButtonStyle.green)
-    async def tickButton(self, interaction: Interaction, _):
+    async def yesButton(self, interaction: Interaction, _):
         await interaction.response.defer()
         await self.tickCallback()
         self.stop()
 
     @ui.button(label="No", style=ButtonStyle.red)
-    async def crossButton(self, interaction: Interaction, _):
+    async def noButton(self, interaction: Interaction, _):
         await interaction.response.defer()
         await self.crossCallback()
         self.stop()

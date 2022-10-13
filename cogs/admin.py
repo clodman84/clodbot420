@@ -150,17 +150,17 @@ class AdminCog(commands.Cog):
 
         embed = ClodEmbed(**response)
 
-        async def tick():
+        async def yes():
             await interactor.cleanup()
             await channel.send(embed=embed)
             await ctx.tick(True)
 
-        async def cross():
+        async def no():
             await interactor.cleanup()
             await ctx.tick(False)
 
         await ctx.send(
-            "Send this embed?", embed=embed, view=YesOrNoMenu(tick, cross, ctx.author)
+            "Send this embed?", embed=embed, view=YesOrNoMenu(yes, no, ctx.author)
         )
 
     @commands.command()
