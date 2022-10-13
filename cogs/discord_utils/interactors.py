@@ -2,11 +2,38 @@ from bot import ClodBot
 from .context import Context
 from .embeds import ClodEmbed
 from typing import Callable, List
-from discord import Message
+from discord import Message, ui, ButtonStyle, Interaction
 
 
 class InteractionCancelledError(Exception):
     pass
+
+
+class YesOrNoMenu(ui.View):
+    """
+    simple menu with yes or no buttons.
+    """
+
+    def __init__(self, tickCallback, crossCallback, author, timeout=120):
+        super().__init__(timeout=timeout)
+        self.tickCallback = tickCallback
+        self.crossCallback = crossCallback
+        self.author = author
+
+    async def interaction_check(self, interaction: Interaction, /) -> bool:
+        return interaction.user == self.author
+
+    @ui.button(label="Yes", style=ButtonStyle.green)
+    async def tickButton(self, interaction: Interaction, _):
+        await interaction.response.defer()
+        await self.tickCallback()
+        self.stop()
+
+    @ui.button(label="No", style=ButtonStyle.red)
+    async def crossButton(self, interaction: Interaction, _):
+        await interaction.response.defer()
+        await self.crossCallback()
+        self.stop()
 
 
 class TextInteractor:

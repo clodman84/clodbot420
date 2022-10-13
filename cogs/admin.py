@@ -1,10 +1,15 @@
 from discord.ext import commands
 from cogs.discord_utils.context import Context
 from cogs.discord_utils.embeds import ClodEmbed
-from cogs.discord_utils.interactors import TextInteractor, InteractionCancelledError
+from cogs.discord_utils.interactors import (
+    TextInteractor,
+    InteractionCancelledError,
+    YesOrNoMenu,
+)
 from clodbot import python, utils
 from pathlib import Path
 from bot import ClodBot
+from typing import Callable
 import logging
 import psutil
 
@@ -122,13 +127,15 @@ class AdminCog(commands.Cog):
                 description=f"Sending embed to {channel.name} in {channel.guild.name}."
             )
         )
+        none_to_skip: Callable = lambda x: None if x.lower().strip() == "none" else x
         queries = {
-            "description": None,
+            "description": none_to_skip,
             "status": lambda x: x.lower().strip() in {"true", "y", "yes"},
-            "title": lambda x: None if x.lower().strip() == "none" else x,
-            "url": lambda x: None if x.lower().strip() == "none" else x,
+            "title": none_to_skip,
+            "url": none_to_skip,
         }
         prompts = {
+            "description": "Enter description, say 'none' to skip",
             "status": "Enter status, if True, the embed will have the default colour, if False it will be Red",
             "title": "Enter title, say 'none' to skip",
             "url": "Enter url, say 'none' to skip",
@@ -137,12 +144,24 @@ class AdminCog(commands.Cog):
         try:
             response = await interactor.getResponses()
         except InteractionCancelledError:
+            await interactor.cleanup()
             await ctx.tick(False)
             return
+
         embed = ClodEmbed(**response)
-        await interactor.cleanup()
-        await channel.send(embed=embed)
-        await ctx.tick(True)
+
+        async def tick():
+            await interactor.cleanup()
+            await channel.send(embed=embed)
+            await ctx.tick(True)
+
+        async def cross():
+            await interactor.cleanup()
+            await ctx.tick(False)
+
+        await ctx.send(
+            "Send this embed?", embed=embed, view=YesOrNoMenu(tick, cross, ctx.author)
+        )
 
     @commands.command()
     async def rtt(self, ctx: Context):
