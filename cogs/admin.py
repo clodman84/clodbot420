@@ -141,7 +141,7 @@ class AdminCog(commands.Cog):
             "status": "Enter status, if True, the embed will have the default colour, if False it will be Red",
             "url": "Enter url, say 'none' to skip",
         }
-        interactor = TextInteractor(queries, prompts, ctx, self.bot)
+        interactor = TextInteractor(queries, ctx, self.bot, prompts)
         try:
             response = await interactor.getResponses()
         except InteractionCancelledError:

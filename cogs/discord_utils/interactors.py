@@ -63,7 +63,7 @@ class TextInteractor:
             response = await interactor.getResponses()
     """
 
-    def __init__(self, queries: dict, prompts: dict, ctx: Context, bot: ClodBot):
+    def __init__(self, queries: dict, ctx: Context, bot: ClodBot, prompts: dict = None):
         """
         Parameters
         ----------
@@ -72,14 +72,16 @@ class TextInteractor:
             is a function, then it is called on the user input to further validate the user response. The callable
             should raise a ValueError to reject an input and return the value it wants to store as a response. This
             behaviour can be used to set defaults, convert the user input into types, etc.
-        prompts:
-            If a key from `queries` is present in this, it is what the user will see, if it isn't, it will default to an
-            "Enter {key}: " prompt.
         ctx:
             The Context to do all the questioning
         bot:
             The bot user
+        prompts:
+            If a key from `queries` is present in this, it is what the user will see, if it isn't, it will default to an
+            "Enter {key}: " prompt. This is an optional argument that defaults to an empty dictionary.
         """
+        if prompts is None:
+            prompts = {}
         self.queries = queries
         self.prompts = {
             key: prompts[key] if key in prompts else f"Enter {key}:" for key in queries
