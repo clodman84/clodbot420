@@ -81,36 +81,6 @@ class Cache:
         key = self._generate_hash_key(*args, **kwargs)
         if key in cache:
             return self._cache.pop(key)
-        raise KeyError(f"{args, kwargs} not in cache for {self.__name__}")
-
-
-class SimpleTimer:
-    """
-    Example
-    -------
-        Timing something and printing the total time as a formatted string: ::
-
-            with SimpleTimer("Test Timer") as timer:
-                ...
-
-            print(timer)
-            >> Test Timer completed in xyz seconds
-    """
-
-    def __init__(self, process_name=None):
-        self.start = None
-        self.time = None
-        self.name = process_name
-
-    def __enter__(self):
-        self.start = time.perf_counter()
-        return self
-
-    def __exit__(self, *args):
-        self.time = time.perf_counter() - self.start
-
-    def __str__(self):
-        return f"{self.name + ' ' if self.name else ''}completed in {self.time} seconds"
 
 
 def divideIterable(iterable, n):
@@ -157,3 +127,56 @@ def natural_size(size_in_bytes: int) -> str:
     units = ("B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB")
     power = int(math.log(max(abs(size_in_bytes), 1), 1024))
     return f"{size_in_bytes / (1024 ** power):.2f} {units[power]}"
+
+
+def natural_time(time_in_seconds: float) -> str:
+    """
+    Converts a time in seconds to a 6-padded scaled unit
+    E.g.:
+        1.5000 ->   1.50  s
+        0.1000 -> 100.00 ms
+        0.0001 -> 100.00 us
+    """
+    units = (
+        ("mi", 60),
+        (" s", 1),
+        ("ms", 1e-3),
+        ("\N{GREEK SMALL LETTER MU}s", 1e-6),
+    )
+
+    absolute = abs(time_in_seconds)
+
+    for label, size in units:
+        if absolute > size:
+            return f"{time_in_seconds / size:6.2f} {label}"
+
+    return f"{time_in_seconds / 1e-9:6.2f} ns"
+
+
+class SimpleTimer:
+    """
+    Example
+    -------
+        Timing something and printing the total time as a formatted string: ::
+
+            with SimpleTimer("Test Timer") as timer:
+                ...
+
+            print(timer)
+            >> Test Timer completed in xyz seconds
+    """
+
+    def __init__(self, process_name=None):
+        self.start = None
+        self.time = None
+        self.name = process_name
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, *args):
+        self.time = time.perf_counter() - self.start
+
+    def __str__(self):
+        return f"{self.name + ' ' if self.name else ''}completed in {natural_time(self.time)}"

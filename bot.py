@@ -7,6 +7,7 @@ import settings
 from cogs.discord_utils.context import Context
 from cogs.discord_utils.embeds import makeEmbeds, ClodEmbed
 from clodbot.http import SingletonSession
+import aiosqlite
 
 log = logging.getLogger('clodbot')
 log.setLevel(logging.DEBUG)
@@ -29,13 +30,19 @@ class ClodBot(commands.Bot):
             description="Sulfate and Paraben free.",
             intents=intents,
         )
-        self.error_channel = self.get_channel(settings.ERROR_CHANNEL)
+        self.error_hook = None
+        self.db = None
         self.dev_guild = settings.DEV_GUILD
         self.initialExt = initialExt
 
     async def setup_hook(self) -> None:
         for extension in self.initialExt:
             await self.load_extension(extension)
+        session = SingletonSession(loop=self.loop)
+        self.error_hook = discord.Webhook.from_url(
+            url=settings.ERROR_WEBHOOK, session=session
+        )
+        self.db: aiosqlite.Connection = await aiosqlite.connect("data.db")
         # guild = discord.Object(self.dev_guild)
         # self.tree.copy_global_to(guild=guild)
         # await self.tree.sync(guild=guild)
@@ -43,6 +50,8 @@ class ClodBot(commands.Bot):
 
     async def close(self):
         log.info("Closing connection to Discord.")
+        await SingletonSession().close()
+        await self.db.close()
         await super().close()
 
     async def get_context(self, message, *, cls=Context) -> Context:
@@ -106,7 +115,7 @@ def main():
     log.addHandler(logFileHandler)
     log.addHandler(streamHandler)
 
-    ext = ['cogs.admin']
+    ext = ["cogs.admin", "cogs.pills"]
     bot = ClodBot(ext)
     log.info("Starting Bot")
     bot.run(token=settings.DISCORD_TOKEN, log_handler=None)
