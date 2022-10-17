@@ -59,8 +59,8 @@ class Cache:
         if asyncio.iscoroutinefunction(self._func):
 
             @wraps(self._func)
-            async def tmp():
-                return await self._func(*args, **kwargs)
+            def tmp():
+                return asyncio.ensure_future(self._func(*args, **kwargs))
 
             result = tmp()
         else:
