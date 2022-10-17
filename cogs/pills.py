@@ -1,7 +1,6 @@
 from discord.ext import commands
 from cogs.discord_utils.embeds import ClodEmbed
 import discord
-from discord import app_commands
 import clodbot.database as database
 import time
 import re

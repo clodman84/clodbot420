@@ -62,7 +62,7 @@ class Output:
         return output
 
 
-async def execute(code, env):
+async def execute(code, env) -> Output:
     code = f'async def _func():\n{textwrap.indent(cleanup_code(code), "  ")}'
     status: bool
     time: str
