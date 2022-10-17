@@ -25,6 +25,9 @@ class Pill:
     messageID: int
     guildID: int
 
+    def jumpURL(self):
+        return f"https://discord.com/channels/{self.guildID}/{self.channelID}/{self.messageID}"
+
 
 def pharmacy(_, row: tuple):
     """
@@ -36,7 +39,7 @@ def pharmacy(_, row: tuple):
 @Cache
 async def viewPillsReceived(userID: int):
     _log.debug("SELECT pills received by %s", userID)
-    db: aiosqlite.Connection = await aiosqlite.connect("../data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
     db.row_factory = pharmacy
     cursor = await db.cursor()
     await cursor.execute("SELECT * FROM pills WHERE receiverID = ?", (userID,))
@@ -48,7 +51,7 @@ async def viewPillsReceived(userID: int):
 @Cache
 async def viewPillsGiven(userID: int):
     _log.debug("SELECT pills given by %s", userID)
-    db: aiosqlite.Connection = await aiosqlite.connect("../data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
     db.row_factory = pharmacy
     cursor = await db.cursor()
     await cursor.execute("SELECT * FROM pills WHERE senderID = ?", (userID,))
