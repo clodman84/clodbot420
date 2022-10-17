@@ -43,9 +43,6 @@ class ClodBot(commands.Bot):
             url=settings.ERROR_WEBHOOK, session=session
         )
         self.db: aiosqlite.Connection = await aiosqlite.connect("data.db")
-        # guild = discord.Object(self.dev_guild)
-        # self.tree.copy_global_to(guild=guild)
-        # await self.tree.sync(guild=guild)
         log.info("Setup Hook Complete!")
 
     async def close(self):

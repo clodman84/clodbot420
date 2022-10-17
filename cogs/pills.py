@@ -1,6 +1,7 @@
 from discord.ext import commands
 from cogs.discord_utils.embeds import ClodEmbed
 import discord
+from discord import app_commands
 import clodbot.database as database
 import time
 import re
@@ -43,6 +44,16 @@ class PillsCog(commands.Cog):
             description=f"{og.author.mention} you are now based and {pillMessage} pilled!"
         ).set_footer(text=timer)
         await message.channel.send(embed=embed)
+
+    @commands.hybrid_command(description="Shows a member's pills")
+    async def pill(self, ctx: commands.Context, member: discord.Member):
+        with SimpleTimer() as timer:
+            pills = await database.viewPillsReceived(member.id)
+        filter(lambda x: x.guildID == member.guild.id, pills)
+        embed = ClodEmbed(
+            description="\n".join(str(pill) for pill in pills)
+        ).set_footer(text=str(timer))
+        await ctx.send(embed=embed)
 
 
 async def setup(bot):

@@ -164,6 +164,13 @@ class AdminCog(commands.Cog):
             "Send this embed?", embed=embed, view=YesOrNoMenu(yes, no, ctx.author)
         )
 
+    @commands.command(name="dsync")
+    async def dev_sync(self, ctx):
+        guild = discord.Object(self.bot.dev_guild)
+        self.bot.tree.copy_global_to(guild=guild)
+        await self.bot.tree.sync(guild=guild)
+        await ctx.send(embed=ClodEmbed(description="Syncing completed to dev server!"))
+
     @commands.command()
     async def logs(self, ctx: Context):
         file = discord.File("./app.log")
