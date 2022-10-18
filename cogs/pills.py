@@ -4,6 +4,8 @@ import discord
 import clodbot.database as database
 import time
 import re
+import random
+import string
 from clodbot.utils import SimpleTimer
 from bot import ClodBot
 
@@ -26,6 +28,7 @@ class PillsCog(commands.Cog):
         if og.author.id == message.author.id or og.content == "":
             return
         pillMessage = match.group(1).strip()
+        pillID = "".join(random.choices(string.ascii_uppercase, k=8))
         pill = database.Pill(
             int(time.time()),
             pillMessage,
@@ -35,13 +38,19 @@ class PillsCog(commands.Cog):
             message.channel.id,
             message.id,
             message.guild.id,
+            pillID,
         )
         with SimpleTimer() as timer:
-            await database.insertPill(pill, self.bot.db)
-
-        embed = ClodEmbed(
-            description=f"{og.author.mention} you are now based and {pillMessage} pilled!"
-        ).set_footer(text=timer)
+            try:
+                await database.insertPill(pill, self.bot.db)
+                embed = ClodEmbed(
+                    description=f"{og.author.mention} you are now based and {pillMessage} pilled!"
+                )
+            except database.PillAlreadyExists:
+                embed = ClodEmbed(
+                    description=f"Someone is already based and {pillMessage} in this server!"
+                )
+        embed.set_footer(text=timer)
         await message.channel.send(embed=embed)
 
     @commands.hybrid_command(description="Shows a member's pills")
@@ -49,6 +58,7 @@ class PillsCog(commands.Cog):
         with SimpleTimer() as timer:
             pills = await database.viewPillsReceived(member.id)
         filter(lambda x: x.guildID == member.guild.id, pills)
+        pills.sort(reverse=True)
         embed = ClodEmbed(
             description="\n".join(str(pill) for pill in pills)
         ).set_footer(text=str(timer))

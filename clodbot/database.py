@@ -2,11 +2,9 @@ import aiosqlite
 import logging
 import asyncio
 from dataclasses import dataclass, astuple
-from typing import List
 from clodbot.utils import Cache
 
 _log = logging.getLogger("clodbot.core.db")
-
 
 # doing this because discord IDs are bigger than the maximum size of sqlite integers
 _MAX_SQLITE_INT = 2**63 - 1
@@ -14,7 +12,11 @@ aiosqlite.register_adapter(int, lambda x: hex(x) if x > _MAX_SQLITE_INT else x)
 aiosqlite.register_converter("integer", lambda b: int(b, 16 if b[:2] == b"0x" else 10))
 
 
-@dataclass(slots=True)
+class PillAlreadyExists(Exception):
+    pass
+
+
+@dataclass(slots=True, frozen=True, order=True)
 class Pill:
     timestamp: int
     pill: str
@@ -24,7 +26,9 @@ class Pill:
     channelID: int
     messageID: int
     guildID: int
+    pillID: str
 
+    @property
     def jumpURL(self):
         return f"https://discord.com/channels/{self.guildID}/{self.channelID}/{self.messageID}"
 
@@ -73,8 +77,12 @@ async def insertPill(pill: Pill, db: aiosqlite.Connection) -> None:
     viewPillsGiven.remove(pill.senderID)
     viewPillsReceived.remove(pill.receiverID)
     data = astuple(pill)
-    await db.execute("INSERT INTO pills VALUES(?, ?, ?, ?, ?, ?, ?, ?)", data)
-    await db.commit()
+    try:
+        await db.execute("INSERT INTO pills VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
+        await db.commit()
+    except aiosqlite.IntegrityError as e:
+        _log.error(f"{e.__class__.__name__} {e.args}")
+        raise PillAlreadyExists
 
 
 async def makePillsTable():
@@ -89,7 +97,9 @@ async def makePillsTable():
             receiverID INTEGER,
             channelID INTEGER,
             messageID INTEGER,
-            guildID INTEGER
+            guildID INTEGER,
+            pillID TEXT,
+            UNIQUE(pill, guildID)
         );
     """
     )
@@ -105,7 +115,6 @@ def makeRandomPills(n):
     import string
     import random
 
-    pills: List[Pill] = []
     for _ in range(n):
         timestamp = random.randint(10**10, 10**11)
         pill = "".join(random.choices(string.ascii_letters, k=random.randint(3, 40)))
@@ -115,20 +124,18 @@ def makeRandomPills(n):
         senderID, receiverID, channelID, messageID, guildID = (
             random.randint(10**18, 10**19) for _ in range(5)
         )
-        pills.append(
-            Pill(
-                timestamp,
-                pill,
-                basedMessage,
-                senderID,
-                receiverID,
-                channelID,
-                messageID,
-                guildID,
-            )
+        pillID = "".join(random.choices(string.ascii_uppercase, k=8))
+        yield Pill(
+            timestamp,
+            pill,
+            basedMessage,
+            senderID,
+            receiverID,
+            channelID,
+            messageID,
+            guildID,
+            pillID,
         )
-
-    return pills
 
 
 async def viewAllPills():
