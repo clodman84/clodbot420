@@ -5,7 +5,7 @@ from logging.handlers import RotatingFileHandler
 import traceback
 import settings
 from cogs.discord_utils.context import Context
-from cogs.discord_utils.embeds import makeEmbeds, ClodEmbed
+from cogs.discord_utils.embeds import makeEmbedsFromString, ClodEmbed
 from clodbot.http import SingletonSession
 import aiosqlite
 
@@ -75,7 +75,7 @@ class ClodBot(commands.Bot):
                     + "".join(traceback.format_tb(original.__traceback__))
                     + str(error)
                 )
-                for message in makeEmbeds(trace, status=False):
+                for message in makeEmbedsFromString(trace, status=False):
                     await self.error_hook.send(embed=message)
         elif isinstance(error, commands.UserInputError):
             errorEmbed = ClodEmbed(

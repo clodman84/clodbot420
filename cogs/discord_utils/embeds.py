@@ -4,7 +4,7 @@ from discord.ext import commands
 import settings
 
 
-def makeEmbeds(string, prefix="```py\n", suffix="```", status=True):
+def makeEmbedsFromString(string, prefix="```py\n", suffix="```", status=True):
 
     return [
         ClodEmbed(description=f"{prefix}{d}{suffix}", status=status)
