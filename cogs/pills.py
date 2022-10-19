@@ -61,7 +61,7 @@ class PillsCog(commands.Cog):
         pills.sort(reverse=True)
         embed = ClodEmbed(
             description="\n".join(str(pill) for pill in pills)
-        ).set_footer(text=str(timer))
+        ).set_footer(text=timer)
         await ctx.send(embed=embed)
 
 

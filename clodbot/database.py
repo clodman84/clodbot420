@@ -41,6 +41,18 @@ def pharmacy(_, row: tuple):
 
 
 @Cache
+async def viewPill(pillID: str):
+    _log.debug("SELECT Pill: %s", pillID)
+    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db.row_factory = pharmacy
+    cursor = await db.cursor()
+    await cursor.execute("SELECT * FROM pills WHERE pillID = ?", (pillID,))
+    pill = await cursor.fetchone()
+    await db.close()
+    return pill
+
+
+@Cache
 async def viewPillsReceived(userID: int):
     _log.debug("SELECT pills received by %s", userID)
     db: aiosqlite.Connection = await aiosqlite.connect("data.db")

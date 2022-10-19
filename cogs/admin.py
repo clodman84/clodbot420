@@ -150,19 +150,18 @@ class AdminCog(commands.Cog):
             return
 
         embed = ClodEmbed(**response)
+        sendConfirm = YesOrNoMenu(ctx.author)
 
-        async def yes():
+        await ctx.send("Send this embed?", embed=embed, view=sendConfirm)
+        await sendConfirm.wait()
+
+        if sendConfirm.value:
             await interactor.cleanup()
             await channel.send(embed=embed)
             await ctx.tick(True)
-
-        async def no():
+        else:
             await interactor.cleanup()
             await ctx.tick(False)
-
-        await ctx.send(
-            "Send this embed?", embed=embed, view=YesOrNoMenu(yes, no, ctx.author)
-        )
 
     @commands.command(name="dsync")
     async def dev_sync(self, ctx):
