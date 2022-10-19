@@ -38,6 +38,7 @@ def tree(dir_path: Path, prefix: str = ""):
 class AdminCog(commands.Cog):
     def __init__(self, bot: ClodBot):
         self.bot = bot
+        self.last_result = None
 
     async def cog_check(self, ctx: Context):
         if await self.bot.is_owner(ctx.author):
