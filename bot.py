@@ -9,7 +9,7 @@ from cogs.discord_utils.embeds import makeEmbedsFromString, ClodEmbed
 from clodbot.http import SingletonSession
 import aiosqlite
 
-log = logging.getLogger('clodbot')
+log = logging.getLogger("clodbot")
 log.setLevel(logging.DEBUG)
 
 
@@ -23,7 +23,8 @@ class ClodBot(commands.Bot):
             voice_states=True,
             messages=True,
             reactions=True,
-            message_content=True)
+            message_content=True,
+        )
 
         super().__init__(
             command_prefix="--",
@@ -58,9 +59,9 @@ class ClodBot(commands.Bot):
         self, ctx: Context, error: commands.CommandError
     ) -> None:
         if isinstance(error, commands.NoPrivateMessage):
-            await ctx.send('This command cannot be used in private messages.')
+            await ctx.send("This command cannot be used in private messages.")
         elif isinstance(error, commands.DisabledCommand):
-            await ctx.send('This command is disabled and cannot be used.')
+            await ctx.send("This command is disabled and cannot be used.")
         elif isinstance(error, commands.CommandOnCooldown):
             await ctx.send(f"Dude, chill. {str(error)}")
         elif isinstance(error, commands.NotOwner):
@@ -93,30 +94,25 @@ def main():
     logging.getLogger("discord.http").setLevel(logging.INFO)
     logging.getLogger("discord.gateway").setLevel(logging.INFO)
     logging.getLogger("discord.client").setLevel(logging.INFO)
-
+    logging.getLogger("discord.webhook").setLevel(logging.INFO)
     logFileHandler = RotatingFileHandler(
-        filename='app.log',
-        encoding='utf-8',
-        maxBytes=7 * 1024 * 1024,  # 7 MiB so that I can send it in chat.
-        backupCount=5,  # Rotate through 5 files
+        filename="app.log",
+        encoding="utf-8",
+        maxBytes=75 * 1024,
+        backupCount=5,
     )
-    streamHandler = logging.StreamHandler()
-    dt_fmt = '%Y-%m-%d %H:%M:%S'
-    formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
-
+    dt_fmt = "%Y-%m-%d %H:%M:%S"
+    formatter = logging.Formatter(
+        "[{asctime}] [{levelname:<8}] {name}: {message}", dt_fmt, style="{"
+    )
     logFileHandler.setFormatter(formatter)
-    streamHandler.setFormatter(formatter)
-
     logger.addHandler(logFileHandler)
-    logger.addHandler(streamHandler)
     log.addHandler(logFileHandler)
-    log.addHandler(streamHandler)
-
     ext = ["cogs.admin", "cogs.pills"]
     bot = ClodBot(ext)
     log.info("Starting Bot")
-    bot.run(token=settings.DISCORD_TOKEN, log_handler=None)
+    bot.run(token=settings.DISCORD_TOKEN, root_logger=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
