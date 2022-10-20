@@ -43,7 +43,10 @@ class ClodBot(commands.Bot):
         self.error_hook = discord.Webhook.from_url(
             url=settings.ERROR_WEBHOOK, session=session
         )
-        self.db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+        self.db: aiosqlite.Connection = await aiosqlite.connect(
+            "data.db", isolation_level=None
+        )
+        await self.db.execute("pragma journal_mode=wal;")
         log.info("Setup Hook Complete!")
 
     async def close(self):

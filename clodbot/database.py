@@ -3,6 +3,7 @@ import logging
 import asyncio
 from dataclasses import dataclass, astuple
 from clodbot.utils import Cache
+from contextlib import asynccontextmanager
 
 _log = logging.getLogger("clodbot.core.db")
 
@@ -40,40 +41,42 @@ def pharmacy(_, row: tuple):
     return Pill(*row)
 
 
+@asynccontextmanager
+async def pillView():
+    db = await aiosqlite.connect("data.db")
+    await db.execute("pragma journal_mode=wal;")
+    db.row_factory = pharmacy
+    try:
+        yield db
+    finally:
+        await db.close()
+
+
 @Cache
 async def viewPill(pillID: str):
     _log.debug("SELECT Pill: %s", pillID)
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
-    db.row_factory = pharmacy
-    cursor = await db.cursor()
-    await cursor.execute("SELECT * FROM pills WHERE pillID = ?", (pillID,))
-    pill = await cursor.fetchone()
-    await db.close()
-    return pill
+    async with pillView() as db:
+        res = await db.execute("SELECT * FROM pills WHERE pillID = ?", (pillID,))
+        pill = await res.fetchone()
+        return pill
 
 
 @Cache
 async def viewPillsReceived(userID: int):
     _log.debug("SELECT pills received by %s", userID)
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
-    db.row_factory = pharmacy
-    cursor = await db.cursor()
-    await cursor.execute("SELECT * FROM pills WHERE receiverID = ?", (userID,))
-    pills = await cursor.fetchall()
-    await db.close()
-    return pills
+    async with pillView() as db:
+        res = await db.execute("SELECT * FROM pills WHERE receiverID = ?", (userID,))
+        pills = await res.fetchall()
+        return pills
 
 
 @Cache
 async def viewPillsGiven(userID: int):
     _log.debug("SELECT pills given by %s", userID)
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
-    db.row_factory = pharmacy
-    cursor = await db.cursor()
-    await cursor.execute("SELECT * FROM pills WHERE senderID = ?", (userID,))
-    pills = await cursor.fetchall()
-    await db.close()
-    return pills
+    async with pillView() as db:
+        res = await db.execute("SELECT * FROM pills WHERE senderID = ?", (userID,))
+        pills = await res.fetchall()
+        return pills
 
 
 async def insertPill(pill: Pill, db: aiosqlite.Connection) -> None:
@@ -91,7 +94,6 @@ async def insertPill(pill: Pill, db: aiosqlite.Connection) -> None:
     data = astuple(pill)
     try:
         await db.execute("INSERT INTO pills VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
-        await db.commit()
     except aiosqlite.IntegrityError as e:
         _log.error(f"{e.__class__.__name__} {e.args}")
         raise PillAlreadyExists
