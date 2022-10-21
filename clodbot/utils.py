@@ -179,4 +179,4 @@ class SimpleTimer:
         self.time = time.perf_counter() - self.start
 
     def __str__(self):
-        return f"{self.name + ' ' if self.name else ''}completed in {natural_time(self.time)}"
+        return f"{self.name + ' ' if self.name else ''}completed in{natural_time(self.time)}"

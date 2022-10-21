@@ -1,3 +1,5 @@
+import math
+
 from discord.ext import commands
 from discord import app_commands
 from cogs.discord_utils.embeds import ClodEmbed
@@ -29,7 +31,7 @@ class PillsCog(commands.Cog):
         for i, pill in enumerate(pills):
             shortenedPill = w.fill(" ".join(pill.pill.strip().split()))
             user = self.bot.get_user(pill.senderID if is_receiver else pill.receiverID)
-            yield f"{i+1}. {pill.pillID}. {shortenedPill} - {user.name}"
+            yield f"{i+1:3d}|{pill.pillID}| {shortenedPill} - {user.name}"
 
     def pillMenuMaker(
         self,
@@ -45,6 +47,8 @@ class PillsCog(commands.Cog):
             custom_embed=embed,
             wrap_in_codeblock="fix",
         )
+        if len(pills) == 0:
+            menu.add_row("Nothing to show here")
         for line in self.pillFormatter(pills, is_receiver):
             menu.add_row(line)
         menu.add_button(
@@ -120,7 +124,7 @@ class PillsCog(commands.Cog):
             pills = await database.viewPillsReceived(member.id)
         filter(lambda x: x.guildID == member.guild.id, pills)
         pills.sort(reverse=True)
-        embed = ClodEmbed().set_footer(text=timer)
+        embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
         menu = self.pillMenuMaker(pills, embed, True, ctx)
         await menu.start()
 
@@ -129,7 +133,7 @@ class PillsCog(commands.Cog):
             pills = await database.viewPillsReceived(member.id)
         filter(lambda x: x.guildID == member.guild.id, pills)
         pills.sort(reverse=True)
-        embed = ClodEmbed().set_footer(text=timer)
+        embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
         menu = self.pillMenuMaker(pills, embed, True, interaction)
         await menu.start()
 
