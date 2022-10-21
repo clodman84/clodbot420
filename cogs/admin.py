@@ -165,11 +165,11 @@ class AdminCog(commands.Cog):
             await ctx.tick(False)
 
     @commands.command(name="dsync")
-    async def dev_sync(self, ctx):
-        guild = discord.Object(self.bot.dev_guild)
+    async def dev_sync(self, ctx, guildID: int = None):
+        guild = discord.Object(guildID if guildID else self.bot.dev_guild)
         self.bot.tree.copy_global_to(guild=guild)
         await self.bot.tree.sync(guild=guild)
-        await ctx.send(embed=ClodEmbed(description="Syncing completed to dev server!"))
+        await ctx.send(embed=ClodEmbed(description="Syncing completed to server!"))
 
     @commands.command()
     async def logs(self, ctx: Context):

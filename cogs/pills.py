@@ -1,13 +1,16 @@
 from discord.ext import commands
+from discord import app_commands
 from cogs.discord_utils.embeds import ClodEmbed
 import discord
 import clodbot.database as database
 import time
+from reactionmenu import ViewMenu, ViewButton
 import re
 import random
 import string
 from clodbot.utils import SimpleTimer
 from bot import ClodBot
+from textwrap import TextWrapper
 
 
 class PillsCog(commands.Cog):
@@ -16,6 +19,63 @@ class PillsCog(commands.Cog):
         self.basedRegex = re.compile(
             r"based and (([\w\"'-]+\s+)+)pilled", re.IGNORECASE
         )
+        self.context_menu = app_commands.ContextMenu(
+            name="Show Pills", callback=self.showPills
+        )
+        self.bot.tree.add_command(self.context_menu)
+
+    def pillFormatter(self, pills: list[database.Pill], is_receiver: bool):
+        w = TextWrapper(width=30, max_lines=1)
+        for i, pill in enumerate(pills):
+            shortenedPill = w.fill(" ".join(pill.pill.strip().split()))
+            user = self.bot.get_user(pill.senderID if is_receiver else pill.receiverID)
+            yield f"{i+1}. {pill.pillID}. {shortenedPill} - {user.name}"
+
+    def pillMenuMaker(
+        self,
+        pills,
+        embed: ClodEmbed,
+        is_receiver: bool,
+        ctx: commands.Context | discord.Interaction,
+    ):
+        menu = ViewMenu(
+            ctx,
+            menu_type=ViewMenu.TypeEmbedDynamic,
+            rows_requested=10,
+            custom_embed=embed,
+            wrap_in_codeblock="fix",
+        )
+        for line in self.pillFormatter(pills, is_receiver):
+            menu.add_row(line)
+        menu.add_button(
+            ViewButton(
+                style=discord.ButtonStyle.green,
+                label="Back",
+                custom_id=ViewButton.ID_PREVIOUS_PAGE,
+            )
+        )
+        menu.add_button(
+            ViewButton(
+                style=discord.ButtonStyle.green,
+                label="Next",
+                custom_id=ViewButton.ID_NEXT_PAGE,
+            )
+        )
+        menu.add_button(
+            ViewButton(
+                style=discord.ButtonStyle.red,
+                label="Stop",
+                custom_id=ViewButton.ID_END_SESSION,
+            )
+        )
+        menu.add_button(
+            ViewButton(
+                style=discord.ButtonStyle.gray,
+                label="Jump",
+                custom_id=ViewButton.ID_GO_TO_PAGE,
+            )
+        )
+        return menu
 
     @commands.Cog.listener("on_message")
     async def basedDetector(self, message: discord.Message):
@@ -48,21 +108,30 @@ class PillsCog(commands.Cog):
                 )
             except database.PillAlreadyExists:
                 embed = ClodEmbed(
-                    description=f"Someone is already based and {pillMessage} in this server!"
+                    description=f"Someone is already based and {pillMessage} pilled in this server!"
                 )
         embed.set_footer(text=timer)
         await message.channel.send(embed=embed)
 
     @commands.hybrid_command(description="Shows a member's pills")
     async def pill(self, ctx: commands.Context, member: discord.Member):
+        await ctx.send(f"Getting pills for {member.mention}...", ephemeral=True)
         with SimpleTimer() as timer:
             pills = await database.viewPillsReceived(member.id)
         filter(lambda x: x.guildID == member.guild.id, pills)
         pills.sort(reverse=True)
-        embed = ClodEmbed(
-            description="\n".join(str(pill) for pill in pills)
-        ).set_footer(text=timer)
-        await ctx.send(embed=embed)
+        embed = ClodEmbed().set_footer(text=timer)
+        menu = self.pillMenuMaker(pills, embed, True, ctx)
+        await menu.start()
+
+    async def showPills(self, interaction: discord.Interaction, member: discord.Member):
+        with SimpleTimer() as timer:
+            pills = await database.viewPillsReceived(member.id)
+        filter(lambda x: x.guildID == member.guild.id, pills)
+        pills.sort(reverse=True)
+        embed = ClodEmbed().set_footer(text=timer)
+        menu = self.pillMenuMaker(pills, embed, True, interaction)
+        await menu.start()
 
 
 async def setup(bot):

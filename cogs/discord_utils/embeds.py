@@ -1,6 +1,5 @@
 from clodbot import utils
 from discord import Embed
-from discord.ext import commands
 import settings
 
 
@@ -33,10 +32,3 @@ class ClodEmbed(Embed):
 
     def __str__(self) -> str:
         return "\n".join(utils.dictionaryFormatter(self.to_dict()))
-
-
-class EmbedInterface:
-    """Creates an interface for navigating between embeds, with buttons and all that."""
-
-    def __init__(self, bot: commands.Bot, embeds: list):
-        raise NotImplementedError
