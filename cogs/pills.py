@@ -1,5 +1,3 @@
-import math
-
 from discord.ext import commands
 from discord import app_commands
 from cogs.discord_utils.embeds import ClodEmbed
@@ -8,11 +6,16 @@ import clodbot.database as database
 import time
 from reactionmenu import ViewMenu, ViewButton
 import re
-import random
-import string
 from clodbot.utils import SimpleTimer
 from bot import ClodBot
 from textwrap import TextWrapper
+
+
+async def pillsAutocomplete(interaction: discord.Interaction, current: str):
+    if current == "":
+        return []
+    pills = await database.pills_fts(current, interaction.guild_id)
+    return [app_commands.Choice(name=pill[0], value=pill[1]) for pill in pills]
 
 
 class PillsCog(commands.Cog):
@@ -26,13 +29,6 @@ class PillsCog(commands.Cog):
         )
         self.bot.tree.add_command(self.context_menu)
 
-    def pillFormatter(self, pills: list[database.Pill], is_receiver: bool):
-        w = TextWrapper(width=30, max_lines=1)
-        for i, pill in enumerate(pills):
-            shortenedPill = w.fill(" ".join(pill.pill.strip().split()))
-            user = self.bot.get_user(pill.senderID if is_receiver else pill.receiverID)
-            yield f"{i+1:3d}|{pill.pillID}| {shortenedPill} - {user.name}"
-
     def pillMenuMaker(
         self,
         pills,
@@ -40,6 +36,15 @@ class PillsCog(commands.Cog):
         is_receiver: bool,
         ctx: commands.Context | discord.Interaction,
     ):
+        def pillFormatter():
+            w = TextWrapper(width=30, max_lines=1)
+            for i, pill in enumerate(pills):
+                shortenedPill = w.fill(" ".join(pill.pill.strip().split()))
+                user = self.bot.get_user(
+                    pill.senderID if is_receiver else pill.receiverID
+                )
+                yield f"|{i + 1:3d}| {shortenedPill} - {user.name}"
+
         menu = ViewMenu(
             ctx,
             menu_type=ViewMenu.TypeEmbedDynamic,
@@ -47,10 +52,12 @@ class PillsCog(commands.Cog):
             custom_embed=embed,
             wrap_in_codeblock="fix",
         )
+
         if len(pills) == 0:
             menu.add_row("Nothing to show here")
-        for line in self.pillFormatter(pills, is_receiver):
+        for line in pillFormatter():
             menu.add_row(line)
+
         menu.add_button(
             ViewButton(
                 style=discord.ButtonStyle.green,
@@ -81,6 +88,18 @@ class PillsCog(commands.Cog):
         )
         return menu
 
+    async def pillMenuSender(self, member, ctx, fil, is_receiver=True):
+        with SimpleTimer() as timer:
+            if is_receiver:
+                pills = await database.viewPillsReceived(member.id)
+            else:
+                pills = await database.viewPillsGiven(member.id)
+        filter(fil, pills)
+        pills.sort(reverse=True)
+        embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
+        menu = self.pillMenuMaker(pills, embed, is_receiver, ctx)
+        await menu.start()
+
     @commands.Cog.listener("on_message")
     async def basedDetector(self, message: discord.Message):
         if message.reference is None:
@@ -92,7 +111,6 @@ class PillsCog(commands.Cog):
         if og.author.id == message.author.id or og.content == "":
             return
         pillMessage = match.group(1).strip()
-        pillID = "".join(random.choices(string.ascii_uppercase, k=8))
         pill = database.Pill(
             int(time.time()),
             pillMessage,
@@ -102,7 +120,6 @@ class PillsCog(commands.Cog):
             message.channel.id,
             message.id,
             message.guild.id,
-            pillID,
         )
         with SimpleTimer() as timer:
             try:
@@ -117,25 +134,50 @@ class PillsCog(commands.Cog):
         embed.set_footer(text=timer)
         await message.channel.send(embed=embed)
 
-    @commands.hybrid_command(description="Shows a member's pills")
-    async def pill(self, ctx: commands.Context, member: discord.Member):
-        await ctx.send(f"Getting pills for {member.mention}...", ephemeral=True)
-        with SimpleTimer() as timer:
-            pills = await database.viewPillsReceived(member.id)
-        filter(lambda x: x.guildID == member.guild.id, pills)
-        pills.sort(reverse=True)
-        embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
-        menu = self.pillMenuMaker(pills, embed, True, ctx)
-        await menu.start()
+    @commands.hybrid_group(name="pills")
+    async def pill(self, ctx: commands.Context):
+        await ctx.send(
+            "Use --pill received or something, this command can't be invoked like this."
+        )
 
-    async def showPills(self, interaction: discord.Interaction, member: discord.Member):
-        with SimpleTimer() as timer:
-            pills = await database.viewPillsReceived(member.id)
-        filter(lambda x: x.guildID == member.guild.id, pills)
-        pills.sort(reverse=True)
-        embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
-        menu = self.pillMenuMaker(pills, embed, True, interaction)
-        await menu.start()
+    @pill.command(name="received")
+    async def received(self, ctx: commands.Context, member: discord.Member):
+        await ctx.send(f"Getting pills for {member.mention}...", ephemeral=True)
+        await self.pillMenuSender(member, ctx, lambda x: x.guildID == member.guild.id)
+
+    @pill.command(name="given")
+    async def given(self, ctx: commands.Context, member: discord.Member):
+        await ctx.send(f"Getting pills for {member.mention}...", ephemeral=True)
+        await self.pillMenuSender(
+            member, ctx, lambda x: x.guildID == member.guild.id, is_receiver=False
+        )
+
+    async def showPills(self, ctx: discord.Interaction, member: discord.Member):
+        await self.pillMenuSender(member, ctx, lambda x: x.guildID == member.guild.id)
+
+    @app_commands.command(name="pills_search")
+    @app_commands.autocomplete(pill=pillsAutocomplete)
+    async def search(self, interaction: discord.Interaction, pill: int):
+        pill: database.Pill = await database.viewPill(pill)
+        if pill is None:
+            await interaction.response.send_message(
+                "Your pill has to be **selected** from the autocomplete menu "
+                "above, if it isn't there, it doesn't exist.",
+                ephemeral=True,
+            )
+        view = discord.ui.View()
+        jump_button = discord.ui.Button(url=pill.jumpURL, label="Jump To Message")
+        view.add_item(jump_button)
+        text = (
+            f"On <t:{pill.timestamp}> in channel <#{pill.channelID}>, "
+            f"<@{pill.senderID}> said <@{pill.receiverID}> "
+            f"was `based and {pill.pill} pilled`"
+        )
+        embed = ClodEmbed(
+            title=f"{self.bot.get_user(pill.receiverID).name}'s based message was",
+            description=f"```fix\n{pill.basedMessage}```",
+        )
+        await interaction.response.send_message(text, embed=embed, view=view)
 
 
 async def setup(bot):

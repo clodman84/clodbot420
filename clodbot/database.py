@@ -1,6 +1,5 @@
 import aiosqlite
 import logging
-import asyncio
 from dataclasses import dataclass, astuple
 from clodbot.utils import Cache
 from contextlib import asynccontextmanager
@@ -27,7 +26,6 @@ class Pill:
     channelID: int
     messageID: int
     guildID: int
-    pillID: str
 
     @property
     def jumpURL(self):
@@ -42,10 +40,10 @@ def pharmacy(_, row: tuple):
 
 
 @asynccontextmanager
-async def pillView():
+async def pillView(row_factory=pharmacy):
     db = await aiosqlite.connect("data.db")
     await db.execute("pragma journal_mode=wal;")
-    db.row_factory = pharmacy
+    db.row_factory = row_factory
     try:
         yield db
     finally:
@@ -53,12 +51,24 @@ async def pillView():
 
 
 @Cache
-async def viewPill(pillID: str):
-    _log.debug("SELECT Pill: %s", pillID)
+async def viewPill(rowID: int):
+    _log.debug("SELECT Pill: %s", rowID)
     async with pillView() as db:
-        res = await db.execute("SELECT * FROM pills WHERE pillID = ?", (pillID,))
+        res = await db.execute("SELECT * FROM pills WHERE rowid = ?", (rowID,))
         pill = await res.fetchone()
         return pill
+
+
+@Cache(maxsize=1000, ttl=120)
+async def pills_fts(text: str, guildID: int):
+    async with pillView(lambda _, y: y) as db:
+        res = await db.execute(
+            f"SELECT pill, rowid, rank FROM pills_fts WHERE "
+            f"pill MATCH ? AND guildID = ? ORDER BY rank LIMIT 15",
+            (text, guildID),
+        )
+        matched_pills = await res.fetchall()
+        return matched_pills
 
 
 @Cache
@@ -93,81 +103,7 @@ async def insertPill(pill: Pill, db: aiosqlite.Connection) -> None:
     viewPillsReceived.remove(pill.receiverID)
     data = astuple(pill)
     try:
-        await db.execute("INSERT INTO pills VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
+        await db.execute("INSERT INTO pills VALUES(?, ?, ?, ?, ?, ?, ?, ?)", data)
     except aiosqlite.IntegrityError as e:
         _log.error(f"{e.__class__.__name__} {e.args}")
         raise PillAlreadyExists
-
-
-async def makePillsTable():
-    db: aiosqlite.Connection = await aiosqlite.connect("../data.db")
-    cursor: aiosqlite.Cursor = await db.cursor()
-    await cursor.execute(
-        """CREATE TABLE IF NOT EXISTS pills(
-            timestamp INTEGER,
-            pill TEXT,
-            basedMessage TEXT,
-            senderID INTEGER,
-            receiverID INTEGER,
-            channelID INTEGER,
-            messageID INTEGER,
-            guildID INTEGER,
-            pillID TEXT,
-            UNIQUE(pill, guildID)
-        );
-    """
-    )
-    await cursor.close()
-    await db.close()
-    print("Pills table was created!")
-
-
-def makeRandomPills(n):
-    """
-    Just for testing purposes
-    """
-    import string
-    import random
-
-    for _ in range(n):
-        timestamp = random.randint(10**10, 10**11)
-        pill = "".join(random.choices(string.ascii_letters, k=random.randint(3, 40)))
-        basedMessage = "".join(
-            random.choices(string.ascii_letters, k=random.randint(3, 120))
-        )
-        senderID, receiverID, channelID, messageID, guildID = (
-            random.randint(10**18, 10**19) for _ in range(5)
-        )
-        pillID = "".join(random.choices(string.ascii_uppercase, k=8))
-        yield Pill(
-            timestamp,
-            pill,
-            basedMessage,
-            senderID,
-            receiverID,
-            channelID,
-            messageID,
-            guildID,
-            pillID,
-        )
-
-
-async def viewAllPills():
-    db: aiosqlite.Connection = await aiosqlite.connect("../data.db")
-    db.row_factory = pharmacy
-    cursor = await db.cursor()
-    await cursor.execute("SELECT * FROM pills")
-    pills = await cursor.fetchall()
-    await db.close()
-    return pills
-
-
-async def main():
-    await makePillsTable()
-    pills = await viewAllPills()
-    for i, pill in enumerate(pills):
-        print(i, pill)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
