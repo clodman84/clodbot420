@@ -12,8 +12,9 @@ from textwrap import TextWrapper
 
 
 async def pillsAutocomplete(interaction: discord.Interaction, current: str):
-    if current == "":
-        return []
+    if len(current) < 4:
+        pills = await database.last15pills(interaction.guild_id)
+        return [app_commands.Choice(name=pill[0], value=pill[1]) for pill in pills]
     pills = await database.pills_fts(current, interaction.guild_id)
     return [app_commands.Choice(name=pill[0], value=pill[1]) for pill in pills]
 
@@ -165,19 +166,26 @@ class PillsCog(commands.Cog):
                 "above, if it isn't there, it doesn't exist.",
                 ephemeral=True,
             )
+            return
+        if pill.guildID != interaction.guild_id:
+            await interaction.response.send_message(
+                "This pill is not from your server", ephemeral=True
+            )
+            return
         view = discord.ui.View()
         jump_button = discord.ui.Button(url=pill.jumpURL, label="Jump To Message")
         view.add_item(jump_button)
-        text = (
-            f"On <t:{pill.timestamp}> in channel <#{pill.channelID}>, "
-            f"<@{pill.senderID}> said <@{pill.receiverID}> "
-            f"was `based and {pill.pill} pilled`"
+
+        author = self.bot.get_user(pill.receiverID)
+        embed = (
+            ClodEmbed(description=f"{pill.basedMessage}", url=pill.jumpURL)
+            .set_author(name=author.name, icon_url=author.display_avatar.url)
+            .add_field(name="Pill:", value=pill.pill)
+            .add_field(name="Awarded by:", value=f"<@{pill.senderID}>")
+            .add_field(name="Awarded on:", value=f"<t:{pill.timestamp}>")
+            .add_field(name="Channel:", value=f"<#{pill.channelID}>")
         )
-        embed = ClodEmbed(
-            title=f"{self.bot.get_user(pill.receiverID).name}'s based message was",
-            description=f"```fix\n{pill.basedMessage}```",
-        )
-        await interaction.response.send_message(text, embed=embed, view=view)
+        await interaction.response.send_message(embed=embed, view=view)
 
 
 async def setup(bot):

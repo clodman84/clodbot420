@@ -7,6 +7,7 @@ import settings
 from cogs.discord_utils.context import Context
 from cogs.discord_utils.embeds import makeEmbedsFromString, ClodEmbed
 from clodbot.http import SingletonSession
+import clodbot.database as database
 import aiosqlite
 
 log = logging.getLogger("clodbot")
@@ -53,6 +54,7 @@ class ClodBot(commands.Bot):
         log.info("Closing connection to Discord.")
         await SingletonSession().close()
         await self.db.close()
+        await database.ConnectionPool.close()
         await super().close()
 
     async def get_context(self, message, *, cls=Context) -> Context:
