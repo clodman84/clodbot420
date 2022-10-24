@@ -95,7 +95,7 @@ class PillsCog(commands.Cog):
                 pills = await database.viewPillsReceived(member.id)
             else:
                 pills = await database.viewPillsGiven(member.id)
-        filter(fil, pills)
+        pills = list(filter(fil, pills))
         pills.sort(reverse=True)
         embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
         menu = self.pillMenuMaker(pills, embed, is_receiver, ctx)

@@ -153,8 +153,11 @@ class AdminCog(commands.Cog):
         embed = ClodEmbed(**response)
         sendConfirm = YesOrNoMenu(ctx.author)
 
-        await ctx.send("Send this embed?", embed=embed, view=sendConfirm)
+        confirmationMessage = await ctx.send(
+            "Send this embed?", embed=embed, view=sendConfirm
+        )
         await sendConfirm.wait()
+        await confirmationMessage.edit(view=sendConfirm)
 
         if sendConfirm.value:
             await interactor.cleanup()
