@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import logging
-from logging.handlers import RotatingFileHandler
+from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 import traceback
 import settings
 from cogs.discord_utils.context import Context
@@ -9,6 +9,7 @@ from cogs.discord_utils.embeds import makeEmbedsFromString, ClodEmbed
 from clodbot.http import SingletonSession
 import clodbot.database as database
 import aiosqlite
+import queue
 
 log = logging.getLogger("clodbot")
 log.setLevel(logging.DEBUG)
@@ -94,12 +95,17 @@ class ClodBot(commands.Bot):
 
 
 def main():
-    logger = logging.getLogger("discord")
-    logger.setLevel(logging.DEBUG)
+    logger = logging.getLogger()
+
+    logging.getLogger("discord").setLevel(logging.DEBUG)
     logging.getLogger("discord.http").setLevel(logging.INFO)
     logging.getLogger("discord.gateway").setLevel(logging.INFO)
     logging.getLogger("discord.client").setLevel(logging.INFO)
     logging.getLogger("discord.webhook").setLevel(logging.INFO)
+
+    q = queue.Queue(-1)
+    q_handler = QueueHandler(q)
+
     logFileHandler = RotatingFileHandler(
         filename="app.log",
         encoding="utf-8",
@@ -108,15 +114,22 @@ def main():
     )
     dt_fmt = "%Y-%m-%d %H:%M:%S"
     formatter = logging.Formatter(
-        "[{asctime}] [{levelname:<8}] {name}: {message}", dt_fmt, style="{"
+        "[{threadName:<10}] [{asctime}] [{levelname:<8}] {name}: {message}",
+        dt_fmt,
+        style="{",
     )
+
+    listener = QueueListener(q, logFileHandler)
+    logger.addHandler(q_handler)
     logFileHandler.setFormatter(formatter)
-    logger.addHandler(logFileHandler)
-    log.addHandler(logFileHandler)
+    listener.start()
     ext = ["cogs.admin", "cogs.pills"]
     bot = ClodBot(ext)
     log.info("Starting Bot")
     bot.run(token=settings.DISCORD_TOKEN, root_logger=True)
+    logFileHandler.close()
+    listener.stop()
+    print("Bye.")
 
 
 if __name__ == "__main__":
