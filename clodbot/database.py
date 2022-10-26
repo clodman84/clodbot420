@@ -64,7 +64,7 @@ class ConnectionPool:
     async def close(cls):
         while not cls._q.empty():
             await cls._q.get_nowait().close()
-        _log.debug("ConnectionPool Closed")
+        _log.info("ConnectionPool Closed")
 
 
 @Cache

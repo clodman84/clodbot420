@@ -1,6 +1,7 @@
 import logging
 import queue
 import traceback
+from contextlib import contextmanager
 from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 
 import aiosqlite
@@ -96,7 +97,8 @@ class ClodBot(commands.Bot):
             await ctx.send(embed=errorEmbed)
 
 
-def main():
+@contextmanager
+def logConfig():
     logger = logging.getLogger()
 
     logging.getLogger("discord").setLevel(logging.DEBUG)
@@ -125,13 +127,19 @@ def main():
     logger.addHandler(q_handler)
     logFileHandler.setFormatter(formatter)
     listener.start()
-    ext = ["cogs.admin", "cogs.pills"]
-    bot = ClodBot(ext)
-    log.info("Starting Bot")
-    bot.run(token=settings.DISCORD_TOKEN, root_logger=True)
-    logFileHandler.close()
-    listener.stop()
-    print("Bye.")
+    try:
+        yield
+    finally:
+        logFileHandler.close()
+        listener.stop()
+
+
+def main():
+    with logConfig():
+        ext = ["cogs.admin", "cogs.pills"]
+        bot = ClodBot(ext)
+        log.info("Starting Bot")
+        bot.run(token=settings.DISCORD_TOKEN, root_logger=True)
 
 
 if __name__ == "__main__":
