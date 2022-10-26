@@ -1,10 +1,10 @@
+import asyncio
+import math
+import time
 from collections import OrderedDict
 from functools import update_wrapper, wraps
 from textwrap import fill
 from typing import Collection, Tuple
-import asyncio
-import time
-import math
 
 
 class Cache:

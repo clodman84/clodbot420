@@ -1,6 +1,7 @@
-from clodbot import utils
 from discord import Embed
+
 import settings
+from clodbot import utils
 
 
 def makeEmbedsFromString(string, prefix="```py\n", suffix="```", status=True):

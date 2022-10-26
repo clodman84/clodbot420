@@ -1,15 +1,17 @@
+import logging
+import queue
+import traceback
+from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
+
+import aiosqlite
 import discord
 from discord.ext import commands
-import logging
-from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
-import traceback
-import settings
-from cogs.discord_utils.context import Context
-from cogs.discord_utils.embeds import makeEmbedsFromString, ClodEmbed
-from clodbot.http import SingletonSession
+
 import clodbot.database as database
-import aiosqlite
-import queue
+import settings
+from clodbot.http import SingletonSession
+from cogs.discord_utils.context import Context
+from cogs.discord_utils.embeds import ClodEmbed, makeEmbedsFromString
 
 log = logging.getLogger("clodbot")
 log.setLevel(logging.DEBUG)

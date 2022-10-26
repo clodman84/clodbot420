@@ -1,8 +1,11 @@
+from typing import Callable, List
+
+from discord import ButtonStyle, Interaction, Message, ui
+
 from bot import ClodBot
+
 from .context import Context
 from .embeds import ClodEmbed
-from typing import Callable, List
-from discord import Message, ui, ButtonStyle, Interaction
 
 
 class InteractionCancelledError(Exception):

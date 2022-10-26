@@ -1,7 +1,9 @@
-import aiosqlite
 import logging
 import queue
-from dataclasses import dataclass, astuple
+from dataclasses import astuple, dataclass
+
+import aiosqlite
+
 from clodbot.utils import Cache
 
 _log = logging.getLogger("clodbot.core.db")

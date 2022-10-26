@@ -1,9 +1,10 @@
 import ast
-import textwrap
-from clodbot.utils import SimpleTimer
-from contextlib import redirect_stdout
 import io
 import logging
+import textwrap
+from contextlib import redirect_stdout
+
+from clodbot.utils import SimpleTimer
 
 log = logging.getLogger("clodbot.core.python")
 

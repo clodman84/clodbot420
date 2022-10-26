@@ -1,11 +1,12 @@
 import io
+import logging
+from textwrap import fill
+from typing import Optional
+
 import discord
 from discord.ext import commands
-from .embeds import ClodEmbed
-from typing import Optional
-from textwrap import fill
-import logging
 
+from .embeds import ClodEmbed
 
 log = logging.getLogger("clodbot.disutils.context")
 

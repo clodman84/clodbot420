@@ -1,5 +1,7 @@
-import aiosqlite
 import asyncio
+
+import aiosqlite
+
 from clodbot.database import Pill
 
 # doing this because discord IDs are bigger than the maximum size of sqlite integers
@@ -69,8 +71,8 @@ def makeRandomPills(n):
     """
     Just for testing purposes
     """
-    import string
     import random
+    import string
 
     for _ in range(n):
         timestamp = random.randint(10**10, 10**11)
