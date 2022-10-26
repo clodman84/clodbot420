@@ -1,6 +1,6 @@
 import re
 import time
-from textwrap import TextWrapper
+from textwrap import TextWrapper, shorten
 
 import discord
 from discord import app_commands
@@ -9,16 +9,22 @@ from reactionmenu import ViewButton, ViewMenu
 
 import clodbot.database as database
 from bot import ClodBot
-from clodbot.utils import SimpleTimer
+from clodbot.utils import SimpleTimer, myShorten
 from cogs.discord_utils.embeds import ClodEmbed
 
 
 async def pillsAutocomplete(interaction: discord.Interaction, current: str):
+    w = TextWrapper(width=90, max_lines=1)
     if len(current) < 4:
         pills = await database.last15pills(interaction.guild_id)
-        return [app_commands.Choice(name=pill[0], value=pill[1]) for pill in pills]
+        return [
+            app_commands.Choice(name=myShorten(pill[0], w), value=pill[1])
+            for pill in pills
+        ]
     pills = await database.pills_fts(current, interaction.guild_id)
-    return [app_commands.Choice(name=pill[0], value=pill[1]) for pill in pills]
+    return [
+        app_commands.Choice(name=myShorten(pill[0], w), value=pill[1]) for pill in pills
+    ]
 
 
 class PillsCog(commands.Cog):
@@ -42,7 +48,7 @@ class PillsCog(commands.Cog):
         def pillFormatter():
             w = TextWrapper(width=30, max_lines=1)
             for i, pill in enumerate(pills):
-                shortenedPill = w.fill(" ".join(pill.pill.strip().split()))
+                shortenedPill = myShorten(pill.pill, w)
                 user = self.bot.get_user(
                     pill.senderID if is_receiver else pill.receiverID
                 )
@@ -128,11 +134,11 @@ class PillsCog(commands.Cog):
             try:
                 await database.insertPill(pill, self.bot.db)
                 embed = ClodEmbed(
-                    description=f"{og.author.mention} you are now based and {pillMessage} pilled!"
+                    description=f"{og.author.mention} you are now based and {shorten(pillMessage, 1000)} pilled!"
                 )
             except database.PillAlreadyExists:
                 embed = ClodEmbed(
-                    description=f"Someone is already based and {pillMessage} pilled in this server!"
+                    description=f"Someone is already based and {shorten(pillMessage, 1000)} pilled in this server!"
                 )
         embed.set_footer(text=timer)
         await message.channel.send(embed=embed)
@@ -180,9 +186,12 @@ class PillsCog(commands.Cog):
 
         author = self.bot.get_user(pill.receiverID)
         embed = (
-            ClodEmbed(description=f"{pill.basedMessage}", url=pill.jumpURL)
+            ClodEmbed(
+                description=f"{shorten(pill.basedMessage, width=2000)}",
+                url=pill.jumpURL,
+            )
             .set_author(name=author.name, icon_url=author.display_avatar.url)
-            .add_field(name="Pill:", value=pill.pill)
+            .add_field(name="Pill:", value=shorten(pill.pill, width=1000))
             .add_field(name="Awarded by:", value=f"<@{pill.senderID}>")
             .add_field(name="Awarded on:", value=f"<t:{pill.timestamp}>")
             .add_field(name="Channel:", value=f"<#{pill.channelID}>")

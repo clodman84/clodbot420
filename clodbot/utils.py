@@ -3,7 +3,7 @@ import math
 import time
 from collections import OrderedDict
 from functools import update_wrapper, wraps
-from textwrap import fill
+from textwrap import TextWrapper, fill
 from typing import Collection, Tuple
 
 
@@ -100,6 +100,13 @@ def dictionaryFormatter(dictionary: dict, indent: int = 1):
                 initial_indent="    " * indent,
                 subsequent_indent="    " * indent,
             )
+
+
+def myShorten(text: str, wrapper: TextWrapper):
+    """
+    Lets you reuse TextWrappers. Wrappers must be created with a width=desired max width and max_lines set to 1.
+    """
+    return wrapper.fill(" ".join(text.strip().split()))
 
 
 def mean_stddev(collection: Collection[float]) -> Tuple[float, float]:
