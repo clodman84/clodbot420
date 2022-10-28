@@ -51,7 +51,12 @@ class ClodBot(commands.Bot):
         self.db: aiosqlite.Connection = await aiosqlite.connect(
             "data.db", isolation_level=None
         )
-        await self.db.execute("pragma journal_mode=wal;")
+        await self.db.executescript(
+            """
+            pragma journal_mode = wal;
+            pragma synchronous = normal;
+        """
+        )
         log.info("Setup Hook Complete!")
 
     async def close(self):
