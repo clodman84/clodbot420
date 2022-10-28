@@ -122,12 +122,12 @@ class PillsCog(commands.Cog):
             "Use --pill received or something, this command can't be invoked like this."
         )
 
-    @pill.command(name="received")
+    @pill.command(name="received", description="Shows pills received in this server")
     async def received(self, ctx: commands.Context, member: discord.Member):
         await ctx.send(f"Getting pills for {member.mention}...", ephemeral=True)
         await self.pillMenuSender(member, ctx, lambda x: x.guildID == member.guild.id)
 
-    @pill.command(name="given")
+    @pill.command(name="given", description="Shows pills given in this server")
     async def given(self, ctx: commands.Context, member: discord.Member):
         await ctx.send(f"Getting pills for {member.mention}...", ephemeral=True)
         await self.pillMenuSender(
@@ -137,10 +137,13 @@ class PillsCog(commands.Cog):
     async def showPills(self, ctx: discord.Interaction, member: discord.Member):
         await self.pillMenuSender(member, ctx, lambda x: x.guildID == member.guild.id)
 
-    @app_commands.command(name="pills_search")
+    @app_commands.command(
+        name="search", description="Searches for a specific pill in the server"
+    )
     @app_commands.autocomplete(pill=pillsAutocomplete)
     async def search(self, interaction: discord.Interaction, pill: int):
-        pill: database.Pill = await database.viewPill(pill)
+        with SimpleTimer() as timer:
+            pill: database.Pill = await database.viewPill(pill)
         if pill is None:
             await interaction.response.send_message(
                 "Your pill has to be **selected** from the autocomplete menu "
@@ -168,6 +171,7 @@ class PillsCog(commands.Cog):
             .add_field(name="Awarded by:", value=f"<@{pill.senderID}>")
             .add_field(name="Awarded on:", value=f"<t:{pill.timestamp}>")
             .add_field(name="Channel:", value=f"<#{pill.channelID}>")
+            .set_footer(text=timer)
         )
         await interaction.response.send_message(embed=embed, view=view)
 

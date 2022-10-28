@@ -69,7 +69,6 @@ class ConnectionPool:
 
 @Cache
 async def viewPill(rowID: int):
-    _log.debug("SELECT Pill: %s", rowID)
     async with ConnectionPool() as db:
         res = await db.execute("SELECT * FROM pills WHERE rowid = ?", (rowID,))
         pill = await res.fetchone()
@@ -101,7 +100,6 @@ async def last15pills(guildID: int):
 
 @Cache
 async def viewPillsReceived(userID: int):
-    _log.debug("SELECT pills received by %s", userID)
     async with ConnectionPool() as db:
         res = await db.execute("SELECT * FROM pills WHERE receiverID = ?", (userID,))
         pills = await res.fetchall()
@@ -110,7 +108,6 @@ async def viewPillsReceived(userID: int):
 
 @Cache
 async def viewPillsGiven(userID: int):
-    _log.debug("SELECT pills given by %s", userID)
     async with ConnectionPool() as db:
         res = await db.execute("SELECT * FROM pills WHERE senderID = ?", (userID,))
         pills = await res.fetchall()
@@ -121,12 +118,6 @@ async def insertPill(pill: Pill, db: aiosqlite.Connection) -> None:
     """
     Inserts pill objects into the database
     """
-    _log.debug(
-        "INSERT pills given by %s to %s in server %s",
-        pill.senderID,
-        pill.receiverID,
-        pill.guildID,
-    )
     viewPillsGiven.remove(pill.senderID)
     viewPillsReceived.remove(pill.receiverID)
     last15pills.remove(pill.guildID)

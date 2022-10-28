@@ -30,20 +30,20 @@ class YesOrNoMenu(ui.View):
     async def yesButton(self, interaction: Interaction, _):
         await interaction.response.defer()
         self.value = True
-        await self.disable()
+        self.disable()
 
     @ui.button(label="No", style=ButtonStyle.red)
     async def noButton(self, interaction: Interaction, _):
         await interaction.response.defer()
-        await self.disable()
+        self.disable()
 
-    async def disable(self):
+    def disable(self):
         for button in self.children:
             button.disabled = True
         self.stop()
 
     async def on_timeout(self) -> None:
-        await self.disable()
+        self.disable()
 
 
 class TextInteractor:
