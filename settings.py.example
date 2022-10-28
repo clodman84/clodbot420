@@ -1,0 +1,4 @@
+ERROR_WEBHOOK = "make a webhook, paste the link here, this is what will send you all the bot errors"
+DEV_GUILD = "the id of the guild you do all your testing in"
+COLOUR = "the colour of all your embeds"
+DISCORD_TOKEN = "your token"
