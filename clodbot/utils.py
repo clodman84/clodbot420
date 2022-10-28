@@ -2,7 +2,7 @@ import asyncio
 import math
 import time
 from collections import OrderedDict
-from functools import update_wrapper, wraps
+from functools import update_wrapper
 from textwrap import TextWrapper, fill
 from typing import Collection, Tuple
 
@@ -57,12 +57,7 @@ class Cache:
                 return cache[key]
 
         if asyncio.iscoroutinefunction(self._func):
-
-            @wraps(self._func)
-            def tmp():
-                return asyncio.ensure_future(self._func(*args, **kwargs))
-
-            result = tmp()
+            result = asyncio.ensure_future(self._func(*args, **kwargs))
         else:
             result = self._func(*args, **kwargs)
 
@@ -155,9 +150,9 @@ def natural_time(time_in_seconds: float) -> str:
 
     for label, size in units:
         if absolute > size:
-            return f"{time_in_seconds / size:6.2f} {label}"
+            return f"{time_in_seconds / size:.2f} {label}"
 
-    return f"{time_in_seconds / 1e-9:6.2f} ns"
+    return f"{time_in_seconds / 1e-9:.2f} ns"
 
 
 class SimpleTimer:
@@ -186,4 +181,4 @@ class SimpleTimer:
         self.time = time.perf_counter() - self.start
 
     def __str__(self):
-        return f"{self.name + ' ' if self.name else ''}completed in{natural_time(self.time)}"
+        return f"{self.name + ' ' if self.name else ''}completed in {natural_time(self.time)}"
