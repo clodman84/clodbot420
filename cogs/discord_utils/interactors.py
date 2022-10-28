@@ -1,6 +1,7 @@
 from typing import Callable, List
 
 from discord import ButtonStyle, Interaction, Message, ui
+from reactionmenu import ViewButton, ViewMenu
 
 from bot import ClodBot
 
@@ -148,3 +149,29 @@ class TextInteractor:
         Deletes every interaction between the bot and the user, neat and tidy.
         """
         await self.ctx.channel.delete_messages(self.interactions)
+
+
+def addNavigators(menu: ViewMenu):
+    buttonSequence = [
+        ViewButton(
+            style=ButtonStyle.green,
+            label="Back",
+            custom_id=ViewButton.ID_PREVIOUS_PAGE,
+        ),
+        ViewButton(
+            style=ButtonStyle.green,
+            label="Next",
+            custom_id=ViewButton.ID_NEXT_PAGE,
+        ),
+        ViewButton(
+            style=ButtonStyle.red,
+            label="Stop",
+            custom_id=ViewButton.ID_END_SESSION,
+        ),
+        ViewButton(
+            style=ButtonStyle.gray,
+            label="Jump",
+            custom_id=ViewButton.ID_GO_TO_PAGE,
+        ),
+    ]
+    menu.add_buttons(buttonSequence)

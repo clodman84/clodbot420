@@ -5,12 +5,13 @@ from textwrap import TextWrapper, shorten
 import discord
 from discord import app_commands
 from discord.ext import commands
-from reactionmenu import ViewButton, ViewMenu
+from reactionmenu import ViewMenu
 
 import clodbot.database as database
 from bot import ClodBot
 from clodbot.utils import SimpleTimer, myShorten
 from cogs.discord_utils.embeds import ClodEmbed
+from cogs.discord_utils.interactors import addNavigators
 
 
 async def pillsAutocomplete(interaction: discord.Interaction, current: str):
@@ -66,35 +67,7 @@ class PillsCog(commands.Cog):
             menu.add_row("Nothing to show here")
         for line in pillFormatter():
             menu.add_row(line)
-
-        menu.add_button(
-            ViewButton(
-                style=discord.ButtonStyle.green,
-                label="Back",
-                custom_id=ViewButton.ID_PREVIOUS_PAGE,
-            )
-        )
-        menu.add_button(
-            ViewButton(
-                style=discord.ButtonStyle.green,
-                label="Next",
-                custom_id=ViewButton.ID_NEXT_PAGE,
-            )
-        )
-        menu.add_button(
-            ViewButton(
-                style=discord.ButtonStyle.red,
-                label="Stop",
-                custom_id=ViewButton.ID_END_SESSION,
-            )
-        )
-        menu.add_button(
-            ViewButton(
-                style=discord.ButtonStyle.gray,
-                label="Jump",
-                custom_id=ViewButton.ID_GO_TO_PAGE,
-            )
-        )
+        addNavigators(menu)
         return menu
 
     async def pillMenuSender(self, member, ctx, fil, is_receiver=True):
