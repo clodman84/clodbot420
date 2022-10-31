@@ -71,7 +71,7 @@ class PillsCog(commands.Cog):
         return menu
 
     async def pillMenuSender(self, member, ctx, fil, is_receiver=True):
-        with SimpleTimer() as timer:
+        with SimpleTimer("SELECT pills") as timer:
             if is_receiver:
                 pills = await database.viewPillsReceived(member.id)
             else:
@@ -103,7 +103,7 @@ class PillsCog(commands.Cog):
             message.id,
             message.guild.id,
         )
-        with SimpleTimer() as timer:
+        with SimpleTimer("INSERT pill") as timer:
             try:
                 await database.insertPill(pill, self.bot.db)
                 embed = ClodEmbed(
@@ -142,7 +142,7 @@ class PillsCog(commands.Cog):
     )
     @app_commands.autocomplete(pill=pillsAutocomplete)
     async def search(self, interaction: discord.Interaction, pill: int):
-        with SimpleTimer() as timer:
+        with SimpleTimer("SELECT pill") as timer:
             pill: database.Pill = await database.viewPill(pill)
         if pill is None:
             await interaction.response.send_message(

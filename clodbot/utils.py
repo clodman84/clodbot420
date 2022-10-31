@@ -188,3 +188,12 @@ class SimpleTimer:
 
     def __str__(self):
         return f"completed in {natural_time(self.time)}"
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            return self.timerDeque.pop()
+        except IndexError:
+            raise StopIteration

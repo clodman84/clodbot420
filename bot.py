@@ -42,8 +42,6 @@ class ClodBot(commands.Bot):
         self.initialExt = initialExt
 
     async def setup_hook(self) -> None:
-        for extension in self.initialExt:
-            await self.load_extension(extension)
         session = SingletonSession(loop=self.loop)
         self.error_hook = discord.Webhook.from_url(
             url=settings.ERROR_WEBHOOK, session=session
@@ -57,6 +55,8 @@ class ClodBot(commands.Bot):
             pragma synchronous = normal;
         """
         )
+        for extension in self.initialExt:
+            await self.load_extension(extension)
         log.info("Setup Hook Complete!")
 
     async def close(self):
@@ -141,7 +141,7 @@ def logConfig():
 
 def main():
     with logConfig():
-        ext = ["cogs.admin", "cogs.pills"]
+        ext = ["cogs.admin", "cogs.pills", "cogs.stats"]
         bot = ClodBot(ext)
         log.info("Starting Bot")
         bot.run(token=settings.DISCORD_TOKEN, root_logger=True)
