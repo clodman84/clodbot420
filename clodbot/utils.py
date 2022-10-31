@@ -1,7 +1,7 @@
 import asyncio
 import math
 import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from functools import update_wrapper
 from textwrap import TextWrapper, fill
 from typing import Collection, Tuple
@@ -157,6 +157,8 @@ def natural_time(time_in_seconds: float) -> str:
 
 class SimpleTimer:
     """
+    A timer that also logs what it times.
+
     Example
     -------
         Timing something and printing the total time as a formatted string: ::
@@ -165,8 +167,9 @@ class SimpleTimer:
                 ...
 
             print(timer)
-            >> Test Timer completed in xyz seconds
     """
+
+    timerDeque = deque()
 
     def __init__(self, process_name=None):
         self.start = None
@@ -179,6 +182,9 @@ class SimpleTimer:
 
     def __exit__(self, *args):
         self.time = time.perf_counter() - self.start
+        if self.name:
+            timestamp = time.time()
+            self.timerDeque.append((timestamp, self.name, self.time))
 
     def __str__(self):
-        return f"{self.name + ' ' if self.name else ''}completed in {natural_time(self.time)}"
+        return f"completed in {natural_time(self.time)}"

@@ -32,6 +32,22 @@ async def makePillsTable():
     print("Pills table was created!")
 
 
+async def makeTimerTable():
+    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    cursor: aiosqlite.Cursor = await db.cursor()
+    await cursor.execute(
+        """CREATE TABLE IF NOT EXISTS timers(
+            timestamp REAL,
+            timer_name TEXT,
+            time REAL
+        );
+    """
+    )
+    await cursor.close()
+    await db.close()
+    print("Timer table was created!")
+
+
 async def setupFTS4pills():
     db: aiosqlite.Connection = await aiosqlite.connect("data.db")
     await db.executescript(
@@ -107,6 +123,7 @@ async def viewAllPills():
 async def main():
     await makePillsTable()
     await setupFTS4pills()
+    await makeTimerTable()
     pills = await viewAllPills()
     for i, pill in enumerate(pills):
         print(i, pill)

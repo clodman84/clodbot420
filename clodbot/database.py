@@ -127,3 +127,13 @@ async def insertPill(pill: Pill, db: aiosqlite.Connection) -> None:
     except aiosqlite.IntegrityError as e:
         _log.error(f"{e.__class__.__name__} {e.args}")
         raise PillAlreadyExists
+
+
+async def insertTimers(times, db: aiosqlite.Connection) -> None:
+    """
+    Inserts timers
+    """
+    try:
+        await db.executemany("INSERT INTO timers VALUES(?, ?, ?)", times)
+    except aiosqlite.Error as e:
+        _log.exception(e)
