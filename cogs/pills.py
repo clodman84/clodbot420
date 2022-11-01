@@ -140,6 +140,7 @@ class PillsCog(commands.Cog):
     @app_commands.command(
         name="search", description="Searches for a specific pill in the server"
     )
+    @app_commands.describe(pill="Start searching for a pill while I autocomplete.")
     @app_commands.autocomplete(pill=pillsAutocomplete)
     async def search(self, interaction: discord.Interaction, pill: int):
         with SimpleTimer("SELECT pill") as timer:

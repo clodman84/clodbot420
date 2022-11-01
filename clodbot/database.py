@@ -91,7 +91,7 @@ async def pills_fts(text: str, guildID: int):
 async def last15pills(guildID: int):
     async with ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
-            "SELECT pill, rowid FROM pills WHERE guildID = ? ORDER BY timestamp LIMIT 15",
+            "SELECT pill, rowid FROM pills WHERE guildID = ? ORDER BY timestamp DESC LIMIT 15",
             (guildID,),
         )
         pills = await res.fetchall()
