@@ -11,49 +11,30 @@ class StatsCog(commands.Cog):
     def __init__(self, bot: ClodBot):
         self.bot = bot
         self.insertTimes.start()
+        self.process = psutil.Process()
 
     @commands.command()
     async def perf(self, ctx: Context):
         """
         Gives performance metrics for the bot, mostly memory usage.
         """
-        summary = ""
-        try:
-            proc = psutil.Process()
+        description = (
+            f"```fix\n"
+            f"{utils.natural_size(self.process.memory_full_info().uss)} - {self.process.memory_percent('uss')}%\n"
+            f"{self.process.cpu_percent()} % CPU Usage\n"
+            f"Running on {psutil.cpu_count()} CPUs and {self.process.num_threads()} threads\n```"
+        )
 
-            with proc.oneshot():
-                try:
-                    mem = proc.memory_full_info()
-                    summary += (
-                        f"Using {utils.natural_size(mem.rss)} physical memory and "
-                        f"{utils.natural_size(mem.vms)} virtual memory, "
-                        f"{utils.natural_size(mem.uss)} of which unique to this process.\n"
-                    )
-                except psutil.AccessDenied:
-                    pass
-
-                try:
-                    name = proc.name()
-                    pid = proc.pid
-                    thread_count = proc.num_threads()
-                    summary += f"Running on PID {pid} (`{name}`) with {thread_count} thread(s).\n"
-                except psutil.AccessDenied:
-                    pass
-
-                summary += "\n"  # blank line
-        except psutil.AccessDenied:
-            summary += (
-                "psutil is installed, but this process does not have high enough access rights "
-                "to query process information.\n"
-            )
-            summary += "\n"  # blank line
-        await ctx.send(embed=ClodEmbed(description=f"```fix\n{summary}\n```"))
+        await ctx.send(
+            embed=ClodEmbed(title="Performance Metrics", description=description)
+        )
 
     @commands.command()
     async def rtt(self, ctx: Context):
         """
-        Calculates Round-Trip Time to the API. Stolen from Jishaku with minor changes to fit clodbot's style.
+        Calculates Round-Trip Time to the API
         """
+        # stolen from jishaku but modified to fit clodbot's style, these metrics are also recorded, because of the timer
         message = None
         api_readings = []
         websocket_readings = []
@@ -78,11 +59,11 @@ class StatsCog(commands.Cog):
 
             embed = ClodEmbed(description=f"```fix\n{text}```")
             if message:
-                with utils.SimpleTimer() as timer:
+                with utils.SimpleTimer("API Latency") as timer:
                     await message.edit(embed=embed)
                 api_readings.append(timer.time)
             else:
-                with utils.SimpleTimer() as timer:
+                with utils.SimpleTimer("API Latency") as timer:
                     message = await ctx.send(embed=embed)
                 api_readings.append(timer.time)
             # Ignore websocket latencies that are 0 or negative because they usually mean we've got bad heartbeats
