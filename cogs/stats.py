@@ -24,7 +24,6 @@ class StatsCog(commands.Cog):
             f"{self.process.cpu_percent()} % CPU Usage\n"
             f"Running on {psutil.cpu_count()} CPUs and {self.process.num_threads()} threads\n```"
         )
-
         await ctx.send(
             embed=ClodEmbed(title="Performance Metrics", description=description)
         )
@@ -39,7 +38,7 @@ class StatsCog(commands.Cog):
         api_readings = []
         websocket_readings = []
 
-        for _ in range(6):
+        for _ in range(5):
             text = "Calculating round-trip time...\n\n"
             text += "\n".join(
                 f"Reading {index + 1}: {reading * 1000:.2f}ms"

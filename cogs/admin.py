@@ -139,6 +139,11 @@ class AdminCog(commands.Cog):
         await ctx.send(embed=ClodEmbed(description="Syncing completed to server!"))
 
     @commands.command()
+    async def sync(self, ctx):
+        await self.bot.tree.sync()
+        await ctx.send(embed=ClodEmbed(description="Syncing completed to all servers!"))
+
+    @commands.command()
     async def logs(self, ctx: Context):
         file = discord.File("./app.log")
         await ctx.send(file=file)
