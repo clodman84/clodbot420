@@ -108,7 +108,7 @@ class AdminCog(commands.Cog):
         }
         interactor = TextInteractor(queries, ctx, self.bot, prompts)
         try:
-            response = await interactor.getResponses()
+            response = await interactor.get_responses()
         except InteractionCancelledError:
             await interactor.cleanup()
             await ctx.tick(False)
@@ -139,7 +139,18 @@ class AdminCog(commands.Cog):
         await ctx.send(embed=ClodEmbed(description="Syncing completed to server!"))
 
     @commands.command()
-    async def sync(self, ctx):
+    async def sync(self, ctx: Context):
+        sync_confirmation_menu = YesOrNoMenu(ctx.author)
+        confirmation_message = await ctx.send(
+            "Are you sure you want to sync all servers?", view=sync_confirmation_menu
+        )
+        await sync_confirmation_menu.wait()
+        await confirmation_message.edit(view=sync_confirmation_menu)
+
+        if not sync_confirmation_menu.value:
+            await ctx.tick(False)
+            return
+
         await self.bot.tree.sync()
         await ctx.send(embed=ClodEmbed(description="Syncing completed to all servers!"))
 

@@ -27,13 +27,13 @@ class YesOrNoMenu(ui.View):
         return interaction.user == self.author
 
     @ui.button(label="Yes", style=ButtonStyle.green)
-    async def yesButton(self, interaction: Interaction, _):
+    async def yes_button(self, interaction: Interaction, _):
         await interaction.response.defer()
         self.value = True
         self.disable()
 
     @ui.button(label="No", style=ButtonStyle.red)
-    async def noButton(self, interaction: Interaction, _):
+    async def no_button(self, interaction: Interaction, _):
         await interaction.response.defer()
         self.disable()
 
@@ -50,7 +50,7 @@ class TextInteractor:
     """
     A simple way to interact with the user in an interactive conversational way. Handles input conversion and
     validation, cancellation and the message loop. All you need to do is pass in a dictionary, then `await
-    TextInteractor.getResponse()` to get back the same dictionary with all the values filled in by the user.
+    TextInteractor.get_responses()` to get back the same dictionary with all the values filled in by the user.
 
     Other methods:
         cleanup() to delete all the back and forth messages between clodbot and the user
@@ -59,18 +59,18 @@ class TextInteractor:
     -------
         Getting a description from a user that is less than 1000 characters long, and a status that is a boolean: ::
 
-            def checkLength(desc):
+            def check_length(desc):
                 if len(desc) > 1000:
                     raise ValueError("Description too long")
                 return str(desc)
 
             queries = {
-                        "description": checkLength,
+                        "description": check_length,
                         "status": lambda x: x.lower() in {"true", "y, "yes"},
                         "footer": None  # This will accept any value
                     }
             interactor = TextInteractor(queries, ctx, bot)
-            response = await interactor.getResponses()
+            response = await interactor.get_responses()
     """
 
     def __init__(self, queries: dict, ctx: Context, bot: ClodBot, prompts: dict = None):
@@ -101,7 +101,7 @@ class TextInteractor:
         self.ctx = ctx
         self.interactions: List[Message] = []
 
-    async def getResponses(self) -> dict:
+    async def get_responses(self) -> dict:
         """
         Await this to get back a dictionary of user responses.
 
