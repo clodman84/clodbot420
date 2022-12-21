@@ -151,7 +151,7 @@ class TextInteractor:
         await self.ctx.channel.delete_messages(self.interactions)
 
 
-def addNavigators(menu: ViewMenu):
+def add_navigators(menu: ViewMenu):
     buttonSequence = [
         ViewButton(
             style=ButtonStyle.green,
