@@ -1,8 +1,9 @@
 import psutil
 from discord.ext import commands, tasks
 
+import clodbot.database
 from bot import ClodBot
-from clodbot import database, utils
+from clodbot import pills, utils
 from cogs.discord_utils.context import Context
 from cogs.discord_utils.embeds import ClodEmbed
 
@@ -71,7 +72,7 @@ class StatsCog(commands.Cog):
 
     @tasks.loop(seconds=10)
     async def insertTimes(self):
-        await database.insertTimers(utils.SimpleTimer(), self.bot.db)
+        await clodbot.database.insert_timers(utils.SimpleTimer(), self.bot.db)
 
     async def cog_unload(self) -> None:
         self.insertTimes.stop()

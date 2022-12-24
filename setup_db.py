@@ -2,7 +2,7 @@ import asyncio
 
 import aiosqlite
 
-from clodbot.database import Pill
+from clodbot.pills import Pill
 
 # doing this because discord IDs are bigger than the maximum size of sqlite integers
 _MAX_SQLITE_INT = 2**63 - 1

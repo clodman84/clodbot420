@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 from reactionmenu import ViewMenu
 
-import clodbot.database as database
+import clodbot.pills as database
 from bot import ClodBot
 from clodbot.utils import SimpleTimer, myShorten
 from cogs.discord_utils.embeds import ClodEmbed
@@ -17,7 +17,7 @@ from cogs.discord_utils.interactors import add_navigators
 async def pillsAutocomplete(interaction: discord.Interaction, current: str):
     w = TextWrapper(width=90, max_lines=1)
     if len(current) < 4:
-        pills = await database.last15pills(interaction.guild_id)
+        pills = await database.view_last_15_pills(interaction.guild_id)
         return [
             app_commands.Choice(name=myShorten(pill[0], w), value=pill[1])
             for pill in pills
@@ -73,9 +73,9 @@ class PillsCog(commands.Cog):
     async def send_pill_menu(self, member, ctx, fil, is_receiver=True):
         with SimpleTimer("SELECT pills") as timer:
             if is_receiver:
-                pills = await database.viewPillsReceived(member.id)
+                pills = await database.view_pills_received(member.id)
             else:
-                pills = await database.viewPillsGiven(member.id)
+                pills = await database.view_pills_given(member.id)
         pills = list(filter(fil, pills))
         pills.sort(reverse=True)
         embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
@@ -105,7 +105,7 @@ class PillsCog(commands.Cog):
         )
         with SimpleTimer("INSERT pill") as timer:
             try:
-                await database.insertPill(pill, self.bot.db)
+                await database.insert_pill(pill, self.bot.db)
                 embed = ClodEmbed(
                     description=f"{og.author.mention} you are now based and {shorten(pillMessage, 1000)} pilled!"
                 )
@@ -146,7 +146,7 @@ class PillsCog(commands.Cog):
     @app_commands.autocomplete(pill=pillsAutocomplete)
     async def search(self, interaction: discord.Interaction, pill: int):
         with SimpleTimer("SELECT pill") as timer:
-            pill: database.Pill = await database.viewPill(pill)
+            pill: database.Pill = await database.view_pill(pill)
         if pill is None:
             await interaction.response.send_message(
                 "Your pill has to be **selected** from the autocomplete menu "

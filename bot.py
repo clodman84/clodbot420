@@ -8,7 +8,7 @@ import aiosqlite
 import discord
 from discord.ext import commands
 
-import clodbot.database as database
+import clodbot.pills as database
 import settings
 from clodbot.http import SingletonSession
 from cogs.discord_utils.context import Context
