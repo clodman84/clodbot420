@@ -1,3 +1,4 @@
+import datetime
 import logging
 import queue
 
@@ -9,6 +10,10 @@ _log = logging.getLogger("clodbot.core.db")
 _MAX_SQLITE_INT = 2**63 - 1
 aiosqlite.register_adapter(int, lambda x: hex(x) if x > _MAX_SQLITE_INT else x)
 aiosqlite.register_converter("integer", lambda b: int(b, 16 if b[:2] == b"0x" else 10))
+
+# dealing with dates https://docs.python.org/3/library/sqlite3.html#adapter-and-converter-recipes
+aiosqlite.register_adapter(datetime.date, lambda x: x.isoformat())
+aiosqlite.register_converter("date", lambda x: datetime.date.fromisoformat(x.decode()))
 
 
 class ConnectionPool:
