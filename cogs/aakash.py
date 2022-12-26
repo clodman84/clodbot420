@@ -1,9 +1,69 @@
 import datetime
+from textwrap import TextWrapper
 
+import discord
+from discord import app_commands
 from discord.ext import commands
+from reactionmenu import ViewMenu
 
 from bot import ClodBot
+from clodbot.aakash_scraper import aakash_db, scraper
+from clodbot.utils import SimpleTimer, myShorten
 from cogs.discord_utils.embeds import ClodEmbed
+from cogs.discord_utils.interactors import add_navigators
+
+
+async def tests_autocomplete(interaction: discord.Interaction, current: str):
+    w = TextWrapper(width=90, max_lines=1)
+    if len(current) < 4:
+        tests = await aakash_db.view_last_15_tests()
+        return [
+            app_commands.Choice(name=myShorten(test[0], w), value=test[1])
+            for test in tests
+        ]
+    tests = await aakash_db.tests_fts(current, interaction.guild_id)
+    return [
+        app_commands.Choice(name=myShorten(test[0], w), value=test[1]) for test in tests
+    ]
+
+
+async def make_results_menu(
+    results: tuple[aakash_db.Result],
+    embed: ClodEmbed,
+    interaction: discord.Interaction,
+):
+    async def results_formatter():
+        w = TextWrapper(width=12, max_lines=1)
+        for i, result in enumerate(results):
+            student = await result.student.fetch()
+            shortened_name = myShorten(student.name, w)
+            air = result.AIR
+            phy = result.physics
+            chem = result.chemistry
+            math = result.maths
+            yield f"|{i + 1:3d}|{shortened_name}|{phy:3d}|{chem:3d}|{math:3d}|{air}|"
+
+    menu = ViewMenu(
+        interaction,
+        menu_type=ViewMenu.TypeEmbedDynamic,
+        rows_requested=20,
+        custom_embed=embed,
+        wrap_in_codeblock="fix",
+    )
+
+    if len(results) == 0:
+        menu.add_row("Nothing to show here")
+
+    test_info = await results[0].test.fetch()
+    menu.add_row(test_info.name)
+    menu.add_row(test_info.date.isoformat())
+    menu.add_row(f"Centre Attendance - {test_info.centre_attendance}")
+    menu.add_row(f"National Attendance - {test_info.national_attendance}")
+
+    async for line in results_formatter():
+        menu.add_row(line)
+    add_navigators(menu)
+    return menu
 
 
 class Aakash(commands.Cog):
@@ -33,6 +93,44 @@ class Aakash(commands.Cog):
             url="https://cdn.discordapp.com/attachments/842796682114498570/1054616038546874428/cozyNukes.jpg"
         )
         await ctx.send(embed=embed)
+
+    @commands.is_owner()
+    @commands.command(hidden=True)
+    async def add_test(self, ctx, test_id):
+        await ctx.send(f"Scraping test -> {test_id}")
+        val = await scraper.scrape(test_id)
+        if val:
+            students, results, test = val
+        else:
+            await ctx.send("No valid responses received from Aakash!")
+            return
+        with SimpleTimer("INSERT test") as test_time:
+            await aakash_db.insert_test(test, self.bot.db)
+        with SimpleTimer("INSERT students") as student_time:
+            await aakash_db.insert_students(students, self.bot.db)
+        with SimpleTimer("INSERT results") as results_time:
+            await aakash_db.insert_results(results, self.bot.db)
+        embed = ClodEmbed(
+            description=f"Done!\nINSERTS for tests {test_time}, students {student_time}, results {results_time}."
+        )
+        await ctx.send(embed=embed)
+
+    @app_commands.guilds(1038025610913656873)
+    @app_commands.describe(test="Start searching for a test while I autocomplete.")
+    @app_commands.command(name="results", description="Aakash test results")
+    async def results(self, interaction: discord.Interaction, test: str):
+        with SimpleTimer("SELECT results") as timer:
+            results = await aakash_db.view_results(test)
+        if results is None:
+            await interaction.response.send_message(
+                "Your test has to be **selected** from the autocomplete menu "
+                "above, if it isn't there, it hasn't been added to the database yet, contact clodman",
+                ephemeral=True,
+            )
+            return
+        embed = ClodEmbed(title="Test Results").set_footer(text=timer)
+        menu = await make_results_menu(results, embed, interaction)
+        await menu.start()
 
 
 async def setup(bot):

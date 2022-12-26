@@ -77,6 +77,9 @@ class Cache:
         if key in cache:
             return self._cache.pop(key)
 
+    def clear(self):
+        self._cache.clear()
+
 
 def divideIterable(iterable, n):
     """Divides a given iterable into chunks of max size n, returns a list of chunks"""

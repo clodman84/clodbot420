@@ -1,8 +1,9 @@
 import datetime
 import logging
 from dataclasses import dataclass
+from typing import Iterable
 
-from aiosqlite import IntegrityError
+from aiosqlite import Error
 
 from clodbot import database
 from clodbot.utils import Cache
@@ -95,55 +96,67 @@ def result_factory(_, row: tuple):  # no puns here
     return Result(student, test, *row[2:])
 
 
-async def view_result(test_id: str):
+@Cache
+async def view_results(test_id: str) -> Result:
     async with database.ConnectionPool(result_factory) as db:
         res = await db.execute("SELECT * FROM results WHERE test_id = ?", (test_id,))
         return await res.fetchall()
 
 
+@Cache
+async def view_last_15_tests():
+    async with database.ConnectionPool(lambda _, y: y) as db:
+        res = await db.execute(
+            "SELECT name, test_id FROM tests ORDER BY date DESC LIMIT 15"
+        )
+        tests = res.fetchall()
+        return tests
+
+
+@Cache(maxsize=32, ttl=120)
+async def tests_fts(text: str):
+    async with database.ConnectionPool(lambda _, y: y) as db:
+        res = await db.execute(
+            "SELECT name, test_id, rank FROM tests_fts WHERE"
+            "name MATCH ? ORDER BY RANK LIMIT 15",
+            (text,),
+        )
+        matched_tests = await res.fetchall()
+        return matched_tests
+
+
 async def insert_test(test: dict, db):
+    view_last_15_tests.clear()
     try:
         await db.execute(
-            """INSERT INTO tests (test_id, name, date, national_attendance, centre_attendance)
-                SELECT :test_id, :name, :date, :national_attendance, :centre_attendance
-                WHERE NOT EXISTS
-                (
-                SELECT test_id
-                FROM tests
-                WHERE test_id = :test_id
-            )
+            """INSERT OR IGNORE INTO tests (test_id, name, date, national_attendance, centre_attendance)
+                VALUES (:test_id, :name, :date, :national_attendance, :centre_attendance)
             """,
             test,
         )
-    except IntegrityError as e:
+    except Error as e:
         _log.error(f"{e.__class__.__name__} {e.args}")
 
 
-async def insert_students(students: tuple[dict, ...], db):
+async def insert_students(students: Iterable[dict], db):
     try:
         await db.executemany(
-            """INSERT INTO students (roll_no, name, psid)
-                SELECT :roll_no, :name, :psid, :batch
-                WHERE NOT EXISTS
-                (
-                SELECT roll_no
-                FROM students
-                WHERE roll_no = :roll_no
-            )
+            """INSERT OR IGNORE INTO students (roll_no, name, psid, batch)
+                VALUES (:roll_no, :name, :psid, :batch)
             """,
             students,
         )
-    except IntegrityError as e:
+    except Error as e:
         _log.error(f"{e.__class__.__name__} {e.args}")
 
 
-async def insert_results(results: tuple[dict, ...], db):
+async def insert_results(results: Iterable[dict], db):
     try:
         await db.executemany(
-            """INSERT INTO students
+            """INSERT OR IGNORE INTO results (roll_no, test_id, air, physics, chemistry, maths)
                 VALUES (:roll_no, :test_id, :air, :physics, :chemistry, :maths)
             """,
             results,
         )
-    except IntegrityError as e:
+    except Error as e:
         _log.error(f"{e.__class__.__name__} {e.args}")
