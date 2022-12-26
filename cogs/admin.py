@@ -151,8 +151,8 @@ class AdminCog(commands.Cog):
             await ctx.tick(False)
             return
 
-        await self.bot.tree.sync()
-        await ctx.send(embed=ClodEmbed(description="Syncing completed to all servers!"))
+        synced = await self.bot.tree.sync()
+        await ctx.safe_send(embed=ClodEmbed(description=f"Syncing completed to all servers!\n```py\n{synced}\n```"))
 
     @commands.command()
     async def logs(self, ctx: Context):
