@@ -34,7 +34,7 @@ async def make_results_menu(
     interaction: discord.Interaction,
 ):
     async def results_formatter():
-        w = TextWrapper(width=12, max_lines=1)
+        w = TextWrapper(width=20, max_lines=1)
         for i, result in enumerate(results):
             student = await result.student.fetch()
             shortened_name = myShorten(student.name, w)
@@ -42,7 +42,7 @@ async def make_results_menu(
             phy = result.physics
             chem = result.chemistry
             math = result.maths
-            yield f"|{i + 1:3d}|{shortened_name}|{phy:3d}|{chem:3d}|{math:3d}|{air}|"
+            yield f"|{phy+chem+math:3d}|{phy:3d}|{chem:3d}|{math:3d}|{air:5d}|{shortened_name}"
 
     menu = ViewMenu(
         interaction,
@@ -57,10 +57,12 @@ async def make_results_menu(
 
     test_info = await results[0].test.fetch()
     menu.add_row(test_info.name)
-    menu.add_row(test_info.date.isoformat())
+    menu.add_row(test_info.date)
     menu.add_row(f"Centre Attendance - {test_info.centre_attendance}")
     menu.add_row(f"National Attendance - {test_info.national_attendance}")
-
+    menu.add_row("")
+    menu.add_row("|TOT|PHY|CHM|MTH| AIR |NAME")
+    menu.add_row(f"|~~~|~~~|~~~|~~~|~~~~~|{'~'*20}")
     async for line in results_formatter():
         menu.add_row(line)
     add_navigators(menu)
@@ -116,9 +118,10 @@ class Aakash(commands.Cog):
         )
         await ctx.send(embed=embed)
 
+    @app_commands.command(name="results", description="Aakash test results")
     @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
     @app_commands.describe(test="Start searching for a test while I autocomplete.")
-    @app_commands.command(name="results", description="Aakash test results")
+    @app_commands.autocomplete(test=tests_autocomplete)
     async def results(self, interaction: discord.Interaction, test: str):
         with SimpleTimer("SELECT results") as timer:
             results = await aakash_db.view_results(test)

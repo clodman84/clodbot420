@@ -61,7 +61,7 @@ class PartialStudent:
 class Test:
     test_id: str
     name: str
-    date: datetime.date
+    date: str
     national_attendance: int
     centre_attendance: int
 
@@ -99,7 +99,9 @@ def result_factory(_, row: tuple):  # no puns here
 @Cache
 async def view_results(test_id: str) -> Result:
     async with database.ConnectionPool(result_factory) as db:
-        res = await db.execute("SELECT * FROM results WHERE test_id = ?", (test_id,))
+        res = await db.execute(
+            "SELECT * FROM results WHERE test_id = ? ORDER BY air", (test_id,)
+        )
         return await res.fetchall()
 
 
@@ -109,7 +111,7 @@ async def view_last_15_tests():
         res = await db.execute(
             "SELECT name, test_id FROM tests ORDER BY date DESC LIMIT 15"
         )
-        tests = res.fetchall()
+        tests = await res.fetchall()
         return tests
 
 
