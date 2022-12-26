@@ -22,7 +22,7 @@ async def tests_autocomplete(interaction: discord.Interaction, current: str):
             app_commands.Choice(name=myShorten(test[0], w), value=test[1])
             for test in tests
         ]
-    tests = await aakash_db.tests_fts(current, interaction.guild_id)
+    tests = await aakash_db.tests_fts(current)
     return [
         app_commands.Choice(name=myShorten(test[0], w), value=test[1]) for test in tests
     ]
