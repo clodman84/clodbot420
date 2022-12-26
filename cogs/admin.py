@@ -134,12 +134,11 @@ class AdminCog(commands.Cog):
     @commands.command(name="dsync")
     async def dev_sync(self, ctx, guildID: int = None):
         guild = discord.Object(guildID if guildID else self.bot.dev_guild)
-        self.bot.tree.copy_global_to(guild=guild)
-        await self.bot.tree.sync(guild=guild)
-        await ctx.send(embed=ClodEmbed(description="Syncing completed to server!"))
+        synced = await self.bot.tree.sync(guild=guild)
+        await ctx.send(embed=ClodEmbed(description=f"Syncing completed to server!```py\n{synced}\n```"))
 
     @commands.command()
-    async def sync(self, ctx: Context, guildID: int = None):
+    async def sync(self, ctx: Context):
         sync_confirmation_menu = YesOrNoMenu(ctx.author)
         confirmation_message = await ctx.send(
             "Are you sure you want to sync all servers?", view=sync_confirmation_menu
@@ -151,7 +150,7 @@ class AdminCog(commands.Cog):
             await ctx.tick(False)
             return
 
-        synced = await self.bot.tree.sync(guildID)
+        synced = await self.bot.tree.sync()
         await ctx.safe_send(embed=ClodEmbed(description=f"Syncing completed to all servers!\n```py\n{synced}\n```"))
 
     @commands.command()
