@@ -139,7 +139,7 @@ class AdminCog(commands.Cog):
         await ctx.send(embed=ClodEmbed(description="Syncing completed to server!"))
 
     @commands.command()
-    async def sync(self, ctx: Context):
+    async def sync(self, ctx: Context, guildID: int = None):
         sync_confirmation_menu = YesOrNoMenu(ctx.author)
         confirmation_message = await ctx.send(
             "Are you sure you want to sync all servers?", view=sync_confirmation_menu
@@ -151,7 +151,7 @@ class AdminCog(commands.Cog):
             await ctx.tick(False)
             return
 
-        synced = await self.bot.tree.sync()
+        synced = await self.bot.tree.sync(guildID)
         await ctx.safe_send(embed=ClodEmbed(description=f"Syncing completed to all servers!\n```py\n{synced}\n```"))
 
     @commands.command()
