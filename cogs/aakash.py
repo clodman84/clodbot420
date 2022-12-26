@@ -6,6 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 from reactionmenu import ViewMenu
 
+import settings
 from bot import ClodBot
 from clodbot.aakash_scraper import aakash_db, scraper
 from clodbot.utils import SimpleTimer, myShorten
@@ -115,7 +116,7 @@ class Aakash(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @app_commands.guilds(1038025610913656873)
+    @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
     @app_commands.describe(test="Start searching for a test while I autocomplete.")
     @app_commands.command(name="results", description="Aakash test results")
     async def results(self, interaction: discord.Interaction, test: str):
