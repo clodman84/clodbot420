@@ -146,8 +146,10 @@ async def insert_test(test: dict, db):
     view_last_15_tests.clear()
     try:
         await db.execute(
-            """INSERT OR IGNORE INTO tests (test_id, name, date, national_attendance, centre_attendance)
+            """INSERT INTO tests (test_id, name, date, national_attendance, centre_attendance)
                 VALUES (:test_id, :name, :date, :national_attendance, :centre_attendance)
+                ON DUPLICATE KEY UPDATE national_attendance = :national_attendance,
+                centre_attendance = :centre_attendance
             """,
             test,
         )
@@ -170,8 +172,9 @@ async def insert_students(students: Iterable[dict], db):
 async def insert_results(results: Iterable[dict], db):
     try:
         await db.executemany(
-            """INSERT OR IGNORE INTO results (roll_no, test_id, air, physics, chemistry, maths)
+            """INSERT INTO results (roll_no, test_id, air, physics, chemistry, maths)
                 VALUES (:roll_no, :test_id, :air, :physics, :chemistry, :maths)
+                ON DUPLICATE KEY UPDATE air = :air
             """,
             results,
         )

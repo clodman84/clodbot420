@@ -31,9 +31,7 @@ async def pillsAutocomplete(interaction: discord.Interaction, current: str):
 class PillsCog(commands.Cog):
     def __init__(self, bot: ClodBot):
         self.bot = bot
-        self.basedRegex = re.compile(
-            r"based and (([\w\"'-]+\s+)+)pilled", re.IGNORECASE
-        )
+        self.basedRegex = re.compile(r"based and (.*?) pilled", re.IGNORECASE)
         self.context_menu = app_commands.ContextMenu(
             name="Show Pills", callback=self.showPills
         )
