@@ -12,7 +12,7 @@ from clodbot import http
 _log = logging.getLogger("clodbot.core.aakash_scraper")
 
 ROOT_URL = "http://aakashleap.com:3131/API/GetIndividualResultByFrmRoll?PageSize=1&id={}&fromRoll={}"
-roll_types = ["0642220600", "0642121200", "0642220500"]
+roll_types = ["0642220600", "0642121200", "0642220500", "0642151200"]
 
 
 async def get(url):
