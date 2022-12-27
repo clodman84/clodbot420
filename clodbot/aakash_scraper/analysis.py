@@ -19,6 +19,7 @@ async def make_csv(test):
             result.physics,
             result.chemistry,
             result.maths,
+            result.total,
         )
 
     data = await asyncio.gather(
@@ -28,6 +29,7 @@ async def make_csv(test):
     def func():
         with io.StringIO() as file:
             writer = csv.writer(file)
+            writer.writerow(["AIR", "Name", "PHY", "CHM", "MTH", "TOT"])
             writer.writerows(data)
             return file.getvalue()
 

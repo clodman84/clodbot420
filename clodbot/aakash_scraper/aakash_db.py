@@ -88,6 +88,10 @@ class Result:
     chemistry: int
     maths: int
 
+    @property
+    def total(self):
+        return self.physics + self.chemistry + self.maths
+
     async def resolve_student(self):
         self.student = await self.student.fetch()
 
