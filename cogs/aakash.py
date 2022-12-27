@@ -1,4 +1,5 @@
 import datetime
+import io
 from textwrap import TextWrapper
 
 import discord
@@ -8,13 +9,13 @@ from reactionmenu import ViewMenu
 
 import settings
 from bot import ClodBot
-from clodbot.aakash_scraper import aakash_db, scraper
+from clodbot.aakash_scraper import aakash_db, analysis, scraper
 from clodbot.utils import SimpleTimer, myShorten
 from cogs.discord_utils.embeds import ClodEmbed
 from cogs.discord_utils.interactors import add_navigators
 
 
-async def tests_autocomplete(interaction: discord.Interaction, current: str):
+async def tests_autocomplete(_, current: str):
     w = TextWrapper(width=90, max_lines=1)
     if len(current) < 4:
         tests = await aakash_db.view_last_15_tests()
@@ -66,6 +67,7 @@ async def make_results_menu(
     async for line in results_formatter():
         menu.add_row(line)
     add_navigators(menu)
+
     return menu
 
 
@@ -132,9 +134,26 @@ class Aakash(commands.Cog):
                 ephemeral=True,
             )
             return
+
         embed = ClodEmbed(title="Test Results").set_footer(text=timer)
         menu = await make_results_menu(results, embed, interaction)
+
         await menu.start()
+
+    @app_commands.command(name="export", description="Get test results in csv format.")
+    @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
+    @app_commands.describe(test="Start searching for a test while I autocomplete.")
+    @app_commands.autocomplete(test=tests_autocomplete)
+    async def export(self, interaction: discord.Interaction, test: str):
+        with SimpleTimer("Make CSV") as timer:
+            data = await analysis.make_csv(test)
+            csv_file = io.BytesIO(data)
+        embed = ClodEmbed(
+            description="Here's the csv file for this test, you can open this in Excel and weep."
+        )
+        embed.set_footer(text=timer)
+        file = discord.File(csv_file, filename="test_results.csv")
+        await interaction.response.send_message(embed=embed, file=file)
 
 
 async def setup(bot):

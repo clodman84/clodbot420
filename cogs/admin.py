@@ -135,7 +135,11 @@ class AdminCog(commands.Cog):
     async def dev_sync(self, ctx, guildID: int = None):
         guild = discord.Object(guildID if guildID else self.bot.dev_guild)
         synced = await self.bot.tree.sync(guild=guild)
-        await ctx.send(embed=ClodEmbed(description=f"Syncing completed to server!```py\n{synced}\n```"))
+        await ctx.send(
+            embed=ClodEmbed(
+                description=f"Syncing completed to server!```py\n{synced}\n```"
+            )
+        )
 
     @commands.command()
     async def sync(self, ctx: Context):
@@ -151,7 +155,11 @@ class AdminCog(commands.Cog):
             return
 
         synced = await self.bot.tree.sync()
-        await ctx.safe_send(embed=ClodEmbed(description=f"Syncing completed to all servers!\n```py\n{synced}\n```"))
+        await ctx.safe_send(
+            embed=ClodEmbed(
+                description=f"Syncing completed to all servers!\n```py\n{synced}\n```"
+            )
+        )
 
     @commands.command()
     async def logs(self, ctx: Context):

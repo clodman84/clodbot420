@@ -1,4 +1,3 @@
-import datetime
 import logging
 from dataclasses import dataclass
 from typing import Iterable
@@ -46,6 +45,9 @@ class Student:
     psid: str  # these are strings because aakash ids have random leading Zeros
     batch: str
 
+    async def fetch(self):
+        return self
+
 
 @dataclass(slots=True, frozen=True)
 class PartialStudent:
@@ -65,6 +67,9 @@ class Test:
     national_attendance: int
     centre_attendance: int
 
+    async def fetch(self):
+        return self
+
 
 @dataclass(slots=True, frozen=True)
 class PartialTest:
@@ -83,6 +88,12 @@ class Result:
     chemistry: int
     maths: int
 
+    async def resolve_student(self):
+        self.student = await self.student.fetch()
+
+    async def resolve_test(self):
+        self.test = await self.test.fetch()
+
     async def resolve(self):
         """A method to convert student and test attributes to their fuller forms with all their data."""
         self.student = await self.student.fetch()
@@ -97,7 +108,7 @@ def result_factory(_, row: tuple):  # no puns here
 
 
 @Cache
-async def view_results(test_id: str) -> Result:
+async def view_results(test_id: str):
     async with database.ConnectionPool(result_factory) as db:
         res = await db.execute(
             "SELECT * FROM results WHERE test_id = ? ORDER BY air", (test_id,)
@@ -119,7 +130,7 @@ async def view_last_15_tests():
 async def tests_fts(text: str):
     async with database.ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
-            "SELECT name, test_id, rank FROM tests_fts WHERE"
+            "SELECT name, test_id, rank FROM tests_fts WHERE "
             "name MATCH ? ORDER BY RANK LIMIT 15",
             (text,),
         )
