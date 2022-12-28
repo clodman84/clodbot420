@@ -24,12 +24,21 @@ def nta(_, row: tuple):
     return Test(*row)
 
 
+async def result_factory(row: tuple):  # no puns here
+    student = await get_student_from_roll(row[0])
+    test = await get_test_from_id(row[1])
+    return Result(student, test, *row[2:])
+
+
 @dataclass(slots=True, frozen=True)
 class Student:
     roll_no: str
     name: str
     psid: str  # these are strings because aakash ids have random leading Zeros
     batch: str
+
+    async def get_result_history(self):
+        return await view_all_tests(self.roll_no)
 
 
 @dataclass(slots=True, frozen=True)
@@ -69,10 +78,17 @@ class Result:
         return self.physics + self.chemistry + self.maths
 
 
-async def result_factory(row: tuple):  # no puns here
-    student = await get_student_from_roll(row[0])
-    test = await get_test_from_id(row[1])
-    return Result(student, test, *row[2:])
+@Cache(maxsize=128)
+async def view_all_tests(roll_no: str):
+    results = []
+    async with database.ConnectionPool(None) as db:
+        async with db.execute(
+            "SELECT * FROM results WHERE roll_no = ? ORDER BY date", (roll_no,)
+        ) as cursor:
+            async for row in cursor:
+                result = await result_factory(row)
+                results.append(result)
+    return results
 
 
 @Cache
@@ -113,9 +129,9 @@ async def tests_fts(text: str):
 async def insert_test(test: dict, db):
     view_last_15_tests.clear()
     view_results.remove(
-        test
+        test["test_id"]
     )  # tests are always inserted with results, so just remove them here.
-    get_test_from_id.remove(test)
+    get_test_from_id.remove(test["test_id"])
     try:
         await db.execute(
             """INSERT INTO tests (test_id, name, date, national_attendance, centre_attendance)
