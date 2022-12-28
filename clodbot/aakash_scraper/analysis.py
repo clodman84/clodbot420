@@ -11,8 +11,7 @@ from . import aakash_db
 async def make_csv(test):
     results = await aakash_db.view_results(test)
 
-    async def get_required_data_from_result(result: aakash_db.Result):
-        await result.resolve_student()
+    def get_required_data_from_result(result: aakash_db.Result):
         return (
             result.AIR,
             result.student.name,
@@ -22,11 +21,8 @@ async def make_csv(test):
             result.total,
         )
 
-    data = await asyncio.gather(
-        *[get_required_data_from_result(result) for result in results]
-    )
-
     def func():
+        data = map(get_required_data_from_result, results)
         with io.StringIO() as file:
             writer = csv.writer(file)
             writer.writerow(["AIR", "Name", "PHY", "CHM", "MTH", "TOT"])

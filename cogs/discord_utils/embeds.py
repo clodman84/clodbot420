@@ -8,7 +8,7 @@ def makeEmbedsFromString(string, prefix="```py\n", suffix="```", status=True):
 
     return [
         ClodEmbed(description=f"{prefix}{d}{suffix}", status=status)
-        for d in utils.divideIterable(string, 4000)
+        for d in utils.divide_iterable(string, 4000)
     ]
 
 

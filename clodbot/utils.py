@@ -81,7 +81,7 @@ class Cache:
         self._cache.clear()
 
 
-def divideIterable(iterable, n):
+def divide_iterable(iterable, n):
     """Divides a given iterable into chunks of max size n, returns a list of chunks"""
     return [iterable[i * n : (i + 1) * n] for i in range((len(iterable) + n - 1) // n)]
 

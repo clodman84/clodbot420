@@ -24,39 +24,12 @@ def nta(_, row: tuple):
     return Test(*row)
 
 
-@Cache(maxsize=128)
-async def get_student_from_roll(roll_no: str):
-    async with database.ConnectionPool(kota) as db:
-        res = await db.execute("SELECT * FROM students WHERE roll_no = ?", (roll_no,))
-        return await res.fetchone()
-
-
-@Cache(maxsize=50)
-async def get_test_from_id(test_id: str):
-    async with database.ConnectionPool(nta) as db:
-        res = await db.execute("SELECT * FROM tests WHERE test_id = ?", (test_id,))
-        return await res.fetchone()
-
-
 @dataclass(slots=True, frozen=True)
 class Student:
     roll_no: str
     name: str
     psid: str  # these are strings because aakash ids have random leading Zeros
     batch: str
-
-    async def fetch(self):
-        return self
-
-
-@dataclass(slots=True, frozen=True)
-class PartialStudent:
-    """These are made when the result is fetched from the database"""
-
-    roll_no: str
-
-    async def fetch(self) -> Student:
-        return await get_student_from_roll(self.roll_no)
 
 
 @dataclass(slots=True, frozen=True)
@@ -67,22 +40,25 @@ class Test:
     national_attendance: int
     centre_attendance: int
 
-    async def fetch(self):
-        return self
+
+@Cache(maxsize=128)
+async def get_student_from_roll(roll_no: str) -> Student:
+    async with database.ConnectionPool(kota) as db:
+        res = await db.execute("SELECT * FROM students WHERE roll_no = ?", (roll_no,))
+        return await res.fetchone()
 
 
-@dataclass(slots=True, frozen=True)
-class PartialTest:
-    test_id: str
+@Cache(maxsize=50)
+async def get_test_from_id(test_id: str) -> Test:
+    async with database.ConnectionPool(nta) as db:
+        res = await db.execute("SELECT * FROM tests WHERE test_id = ?", (test_id,))
+        return await res.fetchone()
 
-    async def fetch(self) -> Test:
-        return await get_test_from_id(self.test_id)
 
-
-@dataclass(slots=True, order=True)
+@dataclass(slots=True)
 class Result:
-    student: Student | PartialStudent
-    test: Test | PartialTest
+    student: Student
+    test: Test
     AIR: int  # for sorting
     physics: int
     chemistry: int
@@ -92,32 +68,24 @@ class Result:
     def total(self):
         return self.physics + self.chemistry + self.maths
 
-    async def resolve_student(self):
-        self.student = await self.student.fetch()
 
-    async def resolve_test(self):
-        self.test = await self.test.fetch()
-
-    async def resolve(self):
-        """A method to convert student and test attributes to their fuller forms with all their data."""
-        self.student = await self.student.fetch()
-        self.test = await self.test.fetch()
-
-
-def result_factory(_, row: tuple):  # no puns here
-    # I could have done this with convertors as well, but don't feel like it.
-    student = PartialStudent(row[0])
-    test = PartialTest(row[1])
+async def result_factory(row: tuple):  # no puns here
+    student = await get_student_from_roll(row[0])
+    test = await get_test_from_id(row[1])
     return Result(student, test, *row[2:])
 
 
 @Cache
 async def view_results(test_id: str):
-    async with database.ConnectionPool(result_factory) as db:
-        res = await db.execute(
+    results = []
+    async with database.ConnectionPool(None) as db:
+        async with db.execute(
             "SELECT * FROM results WHERE test_id = ? ORDER BY air", (test_id,)
-        )
-        return await res.fetchall()
+        ) as cursor:
+            async for row in cursor:
+                result = await result_factory(row)
+                results.append(result)
+    return results
 
 
 @Cache
@@ -144,11 +112,15 @@ async def tests_fts(text: str):
 
 async def insert_test(test: dict, db):
     view_last_15_tests.clear()
+    view_results.remove(
+        test
+    )  # tests are always inserted with results, so just remove them here.
+    get_test_from_id.remove(test)
     try:
         await db.execute(
             """INSERT INTO tests (test_id, name, date, national_attendance, centre_attendance)
                 VALUES (:test_id, :name, :date, :national_attendance, :centre_attendance)
-                ON DUPLICATE KEY UPDATE national_attendance = :national_attendance,
+                ON CONFLICT(test_id) DO UPDATE SET national_attendance = :national_attendance,
                 centre_attendance = :centre_attendance
             """,
             test,
@@ -174,7 +146,7 @@ async def insert_results(results: Iterable[dict], db):
         await db.executemany(
             """INSERT INTO results (roll_no, test_id, air, physics, chemistry, maths)
                 VALUES (:roll_no, :test_id, :air, :physics, :chemistry, :maths)
-                ON DUPLICATE KEY UPDATE air = :air
+                ON CONFLICT(roll_no, test_id) DO UPDATE SET air = :air
             """,
             results,
         )

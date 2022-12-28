@@ -37,7 +37,7 @@ async def make_results_menu(
     async def results_formatter():
         w = TextWrapper(width=20, max_lines=1)
         for i, result in enumerate(results):
-            student = await result.student.fetch()
+            student = result.student
             shortened_name = myShorten(student.name, w)
             air = result.AIR
             phy = result.physics
@@ -56,7 +56,7 @@ async def make_results_menu(
     if len(results) == 0:
         menu.add_row("Nothing to show here")
 
-    test_info = await results[0].test.fetch()
+    test_info = results[0].test
     menu.add_row(test_info.name)
     menu.add_row(test_info.date)
     menu.add_row(f"Centre Attendance - {test_info.centre_attendance}")
