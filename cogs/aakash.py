@@ -15,6 +15,7 @@ from cogs.discord_utils.embeds import ClodEmbed
 from cogs.discord_utils.interactors import add_navigators
 
 
+# TODO: these functions are repetitive, and are essentially copy-pasted 3 different times
 async def tests_autocomplete(_, current: str):
     w = TextWrapper(width=90, max_lines=1)
     if len(current) < 4:
@@ -29,16 +30,36 @@ async def tests_autocomplete(_, current: str):
     ]
 
 
+async def students_autocomplete(_, current: str):
+    w = TextWrapper(width=90, max_lines=1)
+    if len(current) < 4:
+        students = await aakash_db.view_15_students_sorted_alpha()
+        return [
+            app_commands.Choice(name=myShorten(student[0], w), value=student[1])
+            for student in students
+        ]
+    students = await aakash_db.students_fts(current)
+    return [
+        app_commands.Choice(name=myShorten(student[0], w), value=student[1])
+        for student in students
+    ]
+
+
+# TODO: Get rid of reactionmenu and come up with something made specifically for doing things like this
 async def make_results_menu(
     results: tuple[aakash_db.Result],
     embed: ClodEmbed,
     interaction: discord.Interaction,
+    is_student=False,
 ):
     async def results_formatter():
         w = TextWrapper(width=20, max_lines=1)
         for i, result in enumerate(results):
             student = result.student
-            shortened_name = myShorten(student.name, w)
+            if is_student:
+                shortened_name = myShorten(result.test.name, w)
+            else:
+                shortened_name = myShorten(student.name, w)
             air = result.AIR
             phy = result.physics
             chem = result.chemistry
@@ -57,11 +78,12 @@ async def make_results_menu(
         menu.add_row("Nothing to show here")
 
     test_info = results[0].test
-    menu.add_row(test_info.name)
-    menu.add_row(test_info.date)
-    menu.add_row(f"Centre Attendance - {test_info.centre_attendance}")
-    menu.add_row(f"National Attendance - {test_info.national_attendance}")
-    menu.add_row("")
+    if not is_student:
+        menu.add_row(test_info.name)
+        menu.add_row(test_info.date)
+        menu.add_row(f"Centre Attendance - {test_info.centre_attendance}")
+        menu.add_row(f"National Attendance - {test_info.national_attendance}")
+        menu.add_row("")
     menu.add_row("|TOT|PHY|CHM|MTH| AIR |NAME")
     menu.add_row(f"|~~~|~~~|~~~|~~~|~~~~~|{'~'*20}")
     async for line in results_formatter():
@@ -154,6 +176,58 @@ class Aakash(commands.Cog):
         embed.set_footer(text=timer)
         file = discord.File(csv_file, filename="test_results.csv")
         await interaction.response.send_message(embed=embed, file=file)
+
+    @app_commands.command(
+        name="report", description="Student performance reports. Yeah..."
+    )
+    @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
+    @app_commands.describe(
+        student="Start searching for a student while I autocomplete."
+    )
+    @app_commands.autocomplete(student=students_autocomplete)
+    async def report(self, interaction: discord.Interaction, student: str):
+        with SimpleTimer("Make Report") as timer:
+            report = await analysis.make_student_report(student)
+        embed = ClodEmbed()
+        for key, value in report.items():
+            if key == "total":
+                data = (
+                    f"Growth Rate            | {value['growth_rate']:.2f}%\n"
+                    f"Average Score          | {value['average_score']}\n"
+                    f"Average Percentile     | {value['average_rank']:.2f}"
+                )
+                embed.add_field(name="Overall", value=f"```fix\n{data}\n```")
+            else:
+                data = (
+                    f"Growth Rate            | {value['growth_rate']:.2f}%\n"
+                    f"Average Score          | {value['average_score']}\n"
+                    f"Average Rank           | {value['average_rank']:.2f}"
+                )
+                embed.add_field(name=key.capitalize(), value=f"```fix\n{data}\n```")
+        embed.set_footer(text=timer)
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="history", description="Get a student's test history")
+    @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
+    @app_commands.describe(
+        student="Start searching for a student while I autocomplete."
+    )
+    @app_commands.autocomplete(student=students_autocomplete)
+    async def history(self, interaction: discord.Interaction, student: str):
+        with SimpleTimer("SELECT student results") as timer:
+            results = await aakash_db.get_student_results(roll_no=student)
+        if results is None:
+            await interaction.response.send_message(
+                "Your test has to be **selected** from the autocomplete menu "
+                "above, if it isn't there, it hasn't been added to the database yet, contact clodman",
+                ephemeral=True,
+            )
+            return
+
+        embed = ClodEmbed(title=f"{results[0].student.name}").set_footer(text=timer)
+        menu = await make_results_menu(results, embed, interaction, is_student=True)
+
+        await menu.start()
 
 
 async def setup(bot):

@@ -19,7 +19,7 @@ class ConnectionPool:
         self.connection = None
         self.row_factory = row_factory
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> aiosqlite.Connection:
         try:
             self.connection = self._q.get_nowait()
         except queue.Empty:

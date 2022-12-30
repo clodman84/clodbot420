@@ -32,4 +32,4 @@ class ClodEmbed(Embed):
         )
 
     def __str__(self) -> str:
-        return "\n".join(utils.dictionaryFormatter(self.to_dict()))
+        return "\n".join(utils.format_dictionary(self.to_dict()))

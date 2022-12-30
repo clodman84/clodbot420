@@ -37,9 +37,6 @@ class Student:
     psid: str  # these are strings because aakash ids have random leading Zeros
     batch: str
 
-    async def get_result_history(self):
-        return await view_all_tests(self.roll_no)
-
 
 @dataclass(slots=True, frozen=True)
 class Test:
@@ -54,6 +51,7 @@ class Test:
 async def get_student_from_roll(roll_no: str) -> Student:
     async with database.ConnectionPool(kota) as db:
         res = await db.execute("SELECT * FROM students WHERE roll_no = ?", (roll_no,))
+        # noinspection PyTypeChecker
         return await res.fetchone()
 
 
@@ -61,6 +59,7 @@ async def get_student_from_roll(roll_no: str) -> Student:
 async def get_test_from_id(test_id: str) -> Test:
     async with database.ConnectionPool(nta) as db:
         res = await db.execute("SELECT * FROM tests WHERE test_id = ?", (test_id,))
+        # noinspection PyTypeChecker
         return await res.fetchone()
 
 
@@ -79,16 +78,36 @@ class Result:
 
 
 @Cache(maxsize=128)
-async def view_all_tests(roll_no: str):
+async def get_student_results(roll_no: str):
     results = []
     async with database.ConnectionPool(None) as db:
         async with db.execute(
-            "SELECT * FROM results WHERE roll_no = ? ORDER BY date", (roll_no,)
+            "SELECT roll_no, results.test_id, air, physics, chemistry, maths FROM results "
+            "INNER JOIN tests on results.test_id=tests.test_id WHERE roll_no = ?"
+            "ORDER BY tests.date",
+            (roll_no,),
         ) as cursor:
             async for row in cursor:
                 result = await result_factory(row)
                 results.append(result)
     return results
+
+
+@Cache(maxsize=128)
+async def get_student_ranks(roll_no):
+    async with database.ConnectionPool(lambda _, x: x) as db:
+        res = await db.execute(
+            """SELECT * FROM
+                (SELECT roll_no,
+                RANK() OVER( PARTITION by test_id ORDER by physics desc),
+                RANK() OVER( PARTITION by test_id ORDER by chemistry desc),
+                RANK() OVER( PARTITION by test_id ORDER by maths desc)
+                from results)
+                WHERE roll_no = ?
+            """,
+            (roll_no,),
+        )
+        return await res.fetchall()
 
 
 @Cache
@@ -114,6 +133,16 @@ async def view_last_15_tests():
         return tests
 
 
+@Cache
+async def view_15_students_sorted_alpha():
+    async with database.ConnectionPool(lambda _, y: y) as db:
+        res = await db.execute(
+            "SELECT name, roll_no FROM students ORDER BY name LIMIT 15"
+        )
+        tests = await res.fetchall()
+        return tests
+
+
 @Cache(maxsize=32, ttl=120)
 async def tests_fts(text: str):
     async with database.ConnectionPool(lambda _, y: y) as db:
@@ -126,8 +155,22 @@ async def tests_fts(text: str):
         return matched_tests
 
 
+@Cache(maxsize=32, ttl=120)
+async def students_fts(text: str):
+    async with database.ConnectionPool(lambda _, y: y) as db:
+        res = await db.execute(
+            "SELECT name, roll_no, rank FROM students_fts WHERE "
+            "name MATCH ? ORDER BY RANK LIMIT 15",
+            (text,),
+        )
+        matched_tests = await res.fetchall()
+        return matched_tests
+
+
 async def insert_test(test: dict, db):
     view_last_15_tests.clear()
+    get_student_results.clear()
+    get_student_ranks.clear()
     view_results.remove(
         test["test_id"]
     )  # tests are always inserted with results, so just remove them here.
