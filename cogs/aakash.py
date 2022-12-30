@@ -188,7 +188,8 @@ class Aakash(commands.Cog):
     async def report(self, interaction: discord.Interaction, student: str):
         with SimpleTimer("Make Report") as timer:
             report = await analysis.make_student_report(student)
-        embed = ClodEmbed()
+            student = await aakash_db.get_student_from_roll(student)
+        embed = ClodEmbed(title=student.name)
         for key, value in report.items():
             if key == "total":
                 data = (
