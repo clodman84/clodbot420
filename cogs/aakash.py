@@ -21,12 +21,14 @@ async def tests_autocomplete(_, current: str):
     if len(current) < 4:
         tests = await aakash_db.view_last_15_tests()
         return [
-            app_commands.Choice(name=test[1] + myShorten(test[0], w), value=test[1])
+            app_commands.Choice(
+                name=f"{test[1]} {myShorten(test[0], w)}", value=test[1]
+            )
             for test in tests
         ]
     tests = await aakash_db.tests_fts(current)
     return [
-        app_commands.Choice(name=test[1] + myShorten(test[0], w), value=test[1])
+        app_commands.Choice(name=f"{test[1]} {myShorten(test[0], w)}", value=test[1])
         for test in tests
     ]
 
