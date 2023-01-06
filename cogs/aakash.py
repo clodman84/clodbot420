@@ -146,7 +146,7 @@ class Aakash(commands.Cog):
         await ctx.send(embed=embed)
 
     @app_commands.command(name="results", description="Aakash test results")
-    @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
+    @app_commands.guilds(1038025610913656873, 1060954891482308759, settings.DEV_GUILD)
     @app_commands.describe(test="Start searching for a test while I autocomplete.")
     @app_commands.autocomplete(test=tests_autocomplete)
     async def results(self, interaction: discord.Interaction, test: str):
@@ -166,7 +166,7 @@ class Aakash(commands.Cog):
         await menu.start()
 
     @app_commands.command(name="export", description="Get test results in csv format.")
-    @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
+    @app_commands.guilds(1038025610913656873, 1060954891482308759, settings.DEV_GUILD)
     @app_commands.describe(test="Start searching for a test while I autocomplete.")
     @app_commands.autocomplete(test=tests_autocomplete)
     async def export(self, interaction: discord.Interaction, test: str):
@@ -183,7 +183,7 @@ class Aakash(commands.Cog):
     @app_commands.command(
         name="report", description="Student performance reports. Yeah..."
     )
-    @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
+    @app_commands.guilds(1038025610913656873, 1060954891482308759, settings.DEV_GUILD)
     @app_commands.describe(
         student="Start searching for a student while I autocomplete."
     )
@@ -212,7 +212,7 @@ class Aakash(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="history", description="Get a student's test history")
-    @app_commands.guilds(1038025610913656873, settings.DEV_GUILD)
+    @app_commands.guilds(1038025610913656873, 1060954891482308759, settings.DEV_GUILD)
     @app_commands.describe(
         student="Start searching for a student while I autocomplete."
     )
