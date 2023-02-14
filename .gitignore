@@ -3,5 +3,5 @@
 __pycache__/
 venv/
 .idea/
-/data.db
 prog.prof
+/data.*
