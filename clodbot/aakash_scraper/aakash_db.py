@@ -76,6 +76,16 @@ class Result:
     def total(self):
         return self.physics + self.chemistry + self.maths
 
+    def get_row(self):
+        return (
+            self.total,
+            self.physics,
+            self.chemistry,
+            self.maths,
+            self.AIR,
+            self.student.name,
+        )
+
 
 @Cache(maxsize=128)
 async def get_student_results(roll_no: str):
@@ -111,7 +121,7 @@ async def get_student_ranks(roll_no):
 
 
 @Cache
-async def view_results(test_id: str):
+async def view_results(test_id: str) -> list[Result]:
     results = []
     async with database.ConnectionPool(None) as db:
         async with db.execute(

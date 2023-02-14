@@ -5,14 +5,13 @@ from textwrap import TextWrapper
 import discord
 from discord import app_commands
 from discord.ext import commands
-from reactionmenu import ViewMenu
 
+import cogs.discord_utils.menus as menus
 import settings
 from bot import ClodBot
 from clodbot.aakash_scraper import aakash_db, analysis, scraper
 from clodbot.utils import SimpleTimer, myShorten
 from cogs.discord_utils.embeds import ClodEmbed
-from cogs.discord_utils.interactors import add_navigators
 
 
 # TODO: these functions are repetitive, and are essentially copy-pasted 3 different times
@@ -46,54 +45,6 @@ async def students_autocomplete(_, current: str):
         app_commands.Choice(name=myShorten(student[0], w), value=student[1])
         for student in students
     ]
-
-
-# TODO: Get rid of reactionmenu and come up with something made specifically for doing things like this
-async def make_results_menu(
-    results: tuple[aakash_db.Result],
-    embed: ClodEmbed,
-    interaction: discord.Interaction,
-    is_student=False,
-):
-    async def results_formatter():
-        w = TextWrapper(width=20, max_lines=1)
-        for i, result in enumerate(results):
-            student = result.student
-            if is_student:
-                shortened_name = myShorten(result.test.name, w)
-            else:
-                shortened_name = myShorten(student.name, w)
-            air = result.AIR
-            phy = result.physics
-            chem = result.chemistry
-            math = result.maths
-            yield f"|{phy+chem+math:3d}|{phy:3d}|{chem:3d}|{math:3d}|{air:5d}|{shortened_name}"
-
-    menu = ViewMenu(
-        interaction,
-        menu_type=ViewMenu.TypeEmbedDynamic,
-        rows_requested=20,
-        custom_embed=embed,
-        wrap_in_codeblock="fix",
-    )
-
-    if len(results) == 0:
-        menu.add_row("Nothing to show here")
-
-    test_info = results[0].test
-    if not is_student:
-        menu.add_row(test_info.name)
-        menu.add_row(test_info.date)
-        menu.add_row(f"Centre Attendance - {test_info.centre_attendance}")
-        menu.add_row(f"National Attendance - {test_info.national_attendance}")
-        menu.add_row("")
-    menu.add_row("|TOT|PHY|CHM|MTH| AIR |NAME")
-    menu.add_row(f"|~~~|~~~|~~~|~~~|~~~~~|{'~'*20}")
-    async for line in results_formatter():
-        menu.add_row(line)
-    add_navigators(menu)
-
-    return menu
 
 
 class Aakash(commands.Cog):
@@ -151,7 +102,7 @@ class Aakash(commands.Cog):
     @app_commands.autocomplete(test=tests_autocomplete)
     async def results(self, interaction: discord.Interaction, test: str):
         with SimpleTimer("SELECT results") as timer:
-            results = await aakash_db.view_results(test)
+            results: list[aakash_db.Result] = await aakash_db.view_results(test)
         if results is None:
             await interaction.response.send_message(
                 "Your test has to be **selected** from the autocomplete menu "
@@ -159,10 +110,17 @@ class Aakash(commands.Cog):
                 ephemeral=True,
             )
             return
-
-        embed = ClodEmbed(title="Test Results").set_footer(text=timer)
-        menu = await make_results_menu(results, embed, interaction)
-
+        test_info = results[0].test
+        description = (
+            f"Centre Attendance - {test_info.centre_attendance}\n"
+            f"National Attendance - {test_info.national_attendance}"
+        )
+        embed = ClodEmbed(title=test_info.name, description=description).set_footer(
+            text=timer
+        )
+        data = tuple(result.get_row() for result in results)
+        source = menus.TableSource(data, head_embed=embed)
+        menu = menus.Menu(source)
         await menu.start()
 
     @app_commands.command(name="export", description="Get test results in csv format.")
