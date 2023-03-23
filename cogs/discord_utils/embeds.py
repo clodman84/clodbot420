@@ -31,5 +31,8 @@ class ClodEmbed(Embed):
             *args, colour=(settings.COLOUR if status else 0xFF0000), **kwargs
         )
 
+    def get_footer(self):
+        return self._footer.get("text")
+
     def __str__(self) -> str:
         return "\n".join(utils.format_dictionary(self.to_dict()))

@@ -118,9 +118,10 @@ class Aakash(commands.Cog):
         embed = ClodEmbed(title=test_info.name, description=description).set_footer(
             text=timer
         )
+        heading = ("TOT", "PHY", "CHM", "MTH", "AIR", "NAME")
         data = tuple(result.get_row() for result in results)
-        source = menus.TableSource(data, head_embed=embed)
-        menu = menus.Menu(source)
+        source = menus.TableSource(data, head_embed=embed, heading=heading)
+        menu = menus.Menu(source, interaction)
         await menu.start()
 
     @app_commands.command(name="export", description="Get test results in csv format.")
@@ -187,9 +188,6 @@ class Aakash(commands.Cog):
             return
 
         embed = ClodEmbed(title=f"{results[0].student.name}").set_footer(text=timer)
-        menu = await make_results_menu(results, embed, interaction, is_student=True)
-
-        await menu.start()
 
 
 async def setup(bot):
