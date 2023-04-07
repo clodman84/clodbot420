@@ -99,7 +99,7 @@ async def make_results_menu(
 class Aakash(commands.Cog):
     def __init__(self, bot: ClodBot):
         self.bot = bot
-        self.d_day = datetime.datetime(2023, 4, 5, 18, 30, 0)
+        self.d_day = datetime.datetime(2023, 4, 14, 18, 30, 0)
 
     @commands.hybrid_command()
     async def countdown(self, ctx: commands.Context):
