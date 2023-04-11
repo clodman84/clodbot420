@@ -76,14 +76,14 @@ class Result:
     def total(self):
         return self.physics + self.chemistry + self.maths
 
-    def get_row(self):
+    def get_row(self, test=False):
         return (
             self.total,
             self.physics,
             self.chemistry,
             self.maths,
             self.AIR,
-            self.student.name,
+            self.test.date if test else self.student.name,
         )
 
 

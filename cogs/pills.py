@@ -5,13 +5,12 @@ from textwrap import TextWrapper, shorten
 import discord
 from discord import app_commands
 from discord.ext import commands
-from reactionmenu import ViewMenu
 
 import clodbot.pills as database
+import cogs.discord_utils.menus as menus
 from bot import ClodBot
 from clodbot.utils import SimpleTimer, myShorten
 from cogs.discord_utils.embeds import ClodEmbed
-from cogs.discord_utils.interactors import add_navigators
 
 
 async def pillsAutocomplete(interaction: discord.Interaction, current: str):
@@ -37,47 +36,42 @@ class PillsCog(commands.Cog):
         )
         self.bot.tree.add_command(self.context_menu)
 
-    def make_pill_menu(
-        self,
-        pills,
-        embed: ClodEmbed,
-        is_receiver: bool,
-        ctx: commands.Context | discord.Interaction,
+    async def send_pill_menu(
+        self, member, ctx: commands.Context | discord.Interaction, is_receiver=True
     ):
-        def pill_formatter():
-            w = TextWrapper(width=30, max_lines=1)
-            for i, pill in enumerate(pills):
-                shortenedPill = myShorten(pill.pill, w)
-                user = self.bot.get_user(
-                    pill.senderID if is_receiver else pill.receiverID
-                )
-                yield f"|{i + 1:3d}| {shortenedPill} - {user.name}"
-
-        menu = ViewMenu(
-            ctx,
-            menu_type=ViewMenu.TypeEmbedDynamic,
-            rows_requested=10,
-            custom_embed=embed,
-            wrap_in_codeblock="fix",
-        )
-
-        if len(pills) == 0:
-            menu.add_row("Nothing to show here")
-        for line in pill_formatter():
-            menu.add_row(line)
-        add_navigators(menu)
-        return menu
-
-    async def send_pill_menu(self, member, ctx, fil, is_receiver=True):
         with SimpleTimer("SELECT pills") as timer:
             if is_receiver:
-                pills = await database.view_pills_received(member.id)
+                pills = await database.view_pills_received(member.id, ctx.guild.id)
             else:
-                pills = await database.view_pills_given(member.id)
-        pills = list(filter(fil, pills))
-        pills.sort(reverse=True)
+                pills = await database.view_pills_given(member.id, ctx.guild.id)
+
+        def extractor(pill: database.Pill):
+            user_id = pill.senderID if is_receiver else pill.receiverID
+            return pill.pill, self.bot.get_user(user_id).display_name
+
         embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
-        menu = self.make_pill_menu(pills, embed, is_receiver, ctx)
+        extracted = map(extractor, pills)
+        data = tuple((i + 1, *j) for i, j in enumerate(extracted))
+        if not pills:
+            data = (
+                (
+                    1,
+                    "<anything>",
+                    "somebody who thinks you're based"
+                    if is_receiver
+                    else "somebody based",
+                ),
+            )
+            prefix = (
+                "When you say something incredibly based and someone else replies to your message "
+                if is_receiver
+                else "When you read something incredibly based and reply to that message "
+            )
+            body = "with the phrase 'based and <anything> pilled' where <anything> can be absolutely anything, clodbot will detect this and maintain a log of all the times this has happened."
+            embed.add_field(name="Nothing to show!", value=prefix + body)
+        heading = ("No.", "Pill", "Awarder" if is_receiver else "Awardee")
+        source = menus.TableSource(data, head_embed=embed, heading=heading)
+        menu = menus.Menu(source, ctx)
         await menu.start()
 
     @commands.Cog.listener("on_message")
@@ -125,17 +119,15 @@ class PillsCog(commands.Cog):
         ctx = ctx.interaction if ctx.interaction else ctx
         # the line above makes the reactionmenu library treat this context
         # as an interaction if it was invoked with a slash command
-        await self.send_pill_menu(member, ctx, lambda x: x.guildID == member.guild.id)
+        await self.send_pill_menu(member, ctx)
 
     @pill.command(name="given", description="Shows pills given in this server")
     async def given(self, ctx: commands.Context, member: discord.Member):
         ctx = ctx.interaction if ctx.interaction else ctx
-        await self.send_pill_menu(
-            member, ctx, lambda x: x.guildID == member.guild.id, is_receiver=False
-        )
+        await self.send_pill_menu(member, ctx, is_receiver=False)
 
     async def showPills(self, ctx: discord.Interaction, member: discord.Member):
-        await self.send_pill_menu(member, ctx, lambda x: x.guildID == member.guild.id)
+        await self.send_pill_menu(member, ctx)
 
     @app_commands.command(
         name="search", description="Searches for a specific pill in the server"

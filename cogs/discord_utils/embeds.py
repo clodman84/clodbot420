@@ -32,7 +32,9 @@ class ClodEmbed(Embed):
         )
 
     def get_footer(self):
-        return self._footer.get("text")
+        if hasattr(self, "_footer"):
+            return self._footer.get("text")
+        return ""
 
     def __str__(self) -> str:
         return "\n".join(utils.format_dictionary(self.to_dict()))

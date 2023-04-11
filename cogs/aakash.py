@@ -111,13 +111,13 @@ class Aakash(commands.Cog):
             )
             return
         test_info = results[0].test
-        description = (
+        metrics = (
             f"Centre Attendance - {test_info.centre_attendance}\n"
-            f"National Attendance - {test_info.national_attendance}"
+            f"National Attendance - {test_info.national_attendance}\n"
+            f"Date - {test_info.date}"
         )
-        embed = ClodEmbed(title=test_info.name, description=description).set_footer(
-            text=timer
-        )
+        embed = ClodEmbed(title=test_info.name)
+        embed.add_field(name="Info", value=metrics)
         heading = ("TOT", "PHY", "CHM", "MTH", "AIR", "NAME")
         data = tuple(result.get_row() for result in results)
         source = menus.TableSource(data, head_embed=embed, heading=heading)
@@ -188,6 +188,11 @@ class Aakash(commands.Cog):
             return
 
         embed = ClodEmbed(title=f"{results[0].student.name}").set_footer(text=timer)
+        heading = ("TOT", "PHY", "CHM", "MTH", "AIR", "DATE")
+        data = tuple(result.get_row(test=True) for result in results)
+        source = menus.TableSource(data, head_embed=embed, heading=heading)
+        menu = menus.Menu(source, interaction)
+        await menu.start()
 
 
 async def setup(bot):

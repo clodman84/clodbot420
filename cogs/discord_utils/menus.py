@@ -1,3 +1,5 @@
+import itertools
+from io import StringIO
 from textwrap import TextWrapper
 from typing import Optional
 
@@ -13,9 +15,6 @@ class Source:
     def __init__(self, data):
         self.data = data
 
-    def formatter(self, page):
-        return page
-
     async def get_page(self, index):
         return {"content": self.data[index]}
 
@@ -24,40 +23,51 @@ class Source:
 
 
 class TableSource(Source):
-    def __init__(self, data, max_rows=20, head_embed=None, heading=None):
+    def __init__(self, data, max_rows=25, head_embed=None, heading=None):
         super(TableSource, self).__init__(data)
         self.data = divide_iterable(data, max_rows)
         self.head_embed: Optional[ClodEmbed] = head_embed
         if self.head_embed:
             self.original_footer = self.head_embed.get_footer()
         self.wrapper = TextWrapper(width=20, max_lines=1)
+        self.wrapper.placeholder = "..."
         self.heading = heading
 
-    @Cache
-    def get_max_widths(self, index):
-        page = self.data[index]
+    def get_raw_page(self, index: int):
+        if self.heading:
+            return list(itertools.chain((self.heading,), self.data[index]))
+        return self.data[index]
+
+    def get_max_widths(self, index: int):
+        page = self.get_raw_page(index)
         return [max(*map(lambda x: len(str(x[i])), page)) for i in range(len(page[0]))]
 
-    def formatter(self, index):
-        # TODO: Dynamically resizing headings
-        page = self.data[index]
-        widths = TableSource.get_max_widths(self, index)
-        for row in page:
-            string = ""
-            for i, item in enumerate(row):
-                if isinstance(item, int | float):
-                    string = string + f"|{item:{widths[i]}d}"
-                elif isinstance(item, str):
-                    self.wrapper.width = widths[i]
-                    string = string + f"|{myShorten(item, self.wrapper)}"
-            yield string
-
+    @Cache
     async def get_page(self, index: int):
-        table = "\n".join(self.formatter(index))
-        text = f"page {index + 1} / {self.max_index() + 1} "
-        if self.original_footer:
-            self.head_embed.set_footer(text=text + self.original_footer)
-        return {"content": f"```fix\n{table}\n```", "embed": self.head_embed}
+        page = self.get_raw_page(index)
+        widths = self.get_max_widths(index)
+        if self.heading:
+            page.insert(1, tuple("-" * i for i in widths))
+        with StringIO() as table:
+
+            table.write("```\n")
+            for row in page:
+                for i, item in enumerate(row):
+                    width = widths[i]
+                    if isinstance(item, int | float):
+                        table.write(f"|{item:{width}d}")
+                    elif isinstance(item, str):
+                        self.wrapper.width = width
+                        table.write(f"|{myShorten(item, self.wrapper).ljust(width)}")
+                table.write("\n")
+            table.write("```")
+
+            if self.head_embed:
+                self.head_embed.description = table.getvalue()
+                text = f"Page {index + 1} / {self.max_index() + 1} "
+                self.head_embed.set_footer(text=text + self.original_footer)
+                return {"embed": self.head_embed}
+            return {"content": table.getvalue()}
 
 
 class Menu(discord.ui.View):
@@ -69,7 +79,7 @@ class Menu(discord.ui.View):
         self.current_index: int = 0
 
     async def show_page(self, interaction: discord.Interaction):
-        kwargs = await self.source.get_page(self.current_index)
+        kwargs = await TableSource.get_page(self.source, self.current_index)
         await interaction.response.edit_message(**kwargs)
 
     async def on_timeout(self) -> None:
@@ -77,7 +87,7 @@ class Menu(discord.ui.View):
             await self.message.edit(view=None)
 
     async def start(self):
-        kwargs = await self.source.get_page(0)
+        kwargs = await TableSource.get_page(self.source, 0)
         if isinstance(self.ctx, Context):
             self.message = await self.ctx.send(**kwargs, view=self)
         elif isinstance(self.ctx, discord.Interaction):

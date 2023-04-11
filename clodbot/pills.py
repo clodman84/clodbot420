@@ -68,17 +68,23 @@ async def view_last_15_pills(guildID: int):
 
 
 @Cache
-async def view_pills_received(userID: int):
+async def view_pills_received(userID: int, guildID: int) -> list[Pill]:
     async with ConnectionPool(pharmacy) as db:
-        res = await db.execute("SELECT * FROM pills WHERE receiverID = ?", (userID,))
+        res = await db.execute(
+            "SELECT * FROM pills WHERE receiverID = ? AND guildID = ? ORDER BY timestamp DESC",
+            (userID, guildID),
+        )
         pills = await res.fetchall()
         return pills
 
 
 @Cache
-async def view_pills_given(userID: int):
+async def view_pills_given(userID: int, guildID: int) -> list[Pill]:
     async with ConnectionPool(pharmacy) as db:
-        res = await db.execute("SELECT * FROM pills WHERE senderID = ?", (userID,))
+        res = await db.execute(
+            "SELECT * FROM pills WHERE senderID = ? AND guildID = ? ORDER BY timestamp DESC",
+            (userID, guildID),
+        )
         pills = await res.fetchall()
         return pills
 
