@@ -75,7 +75,7 @@ class TableSource(Source):
 
 class Menu(discord.ui.View):
     def __init__(self, source: Source, ctx: Context | discord.Interaction):
-        super().__init__()
+        super().__init__(timeout=60)
         self.source: Source = source
         self.ctx: Context | discord.Interaction = ctx
         self.message: Optional[discord.Message] = None
