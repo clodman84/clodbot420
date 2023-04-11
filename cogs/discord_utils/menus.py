@@ -50,7 +50,7 @@ class TableSource(Source):
             page.insert(1, tuple("-" * i for i in widths))
         with StringIO() as table:
 
-            table.write("```\n")
+            table.write("```fix\n")
             for row in page:
                 for i, item in enumerate(row):
                     width = widths[i]
