@@ -40,7 +40,10 @@ class TableSource(Source):
 
     def get_max_widths(self, index: int):
         page = self.get_raw_page(index)
-        return [max(*map(lambda x: len(str(x[i])), page)) for i in range(len(page[0]))]
+        return [
+            min(max(*map(lambda x: len(str(x[i])), page)), 30)
+            for i in range(len(page[0]))
+        ]
 
     @Cache
     async def get_page(self, index: int):
