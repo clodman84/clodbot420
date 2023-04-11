@@ -49,7 +49,7 @@ class PillsCog(commands.Cog):
             user_id = pill.senderID if is_receiver else pill.receiverID
             return pill.pill, self.bot.get_user(user_id).display_name
 
-        embed = ClodEmbed(title=f"{member.name}'s pills").set_footer(text=timer)
+        embed = ClodEmbed(title=f"{member.display_name}'s pills").set_footer(text=timer)
         extracted = map(extractor, pills)
         data = tuple((i + 1, *j) for i, j in enumerate(extracted))
         if not pills:
