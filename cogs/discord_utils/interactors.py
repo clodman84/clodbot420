@@ -1,11 +1,44 @@
+from textwrap import TextWrapper
 from typing import Callable, List
 
-from discord import ButtonStyle, Interaction, Message, ui
+import discord
+from discord import ButtonStyle, Interaction, Message, app_commands, ui
 
 from bot import ClodBot
+from clodbot.utils import Cache, myShorten
 
 from .context import Context
 from .embeds import ClodEmbed
+
+
+def autocomplete(preview, search, interaction_attribute=None):
+    w = TextWrapper(width=90, max_lines=1)
+
+    @Cache(maxsize=256, ttl=60)
+    async def completer(metadata, current: str):
+        if len(current) < 4:
+            values = await preview(metadata)
+            return [
+                app_commands.Choice(name=f"{myShorten(value[0], w)}", value=value[1])
+                for value in values
+            ]
+        values = await search(current, metadata)
+        return [
+            app_commands.Choice(name=f"{myShorten(value[0], w)}", value=value[1])
+            for value in values
+        ]
+
+    async def coro_wrapper(interaction: discord.Interaction, current: str):
+        # this helps with the Cache since interactions are always different...
+        # and in discord/app_commands/commands.py _populate_autocomplete() there is an iscoroutinefunction() check
+        metadata = (
+            interaction.__getattribute__(interaction_attribute)
+            if interaction_attribute
+            else None
+        )
+        return await completer(metadata, current)
+
+    return coro_wrapper
 
 
 class InteractionCancelledError(Exception):

@@ -1,30 +1,23 @@
 import re
 import time
-from textwrap import TextWrapper, shorten
+from textwrap import shorten
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
 import clodbot.pills as database
+import cogs.discord_utils.interactors as interactor
 import cogs.discord_utils.menus as menus
 from bot import ClodBot
-from clodbot.utils import SimpleTimer, myShorten
+from clodbot.utils import SimpleTimer
 from cogs.discord_utils.embeds import ClodEmbed
 
-
-async def pillsAutocomplete(interaction: discord.Interaction, current: str):
-    w = TextWrapper(width=90, max_lines=1)
-    if len(current) < 4:
-        pills = await database.view_last_15_pills(interaction.guild_id)
-        return [
-            app_commands.Choice(name=myShorten(pill[0], w), value=pill[1])
-            for pill in pills
-        ]
-    pills = await database.pills_fts(current, interaction.guild_id)
-    return [
-        app_commands.Choice(name=myShorten(pill[0], w), value=pill[1]) for pill in pills
-    ]
+pills_autocomplete = interactor.autocomplete(
+    preview=database.view_last_15_pills,
+    search=database.pills_fts,
+    interaction_attribute="guild_id",
+)
 
 
 class PillsCog(commands.Cog):
@@ -67,7 +60,10 @@ class PillsCog(commands.Cog):
                 if is_receiver
                 else "When you read something incredibly based and reply to that message "
             )
-            body = "with the phrase 'based and <anything> pilled' where <anything> can be absolutely anything, clodbot will detect this and maintain a log of all the times this has happened."
+            body = (
+                "with the phrase 'based and <anything> pilled' where <anything> can be absolutely anything, "
+                "clodbot will detect this and maintain a log of all the times this has happened."
+            )
             embed.add_field(name="Nothing to show!", value=prefix + body)
         heading = ("No.", "Pill", "Awarder" if is_receiver else "Awardee")
         source = menus.TableSource(data, head_embed=embed, heading=heading)
@@ -133,7 +129,7 @@ class PillsCog(commands.Cog):
         name="search", description="Searches for a specific pill in the server"
     )
     @app_commands.describe(pill="Start searching for a pill while I autocomplete.")
-    @app_commands.autocomplete(pill=pillsAutocomplete)
+    @app_commands.autocomplete(pill=pills_autocomplete)
     async def search(self, interaction: discord.Interaction, pill: int):
         with SimpleTimer("SELECT pill") as timer:
             pill: database.Pill = await database.view_pill(pill)

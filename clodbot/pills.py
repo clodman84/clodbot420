@@ -44,7 +44,6 @@ async def view_pill(rowID: int):
         return pill
 
 
-@Cache(maxsize=1000, ttl=120)
 async def pills_fts(text: str, guildID: int):
     async with ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(

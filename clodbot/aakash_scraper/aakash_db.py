@@ -134,17 +134,17 @@ async def view_results(test_id: str) -> list[Result]:
 
 
 @Cache
-async def view_last_15_tests():
+async def view_last_15_tests(_):
     async with database.ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
-            "SELECT name, test_id FROM tests ORDER BY date DESC LIMIT 15"
+            "SELECT date || ' ' || name, test_id FROM tests ORDER BY date DESC LIMIT 15"
         )
         tests = await res.fetchall()
         return tests
 
 
 @Cache
-async def view_15_students_sorted_alpha():
+async def view_15_students_sorted_alpha(_):
     async with database.ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
             "SELECT name, roll_no FROM students ORDER BY name LIMIT 15"
@@ -153,11 +153,10 @@ async def view_15_students_sorted_alpha():
         return tests
 
 
-@Cache(maxsize=32, ttl=120)
-async def tests_fts(text: str):
+async def tests_fts(text: str, _):
     async with database.ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
-            "SELECT name, test_id, rank FROM tests_fts WHERE "
+            "SELECT date || ' ' || name, test_id, rank FROM tests_fts WHERE "
             "name MATCH ? ORDER BY RANK LIMIT 15",
             (text,),
         )
@@ -165,8 +164,7 @@ async def tests_fts(text: str):
         return matched_tests
 
 
-@Cache(maxsize=32, ttl=120)
-async def students_fts(text: str):
+async def students_fts(text: str, _):
     async with database.ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
             "SELECT name, roll_no, rank FROM students_fts WHERE "

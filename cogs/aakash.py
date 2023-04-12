@@ -1,50 +1,24 @@
 import datetime
 import io
-from textwrap import TextWrapper
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
+import cogs.discord_utils.interactors as interactors
 import cogs.discord_utils.menus as menus
 import settings
 from bot import ClodBot
 from clodbot.aakash_scraper import aakash_db, analysis, scraper
-from clodbot.utils import SimpleTimer, myShorten
+from clodbot.utils import SimpleTimer
 from cogs.discord_utils.embeds import ClodEmbed
 
-
-# TODO: these functions are repetitive, and are essentially copy-pasted 3 different times
-async def tests_autocomplete(_, current: str):
-    w = TextWrapper(width=90, max_lines=1)
-    if len(current) < 4:
-        tests = await aakash_db.view_last_15_tests()
-        return [
-            app_commands.Choice(
-                name=f"{test[1]} {myShorten(test[0], w)}", value=test[1]
-            )
-            for test in tests
-        ]
-    tests = await aakash_db.tests_fts(current)
-    return [
-        app_commands.Choice(name=f"{test[1]} {myShorten(test[0], w)}", value=test[1])
-        for test in tests
-    ]
-
-
-async def students_autocomplete(_, current: str):
-    w = TextWrapper(width=90, max_lines=1)
-    if len(current) < 4:
-        students = await aakash_db.view_15_students_sorted_alpha()
-        return [
-            app_commands.Choice(name=myShorten(student[0], w), value=student[1])
-            for student in students
-        ]
-    students = await aakash_db.students_fts(current)
-    return [
-        app_commands.Choice(name=myShorten(student[0], w), value=student[1])
-        for student in students
-    ]
+tests_autocomplete = interactors.autocomplete(
+    preview=aakash_db.view_last_15_tests, search=aakash_db.tests_fts
+)
+students_autocomplete = interactors.autocomplete(
+    preview=aakash_db.view_15_students_sorted_alpha, search=aakash_db.students_fts
+)
 
 
 class Aakash(commands.Cog):

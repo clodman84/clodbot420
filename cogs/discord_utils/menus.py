@@ -126,3 +126,4 @@ class Menu(discord.ui.View):
         """stops the pagination session."""
         await interaction.response.defer()
         await interaction.delete_original_response()
+        self.message = None
