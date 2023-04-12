@@ -94,7 +94,8 @@ class Menu(discord.ui.View):
         if isinstance(self.ctx, Context):
             self.message = await self.ctx.send(**kwargs, view=self)
         elif isinstance(self.ctx, discord.Interaction):
-            self.message = await self.ctx.response.send_message(**kwargs, view=self)
+            await self.ctx.response.send_message(**kwargs, view=self)
+            self.message = await self.ctx.original_response()
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.green)
     async def go_to_previous_page(
