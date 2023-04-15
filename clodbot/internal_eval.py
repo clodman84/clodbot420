@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 
 from clodbot.utils import SimpleTimer
 
-log = logging.getLogger("clodbot.core.python")
+log = logging.getLogger("clodbot.core.intenal_eval")
 
 
 def insert_returns(body):
