@@ -2,7 +2,7 @@ import asyncio
 from base64 import b64decode, b64encode
 from dataclasses import dataclass
 
-from clodbot import clod_http
+from clodbot import clod_http, database
 from clodbot.utils import SimpleTimer
 
 
@@ -16,6 +16,12 @@ class File:
         return {"path": self.name, "content": b64encode(self.content).decode("ascii")}
 
 
+class Output:
+    # TODO: Holds the result of an evaluation -> A list of Files, output message, error message
+    def __init__(self):
+        pass
+
+
 class EvaluationFiles:
     def __init__(self, code: str):
         self.code: str = code
@@ -23,14 +29,14 @@ class EvaluationFiles:
         self.files.append("main.py")
 
     def search_imports(self):
-        # this is supposed to have a regex that matches all import statements
+        # TODO: this is supposed to have a regex that matches all import statements
         return []
 
     def __aiter__(self):
         return self
 
     async def __anext__(self) -> File:
-        # this bit is supposed to search through the database, matching file names with imports
+        # TODO: this bit is supposed to search through the database, matching file names with imports
         # this isn't "parallel" though, so I *might* change this to some sort of .gather()
         try:
             filename = self.files.pop()
@@ -42,6 +48,28 @@ class EvaluationFiles:
             raise StopAsyncIteration
 
 
+# TODO: Implement these functions
+async def search_file(user_id, filename):
+    pass
+
+
+async def update_file(user_id, filename):
+    pass
+
+
+async def save_file(user_id, filename):
+    pass
+
+
+async def files_fts(curr, user_id):
+    pass
+
+
+async def view_15_files(user_id):
+    pass
+
+
+# TODO: post_code() should return a list of Files and an Output and all that
 async def post_code(content: str):
     session = clod_http.SingletonSession()
     with SimpleTimer() as timer:
@@ -54,7 +82,7 @@ async def post_code(content: str):
 
 async def main():
     async with clod_http.SingletonSession():
-        data = await post_code("import file\nprint('Hello World!')")
+        data = await post_code("print('Hello World!')")
         print("Output:", data["stdout"])
         print("Files:", [b64decode(i["content"]) for i in data["files"]])
 
