@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 
 from bot import ClodBot
-from clodbot import python
+from clodbot import internal_eval
 from cogs.discord_utils.context import Context
 from cogs.discord_utils.embeds import ClodEmbed
 from cogs.discord_utils.interactors import (
@@ -62,7 +62,7 @@ class AdminCog(commands.Cog):
             "_": self.last_result,
         }
         env.update(globals())
-        output = await python.execute(code, env)
+        output = await internal_eval.execute(code, env)
 
         if output.status and not isinstance(output.returned, Exception):
             self.last_result = output.returned
