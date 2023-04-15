@@ -1,5 +1,7 @@
 import aiohttp
 
+"""wonky way of reusing one aiohttp.ClientSession everywhere"""
+
 
 class Singleton(type):
     _instances = {}
@@ -12,7 +14,3 @@ class Singleton(type):
 
 class SingletonSession(aiohttp.ClientSession, metaclass=Singleton):
     pass
-
-
-async def get(url):
-    return SingletonSession().get(url)

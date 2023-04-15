@@ -7,7 +7,7 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 
-from clodbot import http
+from clodbot import clod_http
 
 _log = logging.getLogger("clodbot.core.aakash_scraper")
 
@@ -16,7 +16,7 @@ roll_types = ["0642220600", "0642121200", "0642220500", "0642151200"]
 
 
 async def get(url):
-    session = http.SingletonSession()
+    session = clod_http.SingletonSession()
     async with session.get(url) as response:
         return await response.text()
 

@@ -10,7 +10,7 @@ from discord.ext import commands
 
 import clodbot.pills as database
 import settings
-from clodbot.http import SingletonSession
+from clodbot.clod_http import SingletonSession
 from cogs.discord_utils.context import Context
 from cogs.discord_utils.embeds import ClodEmbed, makeEmbedsFromString
 
