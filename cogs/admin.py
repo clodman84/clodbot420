@@ -47,10 +47,10 @@ class AdminCog(commands.Cog):
         else:
             raise commands.NotOwner
 
-    @commands.command(name="eval")
+    @commands.command(name="ieval")
     async def _eval(self, ctx: Context, *, code: str):
         """
-        Evaluates python code.
+        Internal evaluation of python code.
         """
         env = {
             "bot": self.bot,

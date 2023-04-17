@@ -141,7 +141,7 @@ def logConfig():
 
 def main():
     with logConfig():
-        ext = ["cogs.admin", "cogs.pills", "cogs.stats", "cogs.aakash"]
+        ext = ["cogs.admin", "cogs.pills", "cogs.stats", "cogs.aakash", "cogs.python"]
         bot = ClodBot(ext)
         log.info("Starting Bot")
         bot.run(token=settings.DISCORD_TOKEN, root_logger=True)
