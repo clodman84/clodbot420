@@ -76,7 +76,7 @@ class ClodBot(commands.Bot):
             await ctx.send("This command cannot be used in private messages.")
         elif isinstance(error, commands.DisabledCommand):
             await ctx.send("This command is disabled and cannot be used.")
-        elif isinstance(error, commands.CommandOnCooldown):
+        elif isinstance(error, commands.MaxConcurrencyReached):
             await ctx.send(f"Dude, chill. {str(error)}")
         elif isinstance(error, commands.NotOwner):
             await ctx.send("This command can only be used by my owner.")

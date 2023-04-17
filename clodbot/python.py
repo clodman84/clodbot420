@@ -9,8 +9,10 @@ from dataclasses import dataclass
 from io import StringIO
 from signal import Signals
 
+from aiosqlite import OperationalError
+
 from clodbot import clod_http, database
-from clodbot.utils import SimpleTimer, natural_size
+from clodbot.utils import Cache, SimpleTimer, natural_size
 
 _log = logging.getLogger("clodbot.core.python")
 MAX_FILE_SIZE = 8 * 1024 * 1024  # 8MB
@@ -44,7 +46,6 @@ class File:
 
 
 class Output:
-    # TODO: Holds the result of an evaluation -> A list of Files, output message, error message
     def __init__(self, json: dict):
         self.stdout = json["stdout"]
         self.return_code = json["returncode"]
@@ -88,24 +89,13 @@ class Output:
             return message.getvalue()
 
 
-def search_imports(code: str):
-    try:
-        source = ast.parse(code)
-    except SyntaxError:
-        return
-    for node in ast.walk(source):
-        if isinstance(node, ast.Import):
-            yield from (i.name for i in node.names)
-        if isinstance(node, ast.ImportFrom):
-            yield node.module
-
-
 class EvaluationFiles:
-    def __init__(self, code: str):
+    def __init__(self, user_id: int, code: str):
         self.code: str = code
-        self.unseen_files = set(search_imports(code))
+        self.unseen_files = set(scan_for_imports(code))
         self.unseen_files.add("main")
         self.seen_files = set()
+        self.user_id = user_id
 
     def __aiter__(self):
         return self
@@ -118,62 +108,111 @@ class EvaluationFiles:
                 if filename == "main":
                     return File("main.py", self.code.encode())
                 # filenames will be stored with the .py extension, future versions might allow saving other file types.
-                content = await search_file(123, f"{filename}.py")
-                if content is not None:
+                content = await search_file(self.user_id, f"{filename}.py")
+                if content:
                     break
 
             new_imports = tuple(
-                filter(lambda x: x not in self.seen_files, search_imports(content))
+                filter(
+                    lambda x: x not in self.seen_files,
+                    scan_for_imports(content.decode()),
+                )
             )
             if new_imports:
                 self.unseen_files.update(new_imports)
-            return File(f"{filename}.py", content.encode())
+            return File(f"{filename}.py", content)
         except KeyError:
             raise StopAsyncIteration
 
 
+def scan_for_imports(code: str):
+    try:
+        source = ast.parse(code)
+    except SyntaxError:
+        return
+    for node in ast.walk(source):
+        if isinstance(node, ast.Import):
+            yield from (i.name for i in node.names)
+        if isinstance(node, ast.ImportFrom):
+            yield node.module
+
+
 # TODO: Implement these functions
-async def search_file(user_id, filename):
-    if filename == "file.py":
-        return "import banana\nprint('hello world from file!')"
-    if filename == "banana.py":
-        return "import file\nprint(2+2, 'from banana')"
+@Cache
+async def search_file(user_id, filename: str) -> bytes | None:
+    async with database.ConnectionPool(lambda _, y: y) as db:
+        res = await db.execute(
+            "SELECT content FROM files WHERE userID = ? and filename = ?",
+            (user_id, filename),
+        )
+        content = await res.fetchone()
+        return content[0] if content else None
 
 
-async def update_file(user_id, filename):
-    pass
+@Cache
+async def get_file(row_id):
+    async with database.ConnectionPool(lambda _, y: y) as db:
+        res = await db.execute(
+            "SELECT userID, filename, content FROM files WHERE rowid = ?", (row_id,)
+        )
+        content = await res.fetchone()
+        return content
 
 
-async def save_file(user_id, filename):
-    pass
+async def update_file(user_id, filename: str, content: bytes, db):
+    search_file.remove(user_id, filename)
+    # sqlite crosses 3.38 within python, change this is strftime('%s')
+    await db.execute(
+        "UPDATE files SET content = ?, last_updated = strftime('%s') WHERE userID = ? and filename = ?",
+        (content, user_id, filename),
+    )
 
 
-async def files_fts(curr, user_id):
-    pass
+async def save_file(user_id, filename: str, content: bytes, db):
+    search_file.remove(user_id, filename)
+    await db.execute(
+        "INSERT INTO files VALUES(strftime('%s'), ?, ?, ?, strftime('%s'))",
+        (user_id, filename, content),
+    )
+
+
+async def delete_file(user_id, filename, db):
+    search_file.remove(user_id, filename)
+    await db.execute(
+        "DELETE FROM files WHERE userID = ? AND filename = ?", (user_id, filename)
+    )
+
+
+async def files_fts(text, user_id):
+    async with database.ConnectionPool(lambda _, y: y) as db:
+        with contextlib.suppress(OperationalError):  # . breaks fts5
+            res = await db.execute(
+                "SELECT filename, rowid FROM files_fts WHERE "
+                "filename MATCH ? AND userID = ? ORDER BY rank LIMIT 15",
+                (text, user_id),
+            )
+            matched_files = await res.fetchall()
+            return matched_files
 
 
 async def view_15_files(user_id):
-    pass
+    async with database.ConnectionPool(lambda _, y: y) as db:
+        res = await db.execute(
+            "SELECT filename, rowid FROM files WHERE userID = ? ORDER BY last_updated DESC LIMIT 15",
+            (user_id,),
+        )
+        pills = await res.fetchall()
+        return pills
 
 
-# TODO: post_code() should return a list of Files and an Output and all that
-async def post_code(content: str) -> Output:
+async def post_code(user_id: int, content: str) -> Output:
     session = clod_http.SingletonSession()
     with SimpleTimer() as timer:
-        file_list = [file.to_json_object() async for file in EvaluationFiles(content)]
+        file_list = [
+            file.to_json_object() async for file in EvaluationFiles(user_id, content)
+        ]
         json = {"args": ["main.py"], "files": file_list}
     _log.debug("Task - collect all files to evaluate - {}".format(timer))
     async with session.post("http://localhost:8060/eval", json=json) as response:
         json = await response.json()
         return Output(json)
-
-
-async def main():
-    async with clod_http.SingletonSession():
-        data = await post_code("import file\nprint('Hello World!')")
-        print("Output:", data.stdout)
-        print("Files:", data.files)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -14,9 +14,7 @@ from clodbot.utils import SimpleTimer
 from cogs.discord_utils.embeds import ClodEmbed
 
 pills_autocomplete = interactor.autocomplete(
-    preview=database.view_last_15_pills,
-    search=database.pills_fts,
-    interaction_attribute="guild_id",
+    preview=database.view_last_15_pills, search=database.pills_fts, attribute="guild_id"
 )
 
 

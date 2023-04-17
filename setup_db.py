@@ -105,6 +105,25 @@ async def make_timer_table():
     print("Timer table was created!")
 
 
+async def make_files_table():
+    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    cursor: aiosqlite.Cursor = await db.cursor()
+    await cursor.execute(
+        """CREATE TABLE IF NOT EXISTS files(
+            created_on TIMESTAMP,
+            userID INTEGER,
+            filename TEXT,
+            content BLOB,
+            last_updated TIMESTAMP,
+            UNIQUE(userID, filename)
+        );
+    """
+    )
+    await cursor.close()
+    await db.close()
+    print("files table was created!")
+
+
 async def setup_fts_for_pills():
     db: aiosqlite.Connection = await aiosqlite.connect("data.db")
     await db.executescript(
@@ -222,6 +241,43 @@ def make_random_pills(n):
         )
 
 
+async def setup_fts_for_files():
+    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    await db.executescript(
+        """ DROP table IF EXISTS files_fts;
+            CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(
+                filename,
+                userID UNINDEXED,
+                content='files',
+                tokenize='trigram'
+            );
+        """
+    )
+    print("fts table for files has been made!")
+    await db.executescript(
+        """
+        DROP TRIGGER IF EXISTS files_ai;
+        DROP TRIGGER IF EXISTS files_ad;
+        DROP TRIGGER IF EXISTS files_au;
+        CREATE TRIGGER files_ai AFTER INSERT ON files BEGIN
+            INSERT INTO files_fts(rowid, filename, userID) VALUES(new.rowid, new.filename, new.userID);
+        END;
+        CREATE TRIGGER files_ad AFTER DELETE ON files BEGIN
+            INSERT INTO files_fts(files_fts, rowid, filename, userID)
+            VALUES('delete', old.rowid, old.filename, old.userID);
+        END;
+        CREATE TRIGGER files_au AFTER UPDATE ON files BEGIN
+            INSERT INTO files_fts(files_fts, rowid, filename, userID)
+            VALUES('delete', old.rowid, old.filename, old.userID);
+            INSERT INTO files_fts(rowid, filename, userID) VALUES(new.rowid, new.filename, new.userID);
+        END;
+        INSERT INTO files_fts SELECT filename, userID FROM files;
+    """
+    )
+    print("update triggers for files have been set up")
+    await db.close()
+
+
 async def view_all_pills():
     db: aiosqlite.Connection = await aiosqlite.connect("data.db")
     cursor = await db.cursor()
@@ -234,17 +290,15 @@ async def view_all_pills():
 async def main():
     # don't change this order
     await make_pills_table()
-    await setup_fts_for_pills()
     await make_timer_table()
     await make_students_table()
     await make_tests_table()
     await make_results_table()
+    await make_files_table()
     await setup_fts_for_students()
     await setup_fts_for_tests()
-
-    pills = await view_all_pills()
-    for i, pill in enumerate(pills):
-        print(i, pill)
+    await setup_fts_for_pills()
+    await setup_fts_for_files()
 
 
 if __name__ == "__main__":

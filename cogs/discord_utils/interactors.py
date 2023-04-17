@@ -11,10 +11,10 @@ from .context import Context
 from .embeds import ClodEmbed
 
 
-def autocomplete(preview, search, interaction_attribute=None):
+def autocomplete(preview, search, attribute=None, user_attribute=False):
     w = TextWrapper(width=90, max_lines=1)
 
-    @Cache(maxsize=256, ttl=60)
+    @Cache(maxsize=256, ttl=30)
     async def completer(metadata, current: str):
         if len(current) < 4:
             values = await preview(metadata)
@@ -31,11 +31,14 @@ def autocomplete(preview, search, interaction_attribute=None):
     async def coro_wrapper(interaction: discord.Interaction, current: str):
         # this helps with the Cache since interactions are always different...
         # and in discord/app_commands/commands.py _populate_autocomplete() there is an iscoroutinefunction() check
-        metadata = (
-            interaction.__getattribute__(interaction_attribute)
-            if interaction_attribute
-            else None
-        )
+        if attribute:
+            metadata = (
+                getattr(interaction.user, attribute)
+                if user_attribute
+                else getattr(interaction, attribute)
+            )
+        else:
+            metadata = None
         return await completer(metadata, current)
 
     return coro_wrapper
