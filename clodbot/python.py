@@ -1,5 +1,4 @@
 import ast
-import asyncio
 import contextlib
 import itertools
 import logging
@@ -161,7 +160,7 @@ async def get_file(row_id):
 
 async def update_file(user_id, filename: str, content: bytes, db):
     search_file.remove(user_id, filename)
-    # sqlite crosses 3.38 within python, change this is strftime('%s')
+    # when sqlite crosses 3.38 within python, change this is strftime('%s')
     await db.execute(
         "UPDATE files SET content = ?, last_updated = strftime('%s') WHERE userID = ? and filename = ?",
         (content, user_id, filename),
@@ -185,14 +184,13 @@ async def delete_file(user_id, filename, db):
 
 async def files_fts(text, user_id):
     async with database.ConnectionPool(lambda _, y: y) as db:
-        with contextlib.suppress(OperationalError):  # . breaks fts5
-            res = await db.execute(
-                "SELECT filename, rowid FROM files_fts WHERE "
-                "filename MATCH ? AND userID = ? ORDER BY rank LIMIT 15",
-                (text, user_id),
-            )
-            matched_files = await res.fetchall()
-            return matched_files
+        res = await db.execute(
+            "SELECT filename, rowid FROM files_fts WHERE "
+            "filename MATCH ? AND userID = ? ORDER BY rank LIMIT 15",
+            (text, user_id),
+        )
+        matched_files = await res.fetchall()
+        return matched_files
 
 
 async def view_15_files(user_id):
