@@ -134,7 +134,6 @@ def scan_for_imports(code: str):
             yield node.module
 
 
-# TODO: Implement these functions
 @Cache
 async def search_file(user_id, filename: str) -> bytes | None:
     async with database.ConnectionPool(lambda _, y: y) as db:
