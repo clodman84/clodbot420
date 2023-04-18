@@ -83,7 +83,13 @@ class Python(commands.Cog):
                 f"{filename} doesn't exist, you might want to use /view to look at all the files you have saved."
             )
             return
-        queries = {"filename": lambda x: x == filename}
+
+        def check(x):
+            if x != filename:
+                raise ValueError(f"Say '{filename}' if you want to delete the file.")
+            return x
+
+        queries = {"filename": check}
         prompts = {"filename": f"Say '{filename}' to delete the file"}
         interactor = interactors.TextInteractor(queries, ctx, self.bot, prompts)
         try:

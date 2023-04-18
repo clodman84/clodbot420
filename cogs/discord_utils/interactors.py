@@ -167,9 +167,9 @@ class TextInteractor:
                 if isinstance(value, Callable):
                     try:
                         response = value(response)
-                    except ValueError:
+                    except ValueError as err:
                         errorEmbed = ClodEmbed(
-                            description=f"There was something wrong with your input. {ValueError}",
+                            description=f"There was something wrong with your input. {err}",
                             status=False,
                         )
                         error = await ctx.send(embed=errorEmbed)
