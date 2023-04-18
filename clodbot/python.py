@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from io import StringIO
 from signal import Signals
 
-from aiosqlite import OperationalError
-
 from clodbot import clod_http, database
 from clodbot.utils import Cache, SimpleTimer, natural_size
 
@@ -177,9 +175,11 @@ async def save_file(user_id, filename: str, content: bytes, db):
 
 async def delete_file(user_id, filename, db):
     search_file.remove(user_id, filename)
-    await db.execute(
-        "DELETE FROM files WHERE userID = ? AND filename = ?", (user_id, filename)
+    row_id = await db.execute(
+        "SELECT rowid FROM files WHERE userID = ? AND filename = ?", (user_id, filename)
     )
+    get_file.remove(row_id)
+    await db.execute("DELETE FROM files WHERE rowid = ?", (row_id,))
 
 
 async def files_fts(text, user_id):

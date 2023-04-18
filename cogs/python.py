@@ -92,6 +92,7 @@ class Python(commands.Cog):
             await interactor.cleanup()
             await ctx.tick(False)
             return
+        await interactor.cleanup()
         await python.delete_file(ctx.author.id, filename, self.bot.db)
         await ctx.tick(True)
 
