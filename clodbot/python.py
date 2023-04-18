@@ -175,9 +175,10 @@ async def save_file(user_id, filename: str, content: bytes, db):
 
 async def delete_file(user_id, filename, db):
     search_file.remove(user_id, filename)
-    row_id = await db.execute(
+    query = await db.execute(
         "SELECT rowid FROM files WHERE userID = ? AND filename = ?", (user_id, filename)
     )
+    (row_id,) = await query.fetchone()
     get_file.remove(row_id)
     await db.execute("DELETE FROM files WHERE rowid = ?", (row_id,))
 
