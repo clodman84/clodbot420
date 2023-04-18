@@ -26,9 +26,9 @@ class TableSource(Source):
     def __init__(self, data, max_rows=25, head_embed=None, heading=None):
         super(TableSource, self).__init__(data)
         self.data = divide_iterable(data, max_rows)
-        self.head_embed: Optional[ClodEmbed] = head_embed
-        if self.head_embed:
-            self.original_footer = self.head_embed.get_footer()
+        self.embed_dict = head_embed.to_dict() if head_embed else None
+        if head_embed:
+            self.original_footer = head_embed.get_footer()
         self.wrapper = TextWrapper(width=20, max_lines=1)
         self.wrapper.placeholder = "..."
         self.heading = heading
@@ -51,8 +51,8 @@ class TableSource(Source):
         widths = self.get_max_widths(index)
         if self.heading:
             page.insert(1, tuple("-" * i for i in widths))
-        with StringIO() as table:
 
+        with StringIO() as table:
             table.write("```fix\n")
             for row in page:
                 for i, item in enumerate(row):
@@ -65,11 +65,13 @@ class TableSource(Source):
                 table.write("\n")
             table.write("```")
 
-            if self.head_embed:
-                self.head_embed.description = table.getvalue()
+            if self.embed_dict:
+                embed = ClodEmbed.from_dict(self.embed_dict)
+                embed.description = table.getvalue()
                 text = f"Page {index + 1} / {self.max_index() + 1} "
-                self.head_embed.set_footer(text=text + self.original_footer)
-                return {"embed": self.head_embed}
+                embed.set_footer(text=text + self.original_footer)
+                return {"embed": embed}
+
             return {"content": table.getvalue()}
 
 
