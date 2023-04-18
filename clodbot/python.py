@@ -157,6 +157,13 @@ async def get_file(row_id):
 
 async def update_file(user_id, filename: str, content: bytes, db):
     search_file.remove(user_id, filename)
+
+    query = await db.execute(
+        "SELECT rowid FROM files WHERE userID = ? AND filename = ?", (user_id, filename)
+    )
+    (row_id,) = await query.fetchone()
+    get_file.remove(row_id)
+
     # when sqlite crosses 3.38 within python, change this is strftime('%s')
     await db.execute(
         "UPDATE files SET content = ?, last_updated = strftime('%s') WHERE userID = ? and filename = ?",
