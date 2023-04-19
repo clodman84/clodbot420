@@ -149,7 +149,8 @@ async def search_file(user_id, filename: str) -> bytes | None:
 async def get_file(row_id):
     async with database.ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
-            "SELECT userID, filename, content FROM files WHERE rowid = ?", (row_id,)
+            "SELECT userID, filename, content, created_on, last_updated FROM files WHERE rowid = ?",
+            (row_id,),
         )
         content = await res.fetchone()
         return content
@@ -164,7 +165,7 @@ async def update_file(user_id, filename: str, content: bytes, db):
     (row_id,) = await query.fetchone()
     get_file.remove(row_id)
 
-    # when sqlite crosses 3.38 within python, change this is strftime('%s')
+    # when sqlite crosses 3.38 within python, change this to unixepoch()
     await db.execute(
         "UPDATE files SET content = ?, last_updated = strftime('%s') WHERE userID = ? and filename = ?",
         (content, user_id, filename),

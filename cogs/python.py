@@ -143,7 +143,18 @@ class Python(commands.Cog):
             )
             return
         code = content[2].decode()
-        embed = ClodEmbed(description=f"```py\n{code}```")
+        embed = ClodEmbed(title=content[1], description=f"```py\n{code}```")
+        user_imports = [
+            file.name
+            async for file in python.EvaluationFiles(interaction.user.id, code)
+        ]
+        import_string = "\n".join(filter(lambda x: x != "main.py", user_imports))
+        embed.add_field(name="Created On:", value=f"<t:{content[3]}>")
+        embed.add_field(name="Last Updated:", value=f"<t:{content[4]}>")
+        if import_string:
+            embed.add_field(
+                name="User generated modules imported:", value=import_string
+            )
         await interaction.response.send_message(embed=embed)
 
 
