@@ -15,7 +15,7 @@ class Source:
     def __init__(self, data):
         self.data = data
 
-    async def get_page(self, index):
+    def get_page(self, index):
         return {"content": self.data[index]}
 
     def max_index(self):
@@ -33,22 +33,19 @@ class TableSource(Source):
         self.wrapper.placeholder = "..."
         self.heading = heading
 
-    def get_raw_page(self, index: int):
+    @Cache
+    def make_page(self, index: int):
         if self.heading:
-            return list(itertools.chain((self.heading,), self.data[index]))
-        return self.data[index]
+            page = list(itertools.chain((self.heading,), self.data[index]))
+        else:
+            page = self.data[index]
 
-    def get_max_widths(self, index: int):
-        page = self.get_raw_page(index)
-        return [
+        # make a list of max widths | 30 (whichever is greater) for each column
+        widths = [
             min(max(*map(lambda x: len(str(x[i])), page)), 30)
             for i in range(len(page[0]))
         ]
 
-    @Cache
-    async def get_page(self, index: int):
-        page = self.get_raw_page(index)
-        widths = self.get_max_widths(index)
         if self.heading:
             page.insert(1, tuple("-" * i for i in widths))
 
@@ -61,7 +58,7 @@ class TableSource(Source):
                         table.write(f"|{item:{width}d}")
                     elif isinstance(item, str):
                         self.wrapper.width = width
-                        table.write(f"|{myShorten(item, self.wrapper).ljust(width)}")
+                        table.write(f"|{myShorten(item, self.wrapper):<{width}}")
                 table.write("\n")
             table.write("```")
 
@@ -74,6 +71,9 @@ class TableSource(Source):
 
             return {"content": table.getvalue()}
 
+    def get_page(self, index: int):
+        return TableSource.make_page(self, index)
+
 
 class Menu(discord.ui.View):
     def __init__(self, source: Source, ctx: Context | discord.Interaction):
@@ -84,7 +84,7 @@ class Menu(discord.ui.View):
         self.current_index: int = 0
 
     async def show_page(self, interaction: discord.Interaction):
-        kwargs = await TableSource.get_page(self.source, self.current_index)
+        kwargs = self.source.get_page(self.current_index)
         await interaction.response.edit_message(**kwargs)
 
     async def on_timeout(self) -> None:
@@ -92,7 +92,7 @@ class Menu(discord.ui.View):
             await self.message.edit(view=None)
 
     async def start(self):
-        kwargs = await TableSource.get_page(self.source, 0)
+        kwargs = self.source.get_page(self.current_index)
         if isinstance(self.ctx, Context):
             self.message = await self.ctx.send(**kwargs, view=self)
         elif isinstance(self.ctx, discord.Interaction):

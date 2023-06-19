@@ -18,11 +18,8 @@ def autocomplete(preview, search, attribute=None, user_attribute=False):
     async def completer(metadata, current: str):
         if len(current) < 4:
             values = await preview(metadata)
-            return [
-                app_commands.Choice(name=f"{myShorten(value[0], w)}", value=value[1])
-                for value in values
-            ]
-        values = await search(current, metadata)
+        else:
+            values = await search(current, metadata)
         return [
             app_commands.Choice(name=f"{myShorten(value[0], w)}", value=value[1])
             for value in values
