@@ -194,7 +194,7 @@ async def files_fts(text, user_id):
     async with database.ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
             "SELECT filename, rowid FROM files_fts WHERE "
-            "files_fts MATCH ? AND userID = ? ORDER BY rank LIMIT 15",
+            "filename MATCH ? AND userID = ? ORDER BY rank LIMIT 15",
             (text, user_id),
         )
         matched_files = await res.fetchall()

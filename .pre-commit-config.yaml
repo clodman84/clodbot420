@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.8.0
+    rev: 23.7.0
     hooks:
       - id: black
         language_version: python3.10
@@ -13,7 +13,7 @@ repos:
     -   id: check-added-large-files
     -   id: requirements-txt-fixer
   - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+    rev: 5.12.0
     hooks:
       - id: isort
         name: isort (python)

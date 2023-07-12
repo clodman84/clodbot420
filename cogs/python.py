@@ -37,7 +37,8 @@ class Python(commands.Cog):
             embed = ClodEmbed(
                 status=output.status, description=f"```py\n{output.stdout or '...'}```"
             )
-            embed.add_field(name="Status", value=output.get_status_message())
+            if output.status is False:
+                embed.add_field(name="Error", value=output.get_status_message())
             files = [
                 File(BytesIO(file.content), filename=file.get_discord_name())
                 for file in output.files
@@ -121,7 +122,8 @@ class Python(commands.Cog):
         embed = ClodEmbed(
             status=output.status, description=f"```py\n{output.stdout or '...'}```"
         )
-        embed.add_field(name="Status", value=output.get_status_message())
+        if output.status is False:
+            embed.add_field(name="Error", value=output.get_status_message())
         files = [
             File(BytesIO(file.content), filename=file.get_discord_name())
             for file in output.files

@@ -48,7 +48,7 @@ async def pills_fts(text: str, guildID: int):
     async with ConnectionPool(lambda _, y: y) as db:
         res = await db.execute(
             "SELECT pill, rowid FROM pills_fts WHERE "
-            "pill_fts MATCH ? AND guildID = ? ORDER BY rank LIMIT 15",
+            "pill MATCH ? AND guildID = ? ORDER BY rank LIMIT 15",
             (text, guildID),
         )
         matched_pills = await res.fetchall()
