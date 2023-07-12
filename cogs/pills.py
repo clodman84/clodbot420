@@ -144,14 +144,14 @@ class PillsCog(commands.Cog):
             )
             return
         view = discord.ui.View()
-        jump_button = discord.ui.Button(url=pill.jumpURL, label="Jump To Message")
+        jump_button = discord.ui.Button(url=pill.jump_url, label="Jump To Message")
         view.add_item(jump_button)
 
         author = self.bot.get_user(pill.receiverID)
         embed = (
             ClodEmbed(
                 description=f"{shorten(pill.basedMessage, width=2000)}",
-                url=pill.jumpURL,
+                url=pill.jump_url,
             )
             .set_author(name=author.name, icon_url=author.display_avatar.url)
             .add_field(name="Pill:", value=shorten(pill.pill, width=1000))

@@ -25,7 +25,7 @@ class Pill:
     guildID: int
 
     @property
-    def jumpURL(self):
+    def jump_url(self):
         return f"https://discord.com/channels/{self.guildID}/{self.channelID}/{self.messageID}"
 
 
