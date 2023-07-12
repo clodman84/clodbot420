@@ -5,7 +5,7 @@ from typing import Optional
 
 import discord
 
-from clodbot.utils import Cache, divide_iterable, myShorten
+from clodbot.utils import Cache, divide_iterable, my_shorten
 
 from .context import Context
 from .embeds import ClodEmbed
@@ -58,7 +58,7 @@ class TableSource(Source):
                         table.write(f"|{item:{width}d}")
                     elif isinstance(item, str):
                         self.wrapper.width = width
-                        table.write(f"|{myShorten(item, self.wrapper):<{width}}")
+                        table.write(f"|{my_shorten(item, self.wrapper):<{width}}")
                 table.write("\n")
             table.write("```")
 

@@ -4,8 +4,7 @@ import settings
 from clodbot import utils
 
 
-def makeEmbedsFromString(string, prefix="```py\n", suffix="```", status=True):
-
+def make_embeds_from_string(string, prefix="```py\n", suffix="```", status=True):
     return [
         ClodEmbed(description=f"{prefix}{d}{suffix}", status=status)
         for d in utils.divide_iterable(string, 4000)

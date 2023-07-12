@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 
 import clodbot.database
 from bot import ClodBot
-from clodbot import pills, utils
+from clodbot import utils
 from cogs.discord_utils.context import Context
 from cogs.discord_utils.embeds import ClodEmbed
 
@@ -11,7 +11,7 @@ from cogs.discord_utils.embeds import ClodEmbed
 class StatsCog(commands.Cog):
     def __init__(self, bot: ClodBot):
         self.bot = bot
-        self.insertTimes.start()
+        self.insert_times.start()
         self.process = psutil.Process()
 
     @commands.command()
@@ -71,11 +71,11 @@ class StatsCog(commands.Cog):
                 websocket_readings.append(self.bot.latency)
 
     @tasks.loop(seconds=10)
-    async def insertTimes(self):
+    async def insert_times(self):
         await clodbot.database.insert_timers(utils.SimpleTimer(), self.bot.db)
 
     async def cog_unload(self) -> None:
-        self.insertTimes.stop()
+        self.insert_times.stop()
 
 
 async def setup(bot):

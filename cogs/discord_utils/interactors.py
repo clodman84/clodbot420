@@ -5,7 +5,7 @@ import discord
 from discord import ButtonStyle, Interaction, Message, app_commands, ui
 
 from bot import ClodBot
-from clodbot.utils import Cache, myShorten
+from clodbot.utils import Cache, my_shorten
 
 from .context import Context
 from .embeds import ClodEmbed
@@ -21,7 +21,7 @@ def autocomplete(preview, search, attribute=None, user_attribute=False):
         else:
             values = await search(current, metadata)
         return [
-            app_commands.Choice(name=f"{myShorten(value[0], w)}", value=value[1])
+            app_commands.Choice(name=f"{my_shorten(value[0], w)}", value=value[1])
             for value in values
         ]
 
@@ -145,11 +145,11 @@ class TextInteractor:
         ctx = self.ctx
         bot = self.bot
         for key, value in self.queries.items():
-            promptEmbed = ClodEmbed(
+            prompt_embed = ClodEmbed(
                 description=f"```fix\n{self.prompts[key]}:\n```"
             ).set_footer(text="Say 'cancel!' to stop")
             while True:
-                prompt = await ctx.send(embed=promptEmbed)
+                prompt = await ctx.send(embed=prompt_embed)
                 self.interactions.append(prompt)
                 response: Message = await bot.wait_for(
                     "message",
@@ -165,11 +165,11 @@ class TextInteractor:
                     try:
                         response = value(response)
                     except ValueError as err:
-                        errorEmbed = ClodEmbed(
+                        error_embed = ClodEmbed(
                             description=f"There was something wrong with your input. {err}",
                             status=False,
                         )
-                        error = await ctx.send(embed=errorEmbed)
+                        error = await ctx.send(embed=error_embed)
                         self.interactions.append(error)
                         continue
                 self.queries[key] = response

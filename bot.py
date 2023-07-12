@@ -12,7 +12,7 @@ import clodbot.pills as database
 import settings
 from clodbot.clod_http import SingletonSession
 from cogs.discord_utils.context import Context
-from cogs.discord_utils.embeds import ClodEmbed, makeEmbedsFromString
+from cogs.discord_utils.embeds import ClodEmbed, make_embeds_from_string
 
 log = logging.getLogger("clodbot")
 log.setLevel(logging.DEBUG)
@@ -90,7 +90,7 @@ class ClodBot(commands.Bot):
                     + "".join(traceback.format_tb(original.__traceback__))
                     + str(error)
                 )
-                for message in makeEmbedsFromString(trace, status=False):
+                for message in make_embeds_from_string(trace, status=False):
                     await self.error_hook.send(embed=message)
         elif isinstance(error, commands.UserInputError):
             errorEmbed = ClodEmbed(
@@ -103,7 +103,7 @@ class ClodBot(commands.Bot):
 
 
 @contextmanager
-def logConfig():
+def log_config():
     logger = logging.getLogger()
 
     logging.getLogger("discord").setLevel(logging.DEBUG)
@@ -140,7 +140,7 @@ def logConfig():
 
 
 def main():
-    with logConfig():
+    with log_config():
         ext = ["cogs.admin", "cogs.pills", "cogs.stats", "cogs.python"]
         bot = ClodBot(ext)
         log.info("Starting Bot")

@@ -46,8 +46,8 @@ class Cache:
         key = self._generate_hash_key(*args, **kwargs)
         if key in cache:
             if self._ttl:
-                result, expiryDate = cache[key]
-                if time.time() > expiryDate:
+                result, expiry_date = cache[key]
+                if time.time() > expiry_date:
                     cache.pop(key)
                 else:
                     cache.move_to_end(key)
@@ -100,7 +100,7 @@ def format_dictionary(dictionary: dict, indent: int = 1):
             )
 
 
-def myShorten(text: str, wrapper: TextWrapper):
+def my_shorten(text: str, wrapper: TextWrapper):
     """
     Lets you reuse TextWrappers. Wrappers must be created with a width=desired max width and max_lines set to 1.
     """
