@@ -1,3 +1,7 @@
+"""
+THIS FILE IS NEVER TOUCHED BY THE PROGRAM.
+It's in here for historic purposes only.
+"""
 import asyncio
 import csv
 import io
