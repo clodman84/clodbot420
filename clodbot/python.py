@@ -219,6 +219,6 @@ async def post_code(user_id: int, content: str) -> Output:
         ]
         json = {"args": ["main.py"], "files": file_list}
     _log.debug("Task - collect all files to evaluate - {}".format(timer))
-    async with session.post("http://localhost:8060/eval", json=json) as response:
+    async with session.post("http://snekbox:8060/eval", json=json) as response:
         json = await response.json()
         return Output(json)
