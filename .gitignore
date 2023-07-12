@@ -1,7 +1,7 @@
-/settings.py
+/settings.json
 /app.log*
 __pycache__/
 venv/
 .idea/
 prog.prof
-/data*
+data.db

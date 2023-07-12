@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  main:
+    build: .
+    container_name: clodbot
+    volumes:
+      - type: bind
+        source: ./data
+        target: /app/data
+    secrets:
+      - discord_bot_secrets
+secrets:
+  discord_bot_secrets:
+    file: ./settings.json

@@ -11,7 +11,7 @@ aiosqlite.register_converter("integer", lambda b: int(b, 16 if b[:2] == b"0x" el
 
 
 async def make_tests_table():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     cursor: aiosqlite.Cursor = await db.cursor()
     await cursor.execute(
         """CREATE TABLE IF NOT EXISTS tests(
@@ -29,7 +29,7 @@ async def make_tests_table():
 
 
 async def make_results_table():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     cursor: aiosqlite.Cursor = await db.cursor()
     await cursor.execute(
         """CREATE TABLE IF NOT EXISTS results(
@@ -51,7 +51,7 @@ async def make_results_table():
 
 
 async def make_students_table():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     cursor: aiosqlite.Cursor = await db.cursor()
     await cursor.execute(
         """CREATE TABLE IF NOT EXISTS students(
@@ -68,7 +68,7 @@ async def make_students_table():
 
 
 async def make_pills_table():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     cursor: aiosqlite.Cursor = await db.cursor()
     await cursor.execute(
         """CREATE TABLE IF NOT EXISTS pills(
@@ -90,7 +90,7 @@ async def make_pills_table():
 
 
 async def make_timer_table():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     cursor: aiosqlite.Cursor = await db.cursor()
     await cursor.execute(
         """CREATE TABLE IF NOT EXISTS timers(
@@ -106,7 +106,7 @@ async def make_timer_table():
 
 
 async def make_files_table():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     cursor: aiosqlite.Cursor = await db.cursor()
     await cursor.execute(
         """CREATE TABLE IF NOT EXISTS files(
@@ -125,7 +125,7 @@ async def make_files_table():
 
 
 async def setup_fts_for_pills():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     await db.executescript(
         """ DROP table IF EXISTS pills_fts;
             CREATE VIRTUAL TABLE IF NOT EXISTS pills_fts USING fts5(
@@ -160,7 +160,7 @@ async def setup_fts_for_pills():
 
 
 async def setup_fts_for_tests():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     await db.executescript(
         """ DROP table IF EXISTS tests_fts;
             CREATE VIRTUAL TABLE IF NOT EXISTS tests_fts USING fts5(
@@ -187,7 +187,7 @@ async def setup_fts_for_tests():
 
 
 async def setup_fts_for_students():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     await db.executescript(
         """ DROP table IF EXISTS students_fts;
             CREATE VIRTUAL TABLE IF NOT EXISTS students_fts USING fts5(
@@ -242,7 +242,7 @@ def make_random_pills(n):
 
 
 async def setup_fts_for_files():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     await db.executescript(
         """ DROP table IF EXISTS files_fts;
             CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(
@@ -279,7 +279,7 @@ async def setup_fts_for_files():
 
 
 async def view_all_pills():
-    db: aiosqlite.Connection = await aiosqlite.connect("data.db")
+    db: aiosqlite.Connection = await aiosqlite.connect("data/data.db")
     cursor = await db.cursor()
     await cursor.execute("SELECT * FROM pills;")
     pills = await cursor.fetchall()

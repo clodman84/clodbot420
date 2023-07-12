@@ -22,7 +22,7 @@ class ConnectionPool:
         try:
             self.connection = self._q.get_nowait()
         except queue.Empty:
-            self.connection = await aiosqlite.connect("data.db")
+            self.connection = await aiosqlite.connect("./data/data.db")
             await self.connection.execute("pragma journal_mode=wal;")
         self.connection.row_factory = self.row_factory
         return self.connection

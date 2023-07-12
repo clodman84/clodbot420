@@ -47,7 +47,7 @@ class ClodBot(commands.Bot):
             url=settings.ERROR_WEBHOOK, session=session
         )
         self.db: aiosqlite.Connection = await aiosqlite.connect(
-            "data.db", isolation_level=None
+            "data/data.db", isolation_level=None
         )
         await self.db.executescript(
             """
