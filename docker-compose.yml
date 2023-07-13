@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  
+
   snekbox:
     restart: unless-stopped
     container_name: snekbox
@@ -13,6 +13,9 @@ services:
     privileged: true
     volumes:
       - user-base:/snekbox/user_base
+      - type: bind
+        source: ./data/snekbox_config
+        target: /snekbox/config
 
   clodbot:
     build: .
@@ -26,11 +29,10 @@ services:
     tty: true
     depends_on:
       - snekbox
- 
+
 volumes:
   user-base:
 
 secrets:
   discord_bot_secrets:
     file: ./settings.json
-
